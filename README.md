@@ -10,11 +10,13 @@ A 1v1 ragdoll stickman duel game for phones, in one HTML file. Physics-based fig
 3. Launch it from the home-screen icon — it runs full-screen with no browser bar.
 
 ## Controls
-- **Drag anywhere** = joystick. Direction is movement *and* where your weapon points.
+- **Fixed joystick** in the bottom-right (2P: P1 bottom-left, P2 bottom-right). Direction is movement *and* where your weapon points.
 - **Let go** = use your weapon's ability (cooldown shown on your card). Melee weapons also hurt just by hitting.
 - **Hold up** = jump (works mid-air when the cooldown is ready). **Push down** = drop through platforms.
 - 2 players on one phone: left half is P1, right half is P2.
 - Keyboard: WASD / arrow keys.
 
 ## Modes
-VS CPU, 2 Players, and Testing Grounds (training dummy, weapon picker, no-cooldown and slow-mo toggles).
+VS CPU, 2 Players, Testing Grounds (training dummy, try any weapon, no-cooldown and slow-mo toggles) and the Locker (spend coins on weapons, colors, hats and trails).
+
+31 weapons, 8 maps, 100 HP health, coins from KOs and wins.

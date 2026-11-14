@@ -379,10 +379,10 @@ function spring(p,tx,ty,k,c,ref,react){
 }
 function solve(a,b,len){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-4,df=(d-len)/d/(a.im+b.im);a.x+=dx*df*a.im;a.y+=dy*df*a.im;b.x-=dx*df*b.im;b.y-=dy*df*b.im}
 function groundBelow(x,y,plats,drop){let best=null;for(const p of plats){if(drop&&p.thin)continue;if(x>=p.x-6&&x<=p.x+p.w+6&&p.y>=y-12&&(!best||p.y<best.y))best=p}return best}
-function collideP(p,plats,drop){
+function collideP(p,plats,drop,hipY){
   for(const pl of plats){
     if(p.x<pl.x-p.r||p.x>pl.x+pl.w+p.r)continue;
-    if(pl.thin){if(drop)continue;if(p.oy+p.r<=pl.y+2&&p.y+p.r>pl.y){p.y=pl.y-p.r;p.hitP=pl}}
+    if(pl.thin){if(drop||hipY>pl.y-2)continue;if(p.oy+p.r<=pl.y+2&&p.y+p.r>pl.y){p.y=pl.y-p.r;p.hitP=pl}}
     else if(p.y+p.r>pl.y&&p.y-p.r<pl.y+pl.h){
       if(p.oy+p.r<=pl.y+3){p.y=pl.y-p.r;p.hitP=pl}
       else if(p.oy-p.r>=pl.y+pl.h-3)p.y=pl.y+pl.h+p.r;
@@ -465,7 +465,7 @@ function physics(f,inp,dt,plats){
   for(const k in P){const p=P[k];p.vx+=p.ax*dt;p.vy+=p.ay*dt;p.vx*=.999;p.vy*=.999;p.ox=p.x;p.oy=p.y;p.x+=p.vx*dt;p.y+=p.vy*dt;p.hitP=null}
   // constraints + collisions
   const len=f.thrown?4:w.len;
-  for(let it=0;it<7;it++){for(const b of BONES)solve(P[b[0]],P[b[1]],b[2]);solve(P.ha,P.tp,len);for(const k in P)collideP(P[k],plats,drop)}
+  for(let it=0;it<7;it++){for(const b of BONES)solve(P[b[0]],P[b[1]],b[2]);solve(P.ha,P.tp,len);for(const k in P)collideP(P[k],plats,drop,P.hp.oy)}
   // velocities + friction
   const wasG=f.onGround;
   for(const k in P){const p=P[k];p.vx=(p.x-p.ox)/dt;p.vy=(p.y-p.oy)/dt;
@@ -614,7 +614,7 @@ function updateFighter(f,inp,dt){
       const P=f.P;for(const k in P){const p=P[k];p.vy=Math.min(p.vy,0)*.3-JUMP*(k==='fa'||k==='fb'?.75:1)}
       f.jumpCd=JUMPCD;f.noSup=.3;f.crouchV-=100;f.steps[0].on=f.steps[1].on=false;f.slam=false;
       for(let i=0;i<8;i++)part(f.x,f.y,(Math.random()-.5)*300,Math.random()*80,.3,'rgba(255,255,255,.6)',5,0);sfx('jump')}
-    if(inp.my>.7&&f.onGround&&f.ground&&f.ground.thin)f.dropT=.25;
+    if(inp.my>.6&&f.onGround&&f.ground&&f.ground.thin)f.dropT=.32;
     if(inp.release&&!G.over)release(f);
   }
   if(f.burst>0&&f.hitstun<=0){f.burstT-=dt;if(f.burstT<=0){shoot(f,{type:'bullet',speed:1050,dmg:5,kb:230,color:'#4ef0ff',r:5});recoil(f,50);f.burst--;f.burstT=.1;sfx('laser')}}

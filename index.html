@@ -166,6 +166,17 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
 .hfoot{display:flex;flex-direction:column;gap:1px;padding:3px 8px 6px;min-height:28px;font-size:11px;text-align:left}
 .hinfo b{color:#ffb347}
 .cell .nm.pr{color:#ffd23f;opacity:1!important;font-size:8px;letter-spacing:-.2px}.htoast{color:#ffd23f;font-weight:700}
+
+#lobby .fhead .seg.cnt{flex:0 0 auto;gap:4px}#lobby .fhead .seg.cnt button{padding:6px 11px;font-size:12.5px;flex:0 0 auto}
+.lslots{flex:1;display:flex;gap:10px;padding:2px 12px 6px;min-height:0;justify-content:center}
+.lslots .slot{flex:1 1 0;max-width:240px}
+.lbar{display:flex;align-items:stretch;gap:10px;padding:2px 12px 10px;height:clamp(64px,22vh,96px);box-sizing:border-box}
+.lbar .mapcard{flex:0 0 auto;width:auto;aspect-ratio:16/9;height:100%}
+.lbar .mapcard .mname{font-size:12px;bottom:17px;left:7px}.lbar .mapcard .msub{font-size:9.5px;left:7px;bottom:4px}
+.lbarmid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}
+.lbarmid .seg button{padding:7px 6px;font-size:13px}
+.lbar #startBtn{min-width:150px;font-size:20px}
+.half.l{left:0;right:auto;border-right:2px solid rgba(255,255,255,.1)}.half.r{right:0;left:auto;border-left:2px solid rgba(255,255,255,.1)}
 #muteBtn{position:absolute;top:10px;right:10px;z-index:6;width:40px;height:40px;border-radius:12px;background:rgba(20,24,40,.6);font-size:18px}
 .winner{font-family:Bungee,Rubik,sans-serif;font-size:clamp(28px,6vw,56px);margin:0 0 10px}
 .stats{display:flex;gap:14px;justify-content:center;margin:0 0 14px;flex-wrap:wrap}
@@ -197,27 +208,12 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
 </div>
 
 <div class="screen full" id="lobby">
-  <div class="fhead"><button class="iconbtn" id="lBack">‹</button><div class="ftitle" id="lTitle">FIGHT SETUP</div><div style="flex:1"></div><div class="coinpill">🪙 <b class="coinv">0</b></div></div>
-  <div class="lbody">
-    <div class="slot" id="slot0"><canvas width="360" height="400"></canvas><button class="stype"></button><button class="sbtn sweap"></button><button class="sbtn slook">🎨 Look</button></div>
-    <div class="lmid">
-      <button class="mapcard" id="mapCard"><canvas width="480" height="270"></canvas><span class="mname"></span><span class="msub">tap to change map</span></button>
-      <div class="seg" id="optMode"></div>
-      <div class="lrow" id="crateRow"><span>Weapon crates</span><div class="seg" id="optCrates"></div></div>
-      <div class="lhint" id="lHint"></div>
-      <button class="big primary" id="startBtn">FIGHT!</button>
-    </div>
-    <div class="slot" id="slot1"><canvas width="360" height="400"></canvas><button class="stype"></button><button class="sbtn sweap"></button><button class="sbtn slook">🎨 Look</button></div>
-  </div>
-  <div class="half" id="half0">
-    <div class="hhead"><div class="htitle"></div><div class="tabs sm"><button data-t="look">LOOK</button><button data-t="weapon">WEAPON</button></div><div style="flex:1"></div><button class="hdone">DONE ✓</button></div>
-    <div class="hbody"></div>
-    <div class="hfoot"><span class="hinfo"></span><span class="htoast"></span></div>
-  </div>
-  <div class="half" id="half1">
-    <div class="hhead"><div class="htitle"></div><div class="tabs sm"><button data-t="look">LOOK</button><button data-t="weapon">WEAPON</button></div><div style="flex:1"></div><button class="hdone">DONE ✓</button></div>
-    <div class="hbody"></div>
-    <div class="hfoot"><span class="hinfo"></span><span class="htoast"></span></div>
+  <div class="fhead"><button class="iconbtn" id="lBack">‹</button><div class="ftitle" id="lTitle">FIGHT SETUP</div><div class="seg cnt" id="optCount"></div><div style="flex:1"></div><div class="coinpill">🪙 <b class="coinv">0</b></div></div>
+  <div class="lslots" id="lslots"></div>
+  <div class="lbar">
+    <button class="mapcard" id="mapCard"><canvas width="320" height="180"></canvas><span class="mname"></span><span class="msub">tap to change</span></button>
+    <div class="lbarmid"><div class="seg" id="optMode"></div><div class="lhint" id="lHint"></div></div>
+    <button class="big primary" id="startBtn">FIGHT!</button>
   </div>
 </div>
 
@@ -227,7 +223,7 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
     <button class="iconbtn" id="pkClose">‹</button>
     <div class="ftitle" id="pkTitle"></div>
     <div class="tabs" id="pkTabs"><button data-t="look">LOOK</button><button data-t="weapon">WEAPONS</button></div>
-    <button class="big small" id="pkSwap" style="padding:7px 12px">P1 ⇄ P2</button>
+    <button class="big small" id="pkSwap" style="padding:7px 12px">NEXT PLAYER ⇄</button>
     <div style="flex:1"></div>
     <div class="coinpill">🪙 <b class="coinv">0</b></div>
   </div>
@@ -351,6 +347,7 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 const cos=load('sc_cos',[{color:0,hat:3,trail:0},{color:1,hat:1,trail:0}]);
+while(cos.length<4)cos.push([{color:2,hat:0,trail:0},{color:3,hat:0,trail:0}][cos.length-2]);
 const setup=Object.assign({mode:'free',map:'random',cpu:'normal',dummy:'on',crates:'on',w:['random','random']},load('sc_setup3',{}));
 
 // ---------- audio ----------
@@ -395,20 +392,28 @@ function newFighter(idx,cpu,lvl){const f={idx,cpu,lvl,cos:cos[idx],x:0,y:0,vx:0,
 function startMatch(opts){
   const map=MAPS[opts.map];
   const plats=map.plats.map(p=>Object.assign({dx:0},p));
-  G={demo:!!opts.demo,opts,map,theme:THEMES[map.theme],plats,mode:opts.mode,pool:opts.demo||opts.test?WKEYS:ownedWeapons(),noItems:opts.crates==='off',
-     fighters:[0,1].map(i=>{const sl=(opts.slots||[])[i]||{t:i?'cpu':'human',lvl:'normal'};const f=newFighter(i,!!opts.demo||sl.t!=='human','normal');f.lvl=sl.lvl||'normal';f.slot=sl.t;return f}),
+  G={demo:!!opts.demo,opts,map,theme:THEMES[map.theme],plats,mode:opts.mode,pool:opts.demo||opts.test?WKEYS:ownedWeapons(),noItems:true,
+     fighters:(opts.slots||[0,1]).map((_,i)=>{const sl=(opts.slots||[])[i]||{t:i?'cpu':'human',lvl:'normal'};const f=newFighter(i,!!opts.demo||sl.t!=='human','normal');f.lvl=sl.lvl||'normal';f.slot=sl.t;return f}),
      proj:[],items:[],parts:[],texts:[],bolts:[],itemT:8,time:120,ready:opts.demo?0:1.3,over:false,overT:0,ann:null,elapsed:0};
   const mains=plats.filter(p=>p.main);G.L=Math.min(...mains.map(p=>p.x));G.R=Math.max(...mains.map(p=>p.x+p.w));G.floor=Math.min(...mains.map(p=>p.y));
-  G.fighters.forEach((f,i)=>{f.wchoice=(opts.wchoice||[])[i]||'random';f.weapon=chooseWeapon(f);f.cd=.5;f.cdMax=WEAP[f.weapon].cd;buildBody(f,map.spawns[i].x,map.spawns[i].y)});
+  G.fighters.forEach((f,i)=>{f.facing=f.aimX=spawnFace(i);f.wchoice=(opts.wchoice||[])[i]||'random';f.weapon=chooseWeapon(f);f.cd=.5;f.cdMax=WEAP[f.weapon].cd;const sp=spawnPoint(i);buildBody(f,sp.x,sp.y)});
   cam.init=false;acc=0;hitStop=0;
   G.test=!!opts.test;
   if(G.test){G.ready=.3;G.noItems=true;const d=G.fighters[1];
-    if(d.slot==='dummy'||d.slot==='none'){d.wchoice='fire';d.dummy=true;d.cpu=true;d.weapon='fire';d.cdMax=1;buildBody(d,map.spawns[1].x,map.spawns[1].y)}
+    if(d.slot==='dummy'||d.slot==='none'){d.wchoice='fire';d.dummy=true;d.cpu=true;d.weapon='fire';d.cdMax=1;const sp=spawnPoint(1);buildBody(d,sp.x,sp.y)}
     if(d.slot==='none'){d.alive=false;d.respawnT=Infinity}}
   if(!G.demo&&!G.test)announce('READY',1.1);
   sticks.forEach(s=>{s.id=null;s.vx=s.vy=0;s.rel=false});
 }
-const opp=f=>G.fighters[1-f.idx];
+const opp=f=>nearestEnemy(f)||G.fighters[(f.idx+1)%G.fighters.length];
+const enemies=f=>G.fighters.filter(o=>o!==f&&o.alive);
+function nearestEnemy(f){let b=null,bd=1e9;for(const o of G.fighters){if(o===f||!o.alive)continue;const d=Math.hypot(o.x-f.x,o.y-f.y);if(d<bd){bd=d;b=o}}return b}
+function spawnPoint(i){
+  const N=G.fighters.length,sp=G.map.spawns;if(N<=2)return sp[i]||sp[0];
+  let x=sp[0].x+(sp[1].x-sp[0].x)*i/(N-1),g=groundBelow(x,-2000,G.plats,false);
+  for(let k=0;k<40&&!g;k++){x+=x<800?12:-12;g=groundBelow(x,-2000,G.plats,false)}
+  return{x,y:g?g.y:sp[0].y}}
+function spawnFace(i){const N=G.fighters.length;return N<2?1:(i<(N-1)/2?1:i>(N-1)/2?-1:(i%2?-1:1))}
 const humanFs=()=>G?G.fighters.filter(f=>!f.cpu&&!f.dummy):[];
 const fname=f=>f.dummy?'DUMMY':f.cpu?'CPU':'P'+(f.idx+1);
 function chooseWeapon(f){
@@ -421,12 +426,12 @@ function chooseWeapon(f){
 // ---------- input ----------
 const R=62;
 function newStick(){return{id:null,ox:0,oy:0,x:0,y:0,vx:0,vy:0,rel:false}}
-const sticks=[newStick(),newStick()];
+const sticks=[newStick(),newStick(),newStick(),newStick()];
 cv.addEventListener('pointerdown',e=>{
   initAudio();if(state!=='play'||paused||!G||G.demo)return;e.preventDefault();
   const p=toLocal(e),hs=humanFs(),two=hs.length>=2;if(!hs.length)return;
   if(!two&&p.x<CW*.4)return; // single player: stick lives on the right
-  const si=two?(p.x>CW/2?1:0):hs[0].idx;const s=sticks[si];if(s.id!==null)return;
+  const si=two?hs[Math.min(hs.length-1,Math.floor(p.x/(CW/hs.length)))].idx:hs[0].idx;const s=sticks[si];if(s.id!==null)return;
   const c=stickCenter(si);s.id=e.pointerId;s.ox=c.x;s.oy=c.y;s.x=p.x;s.y=p.y;stickVec(s);
   try{cv.setPointerCapture(e.pointerId)}catch(_){}
 });
@@ -434,7 +439,9 @@ cv.addEventListener('pointermove',e=>{
   for(const s of sticks){if(s.id!==e.pointerId)continue;const p=toLocal(e);
     s.x=p.x;s.y=p.y;stickVec(s)}
 });
-function stickCenter(i){const m=R+34,two=humanFs().length>=2;return(two&&i===0)?{x:m+12,y:CH-m}:{x:CW-m-12,y:CH-m}}
+function stickCenter(i){const m=R+34,hs=humanFs();if(hs.length<2)return{x:CW-m-12,y:CH-m};
+  const k=hs.findIndex(f=>f.idx===i),n=hs.length;if(n===2)return k===0?{x:m+12,y:CH-m}:{x:CW-m-12,y:CH-m};
+  const colW=CW/n;return{x:Math.max(m+8,Math.min(CW-m-8,colW*(k+.5))),y:CH-m}}
 function stickVec(s){let vx=(s.x-s.ox)/R,vy=(s.y-s.oy)/R;const m=Math.hypot(vx,vy);if(m>1){vx/=m;vy/=m}if(m<.16){vx=0;vy=0}s.vx=vx;s.vy=vy}
 function endPtr(e){for(const s of sticks){if(s.id===e.pointerId){s.id=null;s.vx=s.vy=0;s.rel=true}}}
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
@@ -444,6 +451,7 @@ addEventListener('keydown',e=>{keys.add(e.code);if(e.code.startsWith('Arrow'))e.
 addEventListener('keyup',e=>keys.delete(e.code));
 const kbPrev=[{x:0,y:0},{x:0,y:0}];
 function kbVec(i){
+  if(i>1)return{x:0,y:0};
   const sets=i===0?['KeyA','KeyD','KeyW','KeyS']:['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
   let x=(keys.has(sets[1])?1:0)-(keys.has(sets[0])?1:0),y=(keys.has(sets[3])?1:0)-(keys.has(sets[2])?1:0);
   if(G&&humanFs().length<2){const o=i?['KeyA','KeyD','KeyW','KeyS']:['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];x+=(keys.has(o[1])?1:0)-(keys.has(o[0])?1:0);y+=(keys.has(o[3])?1:0)-(keys.has(o[2])?1:0);x=Math.max(-1,Math.min(1,x));y=Math.max(-1,Math.min(1,y))}
@@ -462,13 +470,13 @@ function humanInput(f){
 // ---------- AI ----------
 function groundUnder(x,y){for(const p of G.plats){if(x>p.x+4&&x<p.x+p.w-4&&p.y>=y-6&&p.y<y+420)return p}return null}
 function aiInput(f,dt){
-  if(f.dummy){const o=opp(f);if(o.alive){f.aimX=Math.sign(o.x-f.x)||1;f.aimY=0}return{mx:0,my:0,release:false}}
-  const D=DIFF[f.lvl]||DIFF.normal,a=f.ai,o=opp(f),inp={mx:0,my:0,release:false};
+  if(f.dummy){const o=nearestEnemy(f);if(o){f.aimX=Math.sign(o.x-f.x)||1;f.aimY=0}return{mx:0,my:0,release:false}}
+  const D=DIFF[f.lvl]||DIFF.normal,a=f.ai,o=nearestEnemy(f)||f,inp={mx:0,my:0,release:false};
   a.t-=dt;a.jt-=dt;
   const offstage=!groundUnder(f.x,f.y)&&(f.x<G.L+10||f.x>G.R-10||f.y>G.floor+30);
   if(offstage&&f.weapon==='tele'&&f.cd<=0&&f.hitstun<=0){const cx=(G.L+G.R)/2,dx=cx-f.x,dy=G.floor-80-f.y,d=Math.hypot(dx,dy)||1;f.aimX=dx/d;f.aimY=dy/d;return{mx:0,my:0,release:true}}
   if(offstage){const cx=(G.L+G.R)/2;inp.mx=f.x<cx?1:-1;if(f.y>G.floor-80||f.vy>120)inp.my=-1;f.aimX=inp.mx;f.aimY=-.3;return inp}
-  if(!o.alive){inp.mx=Math.abs(f.x-W/2)>120?Math.sign(W/2-f.x)*.5:0;return inp}
+  if(o===f||!o.alive){inp.mx=Math.abs(f.x-W/2)>120?Math.sign(W/2-f.x)*.5:0;return inp}
   const w=WEAP[f.weapon];
   let tx=o.x,ty=o.y,seek=false;
   if(D.smart&&G.items.length&&f.cd>1.5){let best=null,bd=1e9;for(const it of G.items){const d=Math.abs(it.x-f.x)+Math.abs(it.y-f.y)*.6;if(d<bd){bd=d;best=it}}if(best&&bd<450&&best.ground){tx=best.x;ty=best.y;seek=true}}
@@ -667,10 +675,10 @@ function explode(x,y,p){
   G.parts.push({ring:1,x,y,r:10,max:p.explode,life:.3,ml:.3});shake=Math.max(shake,16);sfx('boom');
 }
 function shockwave(f){
-  const o=opp(f),gy=Math.max(f.P.fa.y,f.P.fb.y);
+  const gy=Math.max(f.P.fa.y,f.P.fb.y);
   for(let i=0;i<30;i++){const s=i%2?1:-1;part(f.x,gy,s*(200+Math.random()*500),-Math.random()*200,.5,i%3?'#d9c7a7':'#fff',6+Math.random()*6,600)}
   G.parts.push({ring:1,x:f.x,y:gy,r:10,max:190,life:.3,ml:.3});
-  if(o.alive&&Math.abs(o.x-f.x)<200&&Math.abs(o.y-f.y)<100)hit(o,13,Math.sign(o.x-f.x)||1,-.8,580,f);
+  for(const o of enemies(f))if(Math.abs(o.x-f.x)<200&&Math.abs(o.y-f.y)<100)hit(o,13,Math.sign(o.x-f.x)||1,-.8,580,f);
   addVel(f,0,-260,0);shake=Math.max(shake,16);sfx('boom');
 }
 function muzzle(f){return{x:f.P.ha.x+f.aimX*WEAP[f.weapon].len*.85,y:f.P.ha.y+f.aimY*WEAP[f.weapon].len*.85}}
@@ -702,8 +710,8 @@ function release(f){
     case'rocket':shoot(f,{type:'rocket',speed:560,r:9,dmg:16,kb:700,explode:125,life:2.5});recoil(f,170);sfx('rocket');break;
     case'spray':f.sprayT=1.3;f.sprayAcc=0;break;
     case'spin':startSwing(f,.55,ax,ay,true);addVel(f,ax*120,-60,0);break;
-    case'backstab':{const o=opp(f);
-      if(o.alive&&Math.hypot(o.x-f.x,o.y-f.y)<520){const side=-(o.facing||1);teleport(f,o.P.hp.x+side*48-f.P.hp.x,o.P.hp.y-f.P.hp.y);f.facing=Math.sign(o.x-f.x)||1;f.aimX=f.facing;f.aimY=0;startSwing(f,.26,f.aimX,0)}
+    case'backstab':{const o=nearestEnemy(f);
+      if(o&&Math.hypot(o.x-f.x,o.y-f.y)<520){const side=-(o.facing||1);teleport(f,o.P.hp.x+side*48-f.P.hp.x,o.P.hp.y-f.P.hp.y);f.facing=Math.sign(o.x-f.x)||1;f.aimX=f.facing;f.aimY=0;startSwing(f,.26,f.aimX,0)}
       else teleport(f,ax*200,ay*200);break}
     case'rev':f.revT=1.7;sfx('dash');break;
     case'lunge':startSwing(f,.3);f.dashT=.18;addVel(f,ax*620-f.vx*.4,ay*420-80,0);sfx('dash');break;
@@ -729,33 +737,35 @@ function teleport(f,dx,dy){
   f.ptipX=f.tipX=P.tp.x;f.ptipY=f.tipY=P.tp.y;sfx('void');
 }
 function gust(f){
-  const m=muzzle(f),ax=f.aimX,ay=f.aimY,o=opp(f);
-  if(o.alive){const dx=o.P.nk.x-m.x,dy=o.P.nk.y+15-m.y,d=Math.hypot(dx,dy)||1;if(d<290&&(dx*ax+dy*ay)/d>.6)hit(o,3,ax,ay,760,f)}
+  const m=muzzle(f),ax=f.aimX,ay=f.aimY;
+  for(const o of enemies(f)){const dx=o.P.nk.x-m.x,dy=o.P.nk.y+15-m.y,d=Math.hypot(dx,dy)||1;if(d<290&&(dx*ax+dy*ay)/d>.6)hit(o,3,ax,ay,760,f)}
   for(const p of G.proj){if(p.owner===f||p.type==='axe')continue;const dx=p.x-m.x,dy=p.y-m.y,d=Math.hypot(dx,dy)||1;if(d<260&&(dx*ax+dy*ay)/d>.3){const sp=Math.hypot(p.vx,p.vy)*1.1;p.vx=ax*sp;p.vy=ay*sp;p.owner=f;p.life=Math.max(p.life,1)}}
   for(let i=0;i<26;i++){const a=Math.atan2(ay,ax)+(Math.random()-.5)*.9,s=500+Math.random()*500;part(m.x,m.y,Math.cos(a)*s,Math.sin(a)*s,.35,'rgba(220,255,250,.8)',4,0)}
   recoil(f,90);sfx('dash');
 }
 function beam(f,o){
-  const m=muzzle(f),ax=f.aimX,ay=f.aimY,op=opp(f);let x=m.x,y=m.y,hitO=false;
-  for(let d=0;d<o.len;d+=8){x+=ax*8;y+=ay*8;if(!o.pierceWalls&&solidAt(x,y))break;if(!hitO&&op.alive&&rectHit(x,y,6,op)){hitO=true}}
+  const m=muzzle(f),ax=f.aimX,ay=f.aimY,hitS=new Set(),en=enemies(f);let x=m.x,y=m.y;
+  for(let d=0;d<o.len;d+=8){x+=ax*8;y+=ay*8;if(!o.pierceWalls&&solidAt(x,y))break;for(const op of en)if(!hitS.has(op)&&rectHit(x,y,6,op))hitS.add(op)}
   G.bolts.push({pts:[[m.x,m.y],[x,y]],life:.3,col:o.col,w:o.w});
-  if(hitO)hit(op,o.dmg,ax,ay,o.kb,f);
+  for(const op of hitS)hit(op,o.dmg,ax,ay,o.kb,f);
 }
 function lightning(f){
-  const o=opp(f),m=muzzle(f),ax=f.aimX,ay=f.aimY;let x=m.x,y=m.y,hitO=false;
-  for(let d=0;d<760;d+=8){x+=ax*8;y+=ay*8;if(solidAt(x,y))break;if(o.alive&&rectHit(x,y,6,o)){hitO=true;break}}
+  const m=muzzle(f),ax=f.aimX,ay=f.aimY,en=enemies(f);let x=m.x,y=m.y,o=null;
+  for(let d=0;d<760&&!o;d+=8){x+=ax*8;y+=ay*8;if(solidAt(x,y))break;for(const e of en)if(rectHit(x,y,6,e)){o=e;break}}
   const pts=[[m.x,m.y]],n=10;for(let i=1;i<n;i++){const t=i/n,j=(Math.random()-.5)*28;pts.push([m.x+(x-m.x)*t-ay*j,m.y+(y-m.y)*t+ax*j])}pts.push([x,y]);
   G.bolts.push({pts,life:.25});
   for(let i=0;i<10;i++)part(x,y,(Math.random()-.5)*400,(Math.random()-.5)*400,.3,i%2?'#fff':'#ffe66b',4,0);
-  if(hitO)hit(o,12,ax,ay,470,f);recoil(f,60);sfx('zap');shake=Math.max(shake,6);
+  if(o)hit(o,12,ax,ay,470,f);recoil(f,60);sfx('zap');shake=Math.max(shake,6);
 }
 function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((px-ax)*dx+(py-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-ax-dx*t,py-ay-dy*t)}
 function contact(f,dt){
   const w=WEAP[f.weapon];if(!w.contact||f.thrown||!f.alive||f.dummy)return;
-  const o=opp(f);if(!o.alive)return;
+  for(const o of enemies(f))contactPair(f,o,dt,w);
+}
+function contactPair(f,o,dt,w){
   const P=f.P,tvx=P.tp.vx,tvy=P.tp.vy,rvx=tvx-o.vx,rvy=tvy-o.vy,rs=Math.hypot(rvx,rvy);
   const ow=WEAP[o.weapon];
-  if(ow.contact&&!o.thrown&&f.clashCd<=0&&o.clashCd<=0&&f.idx===0){
+  if(ow.contact&&!o.thrown&&f.clashCd<=0&&o.clashCd<=0&&f.idx<o.idx){
     let close=false;for(let i=0;i<=4&&!close;i++){const t=.3+i*.175,px=P.ha.x+(P.tp.x-P.ha.x)*t,py=P.ha.y+(P.tp.y-P.ha.y)*t;if(segDist(px,py,o.P.ha.x,o.P.ha.y,o.P.tp.x,o.P.tp.y)<8)close=true}
     if(close&&(rs>250||Math.hypot(o.P.tp.vx,o.P.tp.vy)>250)){
       const s=Math.sign(o.x-f.x)||1;addVel(f,-s*230,-40,0);addVel(o,s*230,-40,0);
@@ -785,7 +795,7 @@ function announce(t,d){G.ann={t,life:d||1,ml:d||1}}
 function respawn(f){
   f.alive=true;f.dmg=0;f.dying=false;f.invuln=2.2;
   f.weapon=(G.test&&f.idx===0)?f.weapon:chooseWeapon(f);f.cd=.4;f.cdMax=WEAP[f.weapon].cd;f.thrown=false;f.burst=0;f.sprayT=0;f.slam=false;f.dashT=0;f.frozen=0;
-  f.hitstun=0;f.crouch=0;f.crouchV=0;f.lastHitBy=null;f.jumpCd=.3;f.trail=[];buildBody(f,G.map.spawns[f.idx].x,170);
+  f.hitstun=0;f.crouch=0;f.crouchV=0;f.lastHitBy=null;f.jumpCd=.3;f.trail=[];buildBody(f,spawnPoint(f.idx).x,170);
   for(let i=0;i<20;i++){const a=Math.random()*6.28;part(f.x,f.y-45,Math.cos(a)*260,Math.sin(a)*260,.5,COLORS[f.cos.color],5,0)}
   floatText(f.x,f.y-110,WEAP[f.weapon].name.toUpperCase(),'#ffd23f');
 }
@@ -798,7 +808,7 @@ function ko(f){
   for(let i=G.proj.length-1;i>=0;i--)if(G.proj[i].type==='axe'&&G.proj[i].owner===f)G.proj.splice(i,1);
   shake=24;hitStop=.12;sfx('ko');
   if(!G.demo&&f.dmg<100)announce(k?'KO!':'SELF-KO',.9);
-  if(G.mode==='stock'){f.stocks--;if(f.stocks<=0){f.respawnT=Infinity;endMatch()}}
+  if(G.mode==='stock'){f.stocks--;if(f.stocks<=0)f.respawnT=Infinity;if(G.fighters.filter(o=>o.stocks>0).length<=(G.fighters.length>1?1:0))endMatch()}
 }
 function die(f){
   // out of health: go limp, then count as a KO
@@ -1091,10 +1101,11 @@ function drawParts(){
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
 function drawHUD(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  const sc=Math.max(.75,Math.min(1.15,CH/420)),cw=172*sc,chh=74*sc,top=8;
+  const N=G.fighters.length,lN=Math.ceil(N/2),rN=N-lN,halfW=(CW-64)/2-10,base=Math.max(.75,Math.min(1.15,CH/420));
+  const cw=Math.min(172*base,(halfW-6*(Math.max(lN,rN)-1))/Math.max(lN,rN)),sc=Math.min(base,cw/150),chh=74*sc,top=8;
   G.fighters.forEach((f,i)=>{
     if(f.dummy&&!f.alive&&f.respawnT===Infinity)return;
-    const x=i===0?10:CW-10-cw,col=COLORS[f.cos.color],w=WEAP[f.weapon];
+    const x=i<lN?10+i*(cw+6):CW-10-cw*(rN-(i-lN))-6*(rN-1-(i-lN)),col=COLORS[f.cos.color],w=WEAP[f.weapon];
     ctx.fillStyle='rgba(10,12,24,.62)';rr(x,top,cw,chh,12*sc);ctx.fill();
     ctx.fillStyle=col;rr(x,top,6*sc,chh,3);ctx.fill();
     ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,.8)';ctx.font=`700 ${11.5*sc}px Rubik,sans-serif`;
@@ -1121,7 +1132,7 @@ function drawHUD(){
       ctx.fillStyle='rgba(10,12,24,.7)';ctx.beginPath();ctx.arc(cx,cy,22,0,7);ctx.fill();ctx.strokeStyle=COLORS[f.cos.color];ctx.lineWidth=3;ctx.stroke();
       ctx.fillStyle='#fff';ctx.font='900 12px Rubik,sans-serif';ctx.textAlign='center';ctx.fillText(Math.max(0,Math.ceil(100-f.dmg)),cx,cy+4);
       const a=Math.atan2(sy-cy,sx-cx);ctx.fillStyle=COLORS[f.cos.color];ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*32,cy+Math.sin(a)*32);ctx.lineTo(cx+Math.cos(a+.4)*23,cy+Math.sin(a+.4)*23);ctx.lineTo(cx+Math.cos(a-.4)*23,cy+Math.sin(a-.4)*23);ctx.fill()}}
-  sticks.forEach((s,i)=>{const col=COLORS[G.fighters[i].cos.color];
+  sticks.forEach((s,i)=>{if(!G.fighters[i])return;const col=COLORS[G.fighters[i].cos.color];
     const ff=G.fighters[i];if(ff.cpu||ff.dummy)return;const two=humanFs().length>=2;
     const c=stickCenter(i),act=s.id!==null;
     ctx.fillStyle=act?'rgba(255,255,255,.1)':'rgba(255,255,255,.06)';ctx.strokeStyle=act?'rgba(255,255,255,.45)':'rgba(255,255,255,.25)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(c.x,c.y,R,0,7);ctx.fill();ctx.stroke();
@@ -1254,7 +1265,7 @@ function label(t){const d=document.createElement('div');d.className='rowlbl';d.t
 // ---- picker screen (map / weapon / look), everything fits on one screen, no scrolling
 function openPicker(mode,p){pkMode=mode;if(p!==undefined)fp=p;armed=null;state='picker';mainPrev.w='';buildPicker();show('picker');$('toast').textContent=''}
 function closePicker(){if(flow.type==='locker'){state='menu';show('menu')}else openLobby()}
-$('pkClose').onclick=closePicker;$('pkSwap').onclick=()=>{fp=1-fp;armed=null;mainPrev.w='';buildPicker()};
+$('pkClose').onclick=closePicker;$('pkSwap').onclick=()=>{fp=(fp+1)%4;armed=null;mainPrev.w='';buildPicker()};
 document.querySelectorAll('#pkTabs button').forEach(b=>b.onclick=()=>{pkMode=b.dataset.t;armed=null;mainPrev.w='';buildPicker()});
 function buildPicker(){
   const body=$('pkBody');body.innerHTML='';const L=flow.type==='locker',sl=slotOf(fp),who=L?'P'+(fp+1):'P'+(fp+1)+(sl.t==='cpu'?' (CPU)':'');
@@ -1288,45 +1299,62 @@ function buildPicker(){
   wrap.appendChild(label('TRAIL'));const gt=mkGrid(7,1);gt.style.flex='1 1 0';wrap.appendChild(gt);
   TRAILS.forEach((t,i)=>{const key='t:'+i;cell(gt,{label:titleCase(t),on:c.trail===i,locked:!owns(key),price:priceOf(key),thumb:cv=>trailThumb(cv,i,col),onTap:el=>tryUnlock(key,()=>{c.trail=i;save('sc_cos',cos);re()},el)})});
 }
-// ---- lobby
+// ---- lobby: 1-4 fighters, each one PLAYER or CPU, each customizes on their own side
+if(!setup.count)setup.count=2;
+while(setup.slots.length<4)setup.slots.push({t:'cpu',lvl:'normal'});
+while(setup.w.length<4)setup.w.push('random');
 const SLOT_CYCLE=[{t:'human'},{t:'cpu',lvl:'easy'},{t:'cpu',lvl:'normal'},{t:'cpu',lvl:'hard'}];
 const TEST_CYCLE=[{t:'dummy'},{t:'none'},{t:'cpu',lvl:'easy'},{t:'cpu',lvl:'normal'},{t:'cpu',lvl:'hard'}];
-function slotLabel(sl){return sl.t==='human'?'🎮 PLAYER':sl.t==='cpu'?'🤖 CPU · '+sl.lvl.toUpperCase():sl.t==='dummy'?'🎯 DUMMY':'✖ NO OPPONENT'}
+const slotCount=()=>flow.type==='test'?2:setup.count;
+function slotLabel(sl){return sl.t==='human'?'🎮 PLAYER':sl.t==='cpu'?'🤖 CPU · '+sl.lvl.toUpperCase():sl.t==='dummy'?'🎯 DUMMY':'✖ NOBODY'}
 function cycleSlot(i){
   const T=flow.type==='test';if(T&&i===0)return;
   const list=T?TEST_CYCLE:SLOT_CYCLE,cur=slotOf(i),k=list.findIndex(x=>x.t===cur.t&&(x.lvl||'')===(cur.lvl||''));
   const nx=Object.assign({},list[(k+1)%list.length]);if(T)setup.testSlot=nx;else setup.slots[i]=nx;svSetup();buildLobby();tone(500,700,.06,'triangle',.04);
 }
-const slotPrev=[0,1].map(i=>({ctx:$('slot'+i).querySelector('canvas').getContext('2d'),f:newFighter(i,false,'normal'),t:i*.7,acc:0,w:''}));
+// slot cards + half panels are built once for 4 fighters and shown as needed
+const SLOTS=[0,1,2,3].map(i=>{
+  const el=document.createElement('div');el.className='slot';el.innerHTML='<canvas width="360" height="400"></canvas><button class="stype"></button><button class="sbtn sweap"></button><button class="sbtn slook">🎨 Look</button>';
+  $('lslots').appendChild(el);
+  const hp=document.createElement('div');hp.className='half';hp.innerHTML='<div class="hhead"><div class="htitle"></div><div class="tabs sm"><button data-t="look">LOOK</button><button data-t="weapon">WEAPON</button></div><div style="flex:1"></div><button class="hdone">DONE ✓</button></div><div class="hbody"></div><div class="hfoot"><span class="hinfo"></span><span class="htoast"></span></div>';
+  $('lobby').appendChild(hp);
+  const cv=document.createElement('canvas');cv.width=360;cv.height=400;
+  const o={i,el,prevSlot:{ctx:el.querySelector('canvas').getContext('2d'),f:newFighter(i,false,'normal'),t:i*.7,acc:0,w:''},
+    ps:{i,el:hp,mode:null,armed:null,tt:0,cv,prev:{ctx:cv.getContext('2d'),f:newFighter(i,false,'normal'),t:0,acc:0,w:''}}};
+  el.querySelector('.stype').onclick=()=>cycleSlot(i);el.querySelector('.sweap').onclick=()=>openHalf(i,'weapon');
+  el.querySelector('.slook').onclick=()=>openHalf(i,'look');el.querySelector('canvas').onclick=()=>openHalf(i,'look');
+  hp.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{o.ps.mode=b.dataset.t;o.ps.armed=null;o.ps.prev.w='';buildHalf(o.ps)});
+  hp.querySelector('.hdone').onclick=()=>closeHalf(i);
+  return o});
+const HP=SLOTS.map(o=>o.ps);
+function slotSide(i){const n=slotCount();return n<=1?'l':(i<n/2?'l':'r')}
 function buildLobby(){
-  const T=flow.type==='test';
-  $('lTitle').textContent=T?'TESTING GROUNDS':'FIGHT SETUP';
-  $('optMode').style.display=T?'none':'flex';$('crateRow').style.display=T?'none':'flex';
-  [0,1].forEach(i=>{const el=$('slot'+i),sl=slotOf(i),ch=setup.w[i]||'random',off=sl.t==='dummy'||sl.t==='none';
-    const tb=el.querySelector('.stype');tb.textContent='P'+(i+1)+' · '+slotLabel(sl);tb.className='stype '+(sl.t==='human'?'':sl.t);tb.disabled=T&&i===0;
-    const wb=el.querySelector('.sweap');wb.textContent=off?'—':(ch==='random'?'🎲 Weapon: Random':'🗡 '+WEAP[ch].name);wb.disabled=off;
-    el.querySelector('.slook').disabled=sl.t==='none';
-    el.querySelector('canvas').style.opacity=sl.t==='none'?.25:1;
+  const T=flow.type==='test',n=slotCount();
+  $('lTitle').textContent=T?'TESTING':'FIGHT SETUP';
+  $('optCount').style.display=T?'none':'flex';$('optMode').style.display=T?'none':'flex';
+  seg($('optCount'),[[1,'1P'],[2,'2P'],[3,'3P'],[4,'4P']],()=>setup.count,v=>{setup.count=v;svSetup();HP.forEach(ps=>{ps.mode=null;ps.el.classList.remove('open')});setTimeout(buildLobby,0)});
+  SLOTS.forEach(({i,el})=>{
+    if(i>=n){el.style.display='none';return}el.style.display='';
+    const sl=slotOf(i),ch=setup.w[i]||'random',off=sl.t==='dummy'||sl.t==='none';
+    const tb=el.querySelector('.stype');tb.textContent='P'+(i+1)+' · '+slotLabel(sl);tb.className='stype '+(sl.t==='human'?'':sl.t);tb.disabled=T&&i===0;tb.style.borderBottom='4px solid '+COLORS[cos[i].color];
+    const wb=el.querySelector('.sweap');wb.textContent=off?'—':(ch==='random'?'🎲 Random':'🗡 '+WEAP[ch].name);wb.disabled=off;
+    el.querySelector('.slook').disabled=sl.t==='none';el.querySelector('canvas').style.opacity=sl.t==='none'?.25:1;
   });
   const m=setup.map==='random'?null:MAPS[setup.map];mapThumb($('mapCard').querySelector('canvas'),m);
-  $('mapCard').querySelector('.mname').textContent=m?m.name:'🎲 Random map';
-  const hs=[0,1].filter(i=>slotOf(i).t==='human').length;
-  $('lHint').textContent=T?'Tap P2 to switch: dummy / no opponent / CPU':hs===2?'2 players: P1 left stick, P2 right stick':hs===1?'Tap PLAYER/CPU to switch who controls each fighter':'Both CPUs: sit back and watch';
-  $('startBtn').textContent=T?'START TESTING':hs===0?'WATCH!':'FIGHT!';
+  $('mapCard').querySelector('.mname').textContent=m?m.name:'🎲 Random';
+  const hs=[...Array(n).keys()].filter(i=>slotOf(i).t==='human').length;
+  $('lHint').textContent=T?'Tap P2 to switch: dummy / nobody / CPU':n===1?'Solo: just you and the map':hs>=2?hs+' players share the phone: each gets a joystick on their part of the screen':hs===1?'Tap PLAYER / CPU to switch who controls each fighter':'All CPUs: sit back and watch';
+  $('startBtn').textContent=T?'START':hs===0?'WATCH!':'FIGHT!';
   seg($('optMode'),MODES.map(([v,l])=>[v,l.replace(' (3 lives)','').replace(' 2:00','')]),()=>setup.mode,v=>{setup.mode=v;svSetup()});
-  seg($('optCrates'),[['on','On'],['off','Off']],()=>setup.crates,v=>{setup.crates=v;svSetup()});
 }
-[0,1].forEach(i=>{const el=$('slot'+i);el.querySelector('.stype').onclick=()=>cycleSlot(i);el.querySelector('.sweap').onclick=()=>openHalf(i,'weapon');el.querySelector('.slook').onclick=()=>openHalf(i,'look');el.querySelector('canvas').onclick=()=>openHalf(i,'look')});
 $('mapCard').onclick=()=>openPicker('map');
-// ---- half-screen panels: each player customizes on their own side, at the same time
-const HP=[0,1].map(i=>({i,el:$('half'+i),mode:null,armed:null,tt:0,prev:{ctx:null,f:newFighter(i,false,'normal'),t:0,acc:0,w:''}}));
-HP.forEach(ps=>{
-  const cv=document.createElement('canvas');cv.width=360;cv.height=400;ps.prev.ctx=cv.getContext('2d');ps.cv=cv;
-  ps.el.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ps.mode=b.dataset.t;ps.armed=null;ps.prev.w='';buildHalf(ps)});
-  ps.el.querySelector('.hdone').onclick=()=>closeHalf(ps.i);
-});
+function openLobby(){state='lobby';HP.forEach(ps=>{ps.mode=null;ps.el.classList.remove('open')});buildLobby();show('lobby')}
+$('lBack').onclick=()=>{state='menu';show('menu')};
+function drawSlots(dt){SLOTS.forEach(o=>{if(o.i>=slotCount())return;const sl=slotOf(o.i),f=sl.t==='dummy'||sl.t==='none'?'fire':null;if(o.ps.mode==='look')renderPreview(o.ps.prev,o.i,dt,f);else renderPreview(o.prevSlot,o.i,dt,f)})}
 function halfToast(ps,t){const e=ps.el.querySelector('.htoast');e.textContent=t;clearTimeout(ps.tt);ps.tt=setTimeout(()=>{e.textContent=''},3500)}
-function openHalf(i,mode){const ps=HP[i];ps.mode=mode;ps.armed=null;ps.prev.w='';ps.el.classList.add('open');buildHalf(ps)}
+function openHalf(i,mode){const ps=HP[i],side=slotSide(i);
+  HP.forEach(o=>{if(o!==ps&&o.mode&&slotSide(o.i)===side){o.mode=null;o.el.classList.remove('open')}}); // one panel per side
+  ps.mode=mode;ps.armed=null;ps.prev.w='';ps.el.className='half open '+side;buildHalf(ps)}
 function closeHalf(i){const ps=HP[i];ps.mode=null;ps.el.classList.remove('open');buildLobby()}
 function halfUnlock(ps,key,apply,el,nm){
   if(owns(key)){ps.armed=null;apply();return}
@@ -1338,7 +1366,7 @@ function halfUnlock(ps,key,apply,el,nm){
 }
 function buildHalf(ps){
   const i=ps.i,sl=slotOf(i),body=ps.el.querySelector('.hbody'),info=ps.el.querySelector('.hinfo');body.innerHTML='';info.innerHTML='';
-  ps.el.querySelector('.htitle').textContent='P'+(i+1)+(sl.t==='cpu'?' CPU':'');
+  ps.el.querySelector('.htitle').textContent='P'+(i+1)+(sl.t==='cpu'?' CPU':'');ps.el.querySelector('.htitle').style.color=COLORS[cos[i].color];
   ps.el.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.t===ps.mode);b.style.display=(b.dataset.t==='weapon'&&(sl.t==='dummy'||sl.t==='none'))?'none':''});
   if(ps.mode==='weapon'){
     const testing=flow.type==='test',ch=setup.w[i]||'random',g=mkGrid(8,4);body.appendChild(g);
@@ -1359,9 +1387,6 @@ function buildHalf(ps){
   wrap.appendChild(label('TRAIL'));const gt=mkGrid(7,1);gt.style.flex='1.1 1 0';wrap.appendChild(gt);
   TRAILS.forEach((t,k)=>{const key='t:'+k;cell(gt,{compact:1,label:titleCase(t),on:c.trail===k,locked:!owns(key),price:priceOf(key),thumb:cv=>trailThumb(cv,k,col),onTap:el=>halfUnlock(ps,key,()=>{c.trail=k;save('sc_cos',cos);re()},el,titleCase(t))})});
 }
-function openLobby(){state='lobby';HP.forEach(ps=>{ps.mode=null;ps.el.classList.remove('open')});buildLobby();show('lobby')}
-$('lBack').onclick=()=>{state='menu';show('menu')};
-function drawSlots(dt){slotPrev.forEach((P,i)=>{const sl=slotOf(i),f=sl.t==='dummy'||sl.t==='none'?'fire':null;if(HP[i].mode==='look')renderPreview(HP[i].prev,i,dt,f);else renderPreview(P,i,dt,f)})}
 // ---- live stickman previews
 const mainPrev={ctx:$('preview').getContext('2d'),f:newFighter(0,false,'normal'),t:0,acc:0,w:''};
 function drawPreview(dt){if(pkMode==='look')renderPreview(mainPrev,fp,dt,null)}
@@ -1370,7 +1395,7 @@ function renderPreview(P,idx,dt,force){
   const pf=P.f,pctx=P.ctx;P.t+=dt;pf.cos=cos[idx];pf.invuln=0;
   const sl=slotOf(idx),ch=force||setup.w[idx]||'random',pool=(flow.type==='test'||sl.t==='cpu')?WKEYS:ownedWeapons();
   const w=ch==='random'?pool[Math.floor(P.t/2.2)%pool.length]:ch;
-  const face=idx===1&&state==='lobby'?-1:1,px=face<0?100:80;
+  const face=state==='lobby'&&slotSide(idx)==='r'?-1:1,px=face<0?100:80;
   if(w!==P.w||Math.abs(pf.x-px)>60||pf.y>240||pf.facing!==face){P.w=w;pf.weapon=w;pf.facing=face;pf.thrown=false;buildBody(pf,px,180)}
   const a=Math.sin(P.t*3.1)*1.1-.3;pf.aimX=Math.cos(a)*face;pf.aimY=Math.sin(a);
   P.acc+=dt*TS;while(P.acc>=STEP){P.acc-=STEP;pf.swingT=Math.max(0,pf.swingT-STEP);physics(pf,{mx:0,my:0},STEP,pPlats)}
@@ -1404,7 +1429,7 @@ document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=
 }));
 function startReal(){initAudio();state='play';paused=false;
   const T=flow.type==='test',map=setup.map==='random'?Math.floor(Math.random()*MAPS.length):setup.map;
-  startMatch({test:T,mode:T?'free':setup.mode,map,crates:setup.crates,slots:[slotOf(0),slotOf(1)],wchoice:[setup.w[0]||'random',setup.w[1]||'random']});
+  const n=slotCount();startMatch({test:T,mode:T?'free':setup.mode,map,slots:[...Array(n).keys()].map(slotOf),wchoice:[...Array(n).keys()].map(i=>setup.w[i]||'random')});
   G.earned=0;TS=.72;show(null);syncTestBar()}
 $('startBtn').onclick=startReal;
 function togglePause(){if(state!=='play'||G.over)return;paused=!paused;show(paused?'pause':null)}
@@ -1414,13 +1439,14 @@ $('restartBtn').onclick=startReal;$('rematchBtn').onclick=startReal;
 function toMenu(){state='menu';paused=false;TS=.72;startDemo();show('menu')}
 $('quitBtn').onclick=toMenu;$('menuBtn').onclick=toMenu;
 function showOver(){
-  state='over';const[a,b]=G.fighters;let win;
-  if(G.mode==='stock')win=a.stocks>b.stocks?0:b.stocks>a.stocks?1:-1;
-  else{const sa=a.kos-a.falls,sb=b.kos-b.falls;win=sa>sb?0:sb>sa?1:(a.dmg<b.dmg?0:b.dmg<a.dmg?1:-1)}
+  state='over';const F=G.fighters;
+  const score=f=>(G.mode==='stock'?f.stocks:(f.kos-f.falls))*1000+(f.alive?100-f.dmg:0);
+  const sc=F.map(score),best=Math.max(...sc);let win=sc.filter(v=>v===best).length===1?sc.indexOf(best):-1;
   const nm=i=>fname(G.fighters[i]);
   $('winText').textContent=win<0?'DRAW!':nm(win)+' WINS!';$('winText').style.color=win<0?'#fff':COLORS[G.fighters[win].cos.color];
   $('statBox').innerHTML=G.fighters.map((f,i)=>`<div class="stat" style="border-top:4px solid ${COLORS[f.cos.color]}"><div class="n">${nm(i)}</div><div class="v">KOs ${f.kos} · Falls ${f.falls}</div></div>`).join('');
-  const anyHuman=humanFs().length>0;let bonus=anyHuman?10:0;if(win>=0&&!G.fighters[win].cpu&&G.fighters[1-win].cpu)bonus+={easy:15,normal:30,hard:50}[G.fighters[1-win].lvl]||30;
+  const anyHuman=humanFs().length>0;let bonus=anyHuman?10:0;
+  if(win>=0&&!F[win].cpu){const cpus=F.filter(o=>o.cpu&&!o.dummy);if(cpus.length){const lv=Math.max(...cpus.map(o=>({easy:15,normal:30,hard:50}[o.lvl]||30)));bonus+=Math.round(lv*(1+.5*(cpus.length-1)))}}
   addCoins(bonus);G.earned=(G.earned||0)+bonus;
   $('overCoins').textContent='+'+G.earned+' 🪙 earned  ·  total '+SAVE.coins;
   show('over');

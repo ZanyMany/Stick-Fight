@@ -165,7 +165,7 @@ addEventListener('resize',layout);addEventListener('orientationchange',()=>setTi
 function toLocal(e){return ROT?{x:e.clientY,y:innerWidth-e.clientX}:{x:e.clientX,y:e.clientY}}
 
 // ---------- constants ----------
-const W=1600,H=900,GRAV=2000,SPEED=330,JUMP=900,JUMPCD=1,STEP=1/120;let TS=.72;
+const W=1600,H=900,GRAV=1250,SPEED=330,JUMP=720,JUMPCD=1.15,STEP=1/120;let TS=.72;
 const COLORS=['#ff5a4e','#4c8dff','#3ddc84','#ffd23f','#c77dff','#ff8fd1','#ffffff','#2ee6e6','#ff9f1c','#9aa5b8'];
 const HATS=['none','cap','crown','headband','tophat','horns','halo','ninja','party'];
 const TRAILS=['none','ghost','fire','spark','rainbow'];
@@ -419,7 +419,7 @@ function physics(f,inp,dt,plats){
     P.hp.ay+=(dy*(dy<0?850:300)-P.hp.vy*42)*bal;
     for(const k of['hp','nk','hd','ea','ha','eb','hb'])P[k].ay-=GRAV*bal*.92;
     const kw=(tx?12:11)*bal,fx=(tx-P.hp.vx)*kw;for(const k of['hp','nk','hd','ea','ha','eb','hb','ka','kb'])P[k].ax+=fx;
-  }else if(!rag&&f.frozen<=0&&tx){const fx=(tx-P.hp.vx)*2.6;for(const k of['hp','nk','hd','ea','ha','eb','hb','ka','kb','fa','fb'])P[k].ax+=fx}
+  }else if(!rag&&f.frozen<=0&&tx){const fx=(tx*1.1-P.hp.vx)*7;for(const k of['hp','nk','hd','ea','ha','eb','hb','ka','kb','fa','fb'])P[k].ax+=fx}
   if(!near&&inp.my>.6&&!rag)P.hp.ay+=GRAV*.7;
   if(f.dashT>0)for(const k in P)P[k].ay-=GRAV*.85;
   // torso + head muscles
@@ -464,7 +464,7 @@ function physics(f,inp,dt,plats){
     if(!rag&&mus>0){spring(P.fa,P.hp.x+dir*6,P.hp.y+28,140*mus,9,P.hp,P.hp);spring(P.fb,P.hp.x-dir*12,P.hp.y+35,140*mus,9,P.hp,P.hp)}
   }
   // integrate
-  for(const k in P){const p=P[k];p.vx+=p.ax*dt;p.vy+=p.ay*dt;p.vx*=.999;p.vy*=.999;p.ox=p.x;p.oy=p.y;p.x+=p.vx*dt;p.y+=p.vy*dt;p.hitP=null}
+  for(const k in P){const p=P[k];p.vx+=p.ax*dt;p.vy+=p.ay*dt;if(p.vy>950&&!f.slam)p.vy-=(p.vy-950)*4*dt;p.vx*=.999;p.vy*=.999;p.ox=p.x;p.oy=p.y;p.x+=p.vx*dt;p.y+=p.vy*dt;p.hitP=null}
   // constraints + collisions
   const len=f.thrown?4:w.len;
   for(let it=0;it<7;it++){for(const b of BONES)solve(P[b[0]],P[b[1]],b[2]);solve(P.ha,P.tp,len);for(const k in P)collideP(P[k],plats,drop,P.hp.oy)}
@@ -486,7 +486,7 @@ function rectHit(x,y,r,o){const P=o.P;return segDist(x,y,P.nk.x,P.nk.y,P.hp.x,P.
 function hit(o,dmg,dx,dy,kb,att){
   if(o.invuln>0||!o.alive)return false;
   o.dmg=Math.min(999,o.dmg+dmg);
-  const k=kb*(.42+o.dmg/90);
+  const k=kb*(.38+o.dmg/100);
   let l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;dy=dy*.75-.42;l=Math.hypot(dx,dy);dx/=l;dy/=l;
   const P=o.P,keep=.25;for(const q in P){P[q].vx*=keep;P[q].vy*=keep}
   addVel(o,dx*k,dy*k,(dx>=0?1:-1)*k*.22);

@@ -2,7 +2,7 @@
 
 A 1v1 ragdoll stickman duel game for phones, in one HTML file. Physics-based fighters, random weapons with abilities, a Smash-style knockback system, and landscape play.
 
-**Play:** https://zanymany.github.io/Stick-Fight/
+**Play:** https://zanymany.github.io/stick-fight/
 
 ## Install it like an app (iPhone)
 1. Open the link above in **Safari**.

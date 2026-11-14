@@ -177,6 +177,16 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
 .lbarmid .seg button{padding:7px 6px;font-size:13px}
 .lbar #startBtn{min-width:150px;font-size:20px}
 .half.l{left:0;right:auto;border-right:2px solid rgba(255,255,255,.1)}.half.r{right:0;left:auto;border-left:2px solid rgba(255,255,255,.1)}
+
+.lcol{flex:0 0 25%;display:flex;flex-direction:column;gap:7px;min-height:0;min-width:0}
+.lcol .slot{flex:1 1 0;max-width:none;position:relative}
+.sbtns{display:flex;flex-direction:column;gap:5px;min-width:0}
+.slot.compact{flex-direction:row;align-items:stretch;padding:6px;gap:6px}
+.slot.compact canvas{flex:0 0 auto;height:100%;width:auto;max-width:42%}
+.slot.compact .sbtns{flex:1;justify-content:center;gap:4px}
+.slot.compact .stype,.slot.compact .sbtn{padding:6px 5px;font-size:11px}
+.sx{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:8px;background:rgba(0,0,0,.55);font-size:12px;font-weight:900;z-index:2;line-height:1}
+.addbtn{flex:0 0 auto;padding:8px 6px;border:2px dashed rgba(255,255,255,.22);background:transparent;border-radius:12px;font-weight:800;font-size:12.5px;color:rgba(255,255,255,.85)}
 #muteBtn{position:absolute;top:10px;right:10px;z-index:6;width:40px;height:40px;border-radius:12px;background:rgba(20,24,40,.6);font-size:18px}
 .winner{font-family:Bungee,Rubik,sans-serif;font-size:clamp(28px,6vw,56px);margin:0 0 10px}
 .stats{display:flex;gap:14px;justify-content:center;margin:0 0 14px;flex-wrap:wrap}
@@ -208,12 +218,16 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
 </div>
 
 <div class="screen full" id="lobby">
-  <div class="fhead"><button class="iconbtn" id="lBack">‹</button><div class="ftitle" id="lTitle">FIGHT SETUP</div><div class="seg cnt" id="optCount"></div><div style="flex:1"></div><div class="coinpill">🪙 <b class="coinv">0</b></div></div>
-  <div class="lslots" id="lslots"></div>
-  <div class="lbar">
-    <button class="mapcard" id="mapCard"><canvas width="320" height="180"></canvas><span class="mname"></span><span class="msub">tap to change</span></button>
-    <div class="lbarmid"><div class="seg" id="optMode"></div><div class="lhint" id="lHint"></div></div>
-    <button class="big primary" id="startBtn">FIGHT!</button>
+  <div class="fhead"><button class="iconbtn" id="lBack">‹</button><div class="ftitle" id="lTitle">FIGHT SETUP</div><div style="flex:1"></div><div class="coinpill">🪙 <b class="coinv">0</b></div></div>
+  <div class="lbody">
+    <div class="lcol" id="colL"></div>
+    <div class="lmid">
+      <button class="mapcard" id="mapCard"><canvas width="480" height="270"></canvas><span class="mname"></span><span class="msub">tap to change map</span></button>
+      <div class="seg" id="optMode"></div>
+      <div class="lhint" id="lHint"></div>
+      <button class="big primary" id="startBtn">FIGHT!</button>
+    </div>
+    <div class="lcol" id="colR"></div>
   </div>
 </div>
 
@@ -393,7 +407,7 @@ function startMatch(opts){
   const map=MAPS[opts.map];
   const plats=map.plats.map(p=>Object.assign({dx:0},p));
   G={demo:!!opts.demo,opts,map,theme:THEMES[map.theme],plats,mode:opts.mode,pool:opts.demo||opts.test?WKEYS:ownedWeapons(),noItems:true,
-     fighters:(opts.slots||[0,1]).map((_,i)=>{const sl=(opts.slots||[])[i]||{t:i?'cpu':'human',lvl:'normal'};const f=newFighter(i,!!opts.demo||sl.t!=='human','normal');f.lvl=sl.lvl||'normal';f.slot=sl.t;return f}),
+     fighters:(opts.slots||[0,1]).map((_,i)=>{const sl=(opts.slots||[])[i]||{t:i?'cpu':'human',lvl:'normal'};const f=newFighter(i,!!opts.demo||sl.t!=='human','normal');f.lvl=sl.lvl||'normal';f.slot=sl.t;f.pid=opts.pids?opts.pids[i]:i;f.cos=cos[f.pid]||cos[i];return f}),
      proj:[],items:[],parts:[],texts:[],bolts:[],itemT:8,time:120,ready:opts.demo?0:1.3,over:false,overT:0,ann:null,elapsed:0};
   const mains=plats.filter(p=>p.main);G.L=Math.min(...mains.map(p=>p.x));G.R=Math.max(...mains.map(p=>p.x+p.w));G.floor=Math.min(...mains.map(p=>p.y));
   G.fighters.forEach((f,i)=>{f.facing=f.aimX=spawnFace(i);f.wchoice=(opts.wchoice||[])[i]||'random';f.weapon=chooseWeapon(f);f.cd=.5;f.cdMax=WEAP[f.weapon].cd;const sp=spawnPoint(i);buildBody(f,sp.x,sp.y)});
@@ -415,7 +429,7 @@ function spawnPoint(i){
   return{x,y:g?g.y:sp[0].y}}
 function spawnFace(i){const N=G.fighters.length;return N<2?1:(i<(N-1)/2?1:i>(N-1)/2?-1:(i%2?-1:1))}
 const humanFs=()=>G?G.fighters.filter(f=>!f.cpu&&!f.dummy):[];
-const fname=f=>f.dummy?'DUMMY':f.cpu?'CPU':'P'+(f.idx+1);
+const fname=f=>f.dummy?'DUMMY':f.cpu?'CPU':'P'+((f.pid!==undefined?f.pid:f.idx)+1);
 function chooseWeapon(f){
   if(f.dummy)return'fire';
   if(f.wchoice&&f.wchoice!=='random'&&WEAP[f.wchoice])return f.wchoice;
@@ -1138,7 +1152,7 @@ function drawHUD(){
     ctx.fillStyle=act?'rgba(255,255,255,.1)':'rgba(255,255,255,.06)';ctx.strokeStyle=act?'rgba(255,255,255,.45)':'rgba(255,255,255,.25)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(c.x,c.y,R,0,7);ctx.fill();ctx.stroke();
     ctx.fillStyle=col;ctx.globalAlpha=act?.9:.45;ctx.beginPath();ctx.arc(c.x+s.vx*R,c.y+s.vy*R,26,0,7);ctx.fill();ctx.globalAlpha=1;
     if(G.elapsed<8&&!act){ctx.globalAlpha=.7*Math.min(1,8-G.elapsed);ctx.fillStyle='#fff';ctx.font='700 12px Rubik,sans-serif';ctx.textAlign='center';
-      ctx.fillText((two?'P'+(i+1)+': ':'')+'drag = move/aim',c.x,c.y-R-28);ctx.fillText('let go = ability · hold up = jump',c.x,c.y-R-12);ctx.globalAlpha=1}
+      ctx.fillText((two?fname(ff)+': ':'')+'drag = move/aim',c.x,c.y-R-28);ctx.fillText('let go = ability · hold up = jump',c.x,c.y-R-12);ctx.globalAlpha=1}
   });
 }
 function drawAnnounce(){
@@ -1299,58 +1313,65 @@ function buildPicker(){
   wrap.appendChild(label('TRAIL'));const gt=mkGrid(7,1);gt.style.flex='1 1 0';wrap.appendChild(gt);
   TRAILS.forEach((t,i)=>{const key='t:'+i;cell(gt,{label:titleCase(t),on:c.trail===i,locked:!owns(key),price:priceOf(key),thumb:cv=>trailThumb(cv,i,col),onTap:el=>tryUnlock(key,()=>{c.trail=i;save('sc_cos',cos);re()},el)})});
 }
-// ---- lobby: 1-4 fighters, each one PLAYER or CPU, each customizes on their own side
-if(!setup.count)setup.count=2;
+// ---- lobby: P1 & P3 on the left, P2 & P4 on the right; P2-P4 can be toggled on/off
+if(!setup.on)setup.on=[true,true,false,false];
 while(setup.slots.length<4)setup.slots.push({t:'cpu',lvl:'normal'});
 while(setup.w.length<4)setup.w.push('random');
 const SLOT_CYCLE=[{t:'human'},{t:'cpu',lvl:'easy'},{t:'cpu',lvl:'normal'},{t:'cpu',lvl:'hard'}];
 const TEST_CYCLE=[{t:'dummy'},{t:'none'},{t:'cpu',lvl:'easy'},{t:'cpu',lvl:'normal'},{t:'cpu',lvl:'hard'}];
-const slotCount=()=>flow.type==='test'?2:setup.count;
+const isOn=i=>flow.type==='test'?i<2:(i===0||!!setup.on[i]);
+// fight order left->right on the stage: left column (P1,P3) then right column (P4,P2)
+const activePids=()=>[0,2,3,1].filter(isOn);
 function slotLabel(sl){return sl.t==='human'?'🎮 PLAYER':sl.t==='cpu'?'🤖 CPU · '+sl.lvl.toUpperCase():sl.t==='dummy'?'🎯 DUMMY':'✖ NOBODY'}
 function cycleSlot(i){
   const T=flow.type==='test';if(T&&i===0)return;
   const list=T?TEST_CYCLE:SLOT_CYCLE,cur=slotOf(i),k=list.findIndex(x=>x.t===cur.t&&(x.lvl||'')===(cur.lvl||''));
   const nx=Object.assign({},list[(k+1)%list.length]);if(T)setup.testSlot=nx;else setup.slots[i]=nx;svSetup();buildLobby();tone(500,700,.06,'triangle',.04);
 }
-// slot cards + half panels are built once for 4 fighters and shown as needed
+function setOn(i,v){setup.on[i]=v;svSetup();const ps=HP[i];if(!v&&ps.mode){ps.mode=null;ps.el.classList.remove('open')}buildLobby();tone(v?600:400,v?900:300,.08,'triangle',.05)}
+const slotSide=i=>i%2===0?'l':'r';
 const SLOTS=[0,1,2,3].map(i=>{
-  const el=document.createElement('div');el.className='slot';el.innerHTML='<canvas width="360" height="400"></canvas><button class="stype"></button><button class="sbtn sweap"></button><button class="sbtn slook">🎨 Look</button>';
-  $('lslots').appendChild(el);
+  const el=document.createElement('div');el.className='slot';
+  el.innerHTML='<canvas width="360" height="400"></canvas><div class="sbtns"><button class="stype"></button><button class="sbtn sweap"></button><button class="sbtn slook">🎨 Look</button></div>'+(i>0?'<button class="sx" title="Remove">✕</button>':'');
+  const add=document.createElement('button');add.className='addbtn';add.textContent='+ ADD P'+(i+1);add.onclick=()=>setOn(i,true);
   const hp=document.createElement('div');hp.className='half';hp.innerHTML='<div class="hhead"><div class="htitle"></div><div class="tabs sm"><button data-t="look">LOOK</button><button data-t="weapon">WEAPON</button></div><div style="flex:1"></div><button class="hdone">DONE ✓</button></div><div class="hbody"></div><div class="hfoot"><span class="hinfo"></span><span class="htoast"></span></div>';
   $('lobby').appendChild(hp);
   const cv=document.createElement('canvas');cv.width=360;cv.height=400;
-  const o={i,el,prevSlot:{ctx:el.querySelector('canvas').getContext('2d'),f:newFighter(i,false,'normal'),t:i*.7,acc:0,w:''},
+  const o={i,el,add,prevSlot:{ctx:el.querySelector('canvas').getContext('2d'),f:newFighter(i,false,'normal'),t:i*.7,acc:0,w:''},
     ps:{i,el:hp,mode:null,armed:null,tt:0,cv,prev:{ctx:cv.getContext('2d'),f:newFighter(i,false,'normal'),t:0,acc:0,w:''}}};
   el.querySelector('.stype').onclick=()=>cycleSlot(i);el.querySelector('.sweap').onclick=()=>openHalf(i,'weapon');
   el.querySelector('.slook').onclick=()=>openHalf(i,'look');el.querySelector('canvas').onclick=()=>openHalf(i,'look');
+  if(i>0)el.querySelector('.sx').onclick=e=>{e.stopPropagation();setOn(i,false)};
   hp.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{o.ps.mode=b.dataset.t;o.ps.armed=null;o.ps.prev.w='';buildHalf(o.ps)});
   hp.querySelector('.hdone').onclick=()=>closeHalf(i);
   return o});
 const HP=SLOTS.map(o=>o.ps);
-function slotSide(i){const n=slotCount();return n<=1?'l':(i<n/2?'l':'r')}
 function buildLobby(){
-  const T=flow.type==='test',n=slotCount();
-  $('lTitle').textContent=T?'TESTING':'FIGHT SETUP';
-  $('optCount').style.display=T?'none':'flex';$('optMode').style.display=T?'none':'flex';
-  seg($('optCount'),[[1,'1P'],[2,'2P'],[3,'3P'],[4,'4P']],()=>setup.count,v=>{setup.count=v;svSetup();HP.forEach(ps=>{ps.mode=null;ps.el.classList.remove('open')});setTimeout(buildLobby,0)});
-  SLOTS.forEach(({i,el})=>{
-    if(i>=n){el.style.display='none';return}el.style.display='';
-    const sl=slotOf(i),ch=setup.w[i]||'random',off=sl.t==='dummy'||sl.t==='none';
-    const tb=el.querySelector('.stype');tb.textContent='P'+(i+1)+' · '+slotLabel(sl);tb.className='stype '+(sl.t==='human'?'':sl.t);tb.disabled=T&&i===0;tb.style.borderBottom='4px solid '+COLORS[cos[i].color];
-    const wb=el.querySelector('.sweap');wb.textContent=off?'—':(ch==='random'?'🎲 Random':'🗡 '+WEAP[ch].name);wb.disabled=off;
-    el.querySelector('.slook').disabled=sl.t==='none';el.querySelector('canvas').style.opacity=sl.t==='none'?.25:1;
-  });
+  const T=flow.type==='test';
+  $('lTitle').textContent=T?'TESTING GROUNDS':'FIGHT SETUP';$('optMode').style.display=T?'none':'flex';
+  for(const [col,ids] of [[$('colL'),[0,2]],[$('colR'),[1,3]]]){
+    col.innerHTML='';const on=ids.filter(isOn),compact=on.length>1;
+    ids.forEach(i=>{const o=SLOTS[i];
+      if(isOn(i)){col.appendChild(o.el);o.el.classList.toggle('compact',compact);
+        const sx=o.el.querySelector('.sx');if(sx)sx.style.display=T?'none':'';
+        const sl=slotOf(i),ch=setup.w[i]||'random',off=sl.t==='dummy'||sl.t==='none';
+        const tb=o.el.querySelector('.stype');tb.textContent=compact?('P'+(i+1)+' '+(sl.t==='human'?'🎮 YOU':sl.t==='cpu'?'🤖 '+({easy:'EASY',normal:'MED',hard:'HARD'}[sl.lvl]):sl.t==='dummy'?'🎯':'✖')):'P'+(i+1)+' · '+slotLabel(sl);tb.className='stype '+(sl.t==='human'?'':sl.t);tb.disabled=T&&i===0;tb.style.borderBottom='4px solid '+COLORS[cos[i].color];
+        const wb=o.el.querySelector('.sweap');wb.textContent=off?'—':(ch==='random'?(compact?'🎲 Random':'🎲 Weapon: Random'):'🗡 '+WEAP[ch].name);wb.disabled=off;
+        o.el.querySelector('.slook').disabled=sl.t==='none';o.el.querySelector('canvas').style.opacity=sl.t==='none'?.25:1;
+      }else if(!T)col.appendChild(o.add);
+    });
+  }
   const m=setup.map==='random'?null:MAPS[setup.map];mapThumb($('mapCard').querySelector('canvas'),m);
-  $('mapCard').querySelector('.mname').textContent=m?m.name:'🎲 Random';
-  const hs=[...Array(n).keys()].filter(i=>slotOf(i).t==='human').length;
-  $('lHint').textContent=T?'Tap P2 to switch: dummy / nobody / CPU':n===1?'Solo: just you and the map':hs>=2?hs+' players share the phone: each gets a joystick on their part of the screen':hs===1?'Tap PLAYER / CPU to switch who controls each fighter':'All CPUs: sit back and watch';
-  $('startBtn').textContent=T?'START':hs===0?'WATCH!':'FIGHT!';
+  $('mapCard').querySelector('.mname').textContent=m?m.name:'🎲 Random map';
+  const act=activePids(),hs=act.filter(i=>slotOf(i).t==='human').length;
+  $('lHint').textContent=T?'Tap P2 to switch: dummy / nobody / CPU':act.length===1?'Solo: just you and the map':hs>=2?hs+' players share the phone, each with their own joystick':hs===1?'Tap PLAYER / CPU to switch who controls each fighter':'All CPUs: sit back and watch';
+  $('startBtn').textContent=T?'START TESTING':hs===0?'WATCH!':'FIGHT!';
   seg($('optMode'),MODES.map(([v,l])=>[v,l.replace(' (3 lives)','').replace(' 2:00','')]),()=>setup.mode,v=>{setup.mode=v;svSetup()});
 }
 $('mapCard').onclick=()=>openPicker('map');
 function openLobby(){state='lobby';HP.forEach(ps=>{ps.mode=null;ps.el.classList.remove('open')});buildLobby();show('lobby')}
 $('lBack').onclick=()=>{state='menu';show('menu')};
-function drawSlots(dt){SLOTS.forEach(o=>{if(o.i>=slotCount())return;const sl=slotOf(o.i),f=sl.t==='dummy'||sl.t==='none'?'fire':null;if(o.ps.mode==='look')renderPreview(o.ps.prev,o.i,dt,f);else renderPreview(o.prevSlot,o.i,dt,f)})}
+function drawSlots(dt){SLOTS.forEach(o=>{if(!isOn(o.i))return;const sl=slotOf(o.i),f=sl.t==='dummy'||sl.t==='none'?'fire':null;if(o.ps.mode==='look')renderPreview(o.ps.prev,o.i,dt,f);else renderPreview(o.prevSlot,o.i,dt,f)})}
 function halfToast(ps,t){const e=ps.el.querySelector('.htoast');e.textContent=t;clearTimeout(ps.tt);ps.tt=setTimeout(()=>{e.textContent=''},3500)}
 function openHalf(i,mode){const ps=HP[i],side=slotSide(i);
   HP.forEach(o=>{if(o!==ps&&o.mode&&slotSide(o.i)===side){o.mode=null;o.el.classList.remove('open')}}); // one panel per side
@@ -1429,7 +1450,7 @@ document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=
 }));
 function startReal(){initAudio();state='play';paused=false;
   const T=flow.type==='test',map=setup.map==='random'?Math.floor(Math.random()*MAPS.length):setup.map;
-  const n=slotCount();startMatch({test:T,mode:T?'free':setup.mode,map,slots:[...Array(n).keys()].map(slotOf),wchoice:[...Array(n).keys()].map(i=>setup.w[i]||'random')});
+  const ids=T?[0,1]:activePids();startMatch({test:T,mode:T?'free':setup.mode,map,pids:ids,slots:ids.map(slotOf),wchoice:ids.map(i=>setup.w[i]||'random')});
   G.earned=0;TS=.72;show(null);syncTestBar()}
 $('startBtn').onclick=startReal;
 function togglePause(){if(state!=='play'||G.over)return;paused=!paused;show(paused?'pause':null)}

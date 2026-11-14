@@ -122,7 +122,7 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
     <p><b>Joystick:</b> touch and drag anywhere. Direction = movement <i>and</i> where your weapon points.</p>
     <p><b>Melee:</b> your blade does damage just by hitting them. The faster it's moving, the harder it hits. Whip the stick around to swing.</p>
     <p><b>Let go</b> of the stick to use your weapon's ability (dash, slam, fireball, laser burst…). Each one has a cooldown, shown on your card.</p>
-    <p><b>Hold up</b> to jump (it works mid-air too, whenever the cooldown's ready). <b>Push down</b> to drop through platforms.</p>
+    <p><b>Hold up</b> to jump (it works mid-air too, whenever the cooldown's ready). <b>Push down</b> to drop through the see-through dashed platforms (all other ground is solid).</p>
     <p><b>Damage %</b> makes you fly further. Fly off the screen = KO. Everyone spawns with a random weapon, and crates drop new ones.</p>
     <div class="wlist" id="wlist"></div>
     <p><b>2 Players:</b> left half = P1 stick, right half = P2. <b>Keyboard:</b> WASD / arrows.</p>
@@ -165,7 +165,7 @@ addEventListener('resize',layout);addEventListener('orientationchange',()=>setTi
 function toLocal(e){return ROT?{x:e.clientY,y:innerWidth-e.clientX}:{x:e.clientX,y:e.clientY}}
 
 // ---------- constants ----------
-const W=1600,H=900,GRAV=2000,SPEED=330,JUMP=800,JUMPCD=.85,STEP=1/120;let TS=.72;
+const W=1600,H=900,GRAV=2000,SPEED=330,JUMP=900,JUMPCD=1,STEP=1/120;let TS=.72;
 const COLORS=['#ff5a4e','#4c8dff','#3ddc84','#ffd23f','#c77dff','#ff8fd1','#ffffff','#2ee6e6','#ff9f1c','#9aa5b8'];
 const HATS=['none','cap','crown','headband','tophat','horns','halo','ninja','party'];
 const TRAILS=['none','ghost','fire','spark','rainbow'];
@@ -198,9 +198,9 @@ const THEMES=[
   {sky:['#0e4c7a','#3aa0c8','#bfeaf2'],hill:'#2d7a8c',hill2:'#1d5a6a',stage:'#34465a',edge:'#7dffb0',thin:'#c7ffe0',clouds:1}
 ];
 const MAPS=[
-  {name:'Battleground',theme:0,plats:[{x:330,y:640,w:940,h:70,solid:1,main:1},{x:450,y:480,w:220,h:14,thin:1},{x:930,y:480,w:220,h:14,thin:1},{x:690,y:330,w:220,h:14,thin:1}],spawns:[{x:540,y:640},{x:1060,y:640}]},
+  {name:'Battleground',theme:0,plats:[{x:330,y:640,w:940,h:70,solid:1,main:1},{x:450,y:500,w:220,h:28,solid:1},{x:930,y:500,w:220,h:28,solid:1},{x:690,y:355,w:220,h:14,thin:1}],spawns:[{x:540,y:640},{x:1060,y:640}]},
   {name:'Final Edge',theme:1,plats:[{x:240,y:620,w:1120,h:80,solid:1,main:1}],spawns:[{x:520,y:620},{x:1080,y:620}]},
-  {name:'Sky Islands',theme:2,plats:[{x:200,y:650,w:480,h:60,solid:1,main:1},{x:920,y:650,w:480,h:60,solid:1,main:1},{x:690,y:470,w:220,h:14,thin:1,move:{cx:800,amp:170,spd:.6}}],spawns:[{x:420,y:650},{x:1180,y:650}]}
+  {name:'Sky Islands',theme:2,plats:[{x:200,y:650,w:480,h:60,solid:1,main:1},{x:920,y:650,w:480,h:60,solid:1,main:1},{x:690,y:495,w:220,h:28,solid:1,move:{cx:800,amp:170,spd:.6}}],spawns:[{x:420,y:650},{x:1180,y:650}]}
 ];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 
@@ -328,7 +328,9 @@ function aiInput(f,dt){
     if(across&&f.jumpCd<=0&&D.smart)inp.my=-1;else want=0;
   }
   inp.mx=want*D.speed;
-  if(dy<-110&&Math.abs(dx)<320&&a.jt<=0){inp.my=-1;a.jt=.5/D.jumpy}
+  if(dy<-110&&Math.abs(dx)<320&&a.jt<=0){
+    let roof=null;for(const p of G.plats)if(p.solid&&!p.main&&f.x>p.x-12&&f.x<p.x+p.w+12&&p.y<f.y-40&&p.y>f.y-200)roof=p;
+    if(roof){inp.mx=(f.x-roof.x<roof.x+roof.w-f.x?-1:1)*D.speed}else{inp.my=-1;a.jt=.5/D.jumpy}}
   if(dy>90&&f.onGround&&f.ground&&f.ground.thin&&Math.abs(dx)<300)inp.my=1;
   if(!f.onGround&&!groundUnder(f.x,f.y)&&f.vy>200)inp.my=-1;
   if(D.jumpy>.5&&f.onGround&&f.jumpCd<=0)for(const p of G.proj){if(p.owner!==f&&Math.abs(p.y-(f.y-45))<60&&Math.sign(f.x-p.x)===Math.sign(p.vx)&&Math.abs(f.x-p.x)<260&&Math.random()<D.jumpy*.04){inp.my=-1;break}}
@@ -416,8 +418,8 @@ function physics(f,inp,dt,plats){
     const ty=g.y-(37-f.crouch),dy=ty-P.hp.y;
     P.hp.ay+=(dy*(dy<0?850:300)-P.hp.vy*42)*bal;
     for(const k of['hp','nk','hd','ea','ha','eb','hb'])P[k].ay-=GRAV*bal*.92;
-    const kw=(tx?13:6)*bal,fx=(tx-P.hp.vx)*kw;P.hp.ax+=fx;P.nk.ax+=fx*.9;
-  }else if(!rag&&f.frozen<=0){const fx=(tx-P.hp.vx)*2.2;P.hp.ax+=fx;P.nk.ax+=fx}
+    const kw=(tx?12:11)*bal,fx=(tx-P.hp.vx)*kw;for(const k of['hp','nk','hd','ea','ha','eb','hb','ka','kb'])P[k].ax+=fx;
+  }else if(!rag&&f.frozen<=0&&tx){const fx=(tx-P.hp.vx)*2.6;for(const k of['hp','nk','hd','ea','ha','eb','hb','ka','kb','fa','fb'])P[k].ax+=fx}
   if(!near&&inp.my>.6&&!rag)P.hp.ay+=GRAV*.7;
   if(f.dashT>0)for(const k in P)P[k].ay-=GRAV*.85;
   // torso + head muscles
@@ -714,13 +716,22 @@ function worldT(){const s=view.s,sx=(Math.random()-.5)*shake,sy=(Math.random()-.
 function drawStage(){
   const th=G.theme;
   for(const p of G.plats){
-    if(p.solid){
+    if(p.solid&&p.main){
       ctx.fillStyle=th.stage;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+p.w,p.y);ctx.lineTo(p.x+p.w,p.y+p.h);ctx.lineTo(p.x+p.w-70,p.y+p.h+130);ctx.lineTo(p.x+p.w*.6,p.y+p.h+190);ctx.lineTo(p.x+p.w*.35,p.y+p.h+150);ctx.lineTo(p.x+70,p.y+p.h+120);ctx.lineTo(p.x,p.y+p.h);ctx.closePath();ctx.fill();
       ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(p.x,p.y+p.h-10,p.w,10);
       ctx.fillStyle=th.edge;ctx.shadowColor=th.edge;ctx.shadowBlur=18;ctx.fillRect(p.x,p.y-3,p.w,7);ctx.shadowBlur=0;
+    }else if(p.solid){
+      ctx.fillStyle=th.stage;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+p.w,p.y);ctx.lineTo(p.x+p.w,p.y+p.h);ctx.lineTo(p.x+p.w-30,p.y+p.h+22);ctx.lineTo(p.x+30,p.y+p.h+22);ctx.lineTo(p.x,p.y+p.h);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(p.x,p.y+p.h-6,p.w,6);
+      ctx.fillStyle=th.edge;ctx.shadowColor=th.edge;ctx.shadowBlur=14;ctx.fillRect(p.x,p.y-3,p.w,6);ctx.shadowBlur=0;
     }else{
-      ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(p.x+6,p.y+4,p.w-12,p.h);
-      ctx.fillStyle=th.thin;ctx.shadowColor=th.thin;ctx.shadowBlur=14;ctx.fillRect(p.x,p.y-3,p.w,10);ctx.shadowBlur=0;
+      // pass-through piece: translucent with arrows so it reads differently from ground
+      ctx.fillStyle='rgba(255,255,255,.10)';ctx.fillRect(p.x,p.y-3,p.w,p.h+3);
+      ctx.strokeStyle=th.thin;ctx.lineWidth=3;ctx.setLineDash([14,10]);ctx.shadowColor=th.thin;ctx.shadowBlur=10;
+      ctx.beginPath();ctx.moveTo(p.x,p.y-2);ctx.lineTo(p.x+p.w,p.y-2);ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;
+      ctx.fillStyle=th.thin;ctx.globalAlpha=.55;
+      for(let ax=p.x+30;ax<p.x+p.w-10;ax+=55){ctx.beginPath();ctx.moveTo(ax,p.y+12);ctx.lineTo(ax-6,p.y+5);ctx.lineTo(ax+6,p.y+5);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(ax,p.y-14);ctx.lineTo(ax-6,p.y-7);ctx.lineTo(ax+6,p.y-7);ctx.closePath();ctx.fill()}
+      ctx.globalAlpha=1;
     }
   }
 }

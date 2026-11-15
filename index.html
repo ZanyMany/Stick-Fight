@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Stick Fight">
-<meta name="theme-color" content="#5fd0ff">
+<meta name="theme-color" content="#1d1640">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -17,7 +17,7 @@
 <style>
 #safeProbe{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #app{--sl:0px;--sr:0px;--st:0px;--sb:0px}
-html,body{margin:0;height:100%;background:#0b0d14;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:Rubik,system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
+html,body{margin:0;height:100%;background:#1d1640;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:Rubik,system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
 #app{position:fixed;left:0;top:0;transform-origin:0 0;overflow:hidden;transition:none}
 canvas#game{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .screen{position:absolute;inset:0;padding-left:calc(12px + var(--sl))!important;padding-right:calc(12px + var(--sr))!important;padding-top:calc(12px + var(--st))!important;padding-bottom:calc(12px + var(--sb))!important;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,20,.72);overflow:auto;padding:12px;box-sizing:border-box;z-index:5;text-align:center}
@@ -361,7 +361,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.24 · Nov 15';
+const APP_VERSION='v1.25 · Nov 15';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game'),ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -372,7 +372,12 @@ function lastLandscape(){const a=(screen.orientation&&typeof screen.orientation.
   if(a===90)ROTDIR=1;else if(a===270||a===-90)ROTDIR=-1}
 function lockLandscape(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}
 function layout(){
-  const iw=innerWidth,ih=innerHeight;ROT=ih>iw;DPR=Math.min(window.devicePixelRatio||1,2);
+  let iw=innerWidth,ih=innerHeight;ROT=ih>iw;DPR=Math.min(window.devicePixelRatio||1,2);
+  // iPhone home-screen app held upright reserves a strip for the status bar (innerHeight is short);
+  // use the whole physical screen so the game covers it instead of leaving a coloured bar
+  const standalone=navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+  if(ROT&&standalone&&screen.height>ih){ih=Math.max(screen.width,screen.height);iw=Math.min(screen.width,screen.height)}
+  document.documentElement.style.height=document.body.style.height=ih+'px';
   if(!ROT)lastLandscape();
   if(ROT){CW=ih;CH=iw;app.style.transform=ROTDIR>0?`translate(0px,${ih}px) rotate(-90deg)`:`translate(${iw}px,0px) rotate(90deg)`}else{CW=iw;CH=ih;app.style.transform='none'}
   app.style.width=CW+'px';app.style.height=CH+'px';cv.width=Math.round(CW*DPR);cv.height=Math.round(CH*DPR);
@@ -385,7 +390,7 @@ lastLandscape();
 addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,120));
 if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',()=>setTimeout(layout,60));
 addEventListener('pointerdown',lockLandscape,{once:true});lockLandscape();layout();
-function toLocal(e){if(!ROT)return{x:e.clientX,y:e.clientY};return ROTDIR>0?{x:innerHeight-e.clientY,y:e.clientX}:{x:e.clientY,y:innerWidth-e.clientX}}
+function toLocal(e){if(!ROT)return{x:e.clientX,y:e.clientY};return ROTDIR>0?{x:CW-e.clientY,y:e.clientX}:{x:e.clientY,y:CH-e.clientX}}
 
 // ---------- constants ----------
 const W=2400,H=1100,GRAV=1250,SPEED=330,JUMP=980,JUMPCD=.28,STEP=1/120;let TS=.72;

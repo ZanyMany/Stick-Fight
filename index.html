@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.30 · Nov 15';
+const APP_VERSION='v1.31 · Nov 15';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -1428,7 +1428,7 @@ function updateFighter(f,inp,dt){
       f.weapon=it.type;f.cd=Math.min(f.cd,.3);f.cdMax=WEAP[it.type].cd;f.burst=0;f.sprayT=0;G.items.splice(i,1);
       floatText(f.x,f.y-120,WEAP[it.type].name.toUpperCase(),'#ffd23f');sfx('pick');
       for(let j=0;j<12;j++){const a=Math.random()*6.28;part(it.x,it.y-15,Math.cos(a)*200,Math.sin(a)*200,.35,'#ffd23f',4,0)}}}
-  if(f.x<-520||f.x>W+520||f.y>H+420||f.y<-950)ko(f);
+  if(f.x<-1500||f.x>W+1500||f.y>H+650||f.y<-2600)ko(f);
 }
 function updateProj(dt){
   for(let i=G.proj.length-1;i>=0;i--){const p=G.proj[i];let dead=false;
@@ -1467,7 +1467,7 @@ function updateProj(dt){
         else dead=true;
         break}}
     if(p.life<=0)dead=true;
-    if(p.x<-800||p.x>W+800||p.y>H+600||p.y<-1100){if(p.type==='axe')p.owner.thrown=false;G.proj.splice(i,1);continue}
+    if(p.x<-1800||p.x>W+1800||p.y>H+800||p.y<-2800){if(p.type==='axe')p.owner.thrown=false;G.proj.splice(i,1);continue}
     if(dead){
       if(p.explode)explode(p.x,p.y,p);
       else for(let j=0;j<4;j++)part(p.x,p.y,(Math.random()-.5)*300,(Math.random()-.5)*300,.2,p.color||'#ffe08a',3,0);
@@ -1828,10 +1828,17 @@ function drawHUD(){
   }
   if(G.mode==='rounds'){const t=Math.ceil(G.time),s2=`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`,top=8+SAFE.t;ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.font=`400 ${22*base}px 'Lilita One',Fredoka,sans-serif`;ctx.lineWidth=6;ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.strokeText(s2,CW/2,top+22*base);ctx.fillStyle=t<=10?'#ff5a4e':'#fff';ctx.fillText(s2,CW/2,top+22*base)}
   if(!G.kofx)for(const f of G.fighters){if(!f.alive)continue;const sx=CW/2+(f.x-cam.x)*view.s,sy=CH/2+(f.y-45-cam.y)*view.s;
-    if(sx<0||sx>CW||sy<0||sy>CH){const m=34,cx=Math.max(m+SAFE.l,Math.min(CW-m-SAFE.r,sx)),cy=Math.max(m+40+SAFE.t,Math.min(CH-m-SAFE.b,sy));
-      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx,cy,22,0,7);ctx.fill();ctx.strokeStyle=COLORS[f.cos.color];ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle=INK;ctx.font='900 12px Fredoka,Rubik,sans-serif';ctx.textAlign='center';ctx.fillText(Math.max(0,Math.ceil(100-f.dmg)),cx,cy+4);
-      const a=Math.atan2(sy-cy,sx-cx);ctx.fillStyle=COLORS[f.cos.color];ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*32,cy+Math.sin(a)*32);ctx.lineTo(cx+Math.cos(a+.4)*23,cy+Math.sin(a+.4)*23);ctx.lineTo(cx+Math.cos(a-.4)*23,cy+Math.sin(a-.4)*23);ctx.fill()}}
+    if(sx<0||sx>CW||sy<0||sy>CH){const m=50,cx=Math.max(m+SAFE.l,Math.min(CW-m-SAFE.r,sx)),cy=Math.max(m+40+SAFE.t,Math.min(CH-m-SAFE.b,sy));
+      const dist=Math.hypot(sx-cx,sy-cy)/view.s,rad=Math.max(15,26-dist/90),a=Math.atan2(sy-cy,sx-cx),col=COLORS[f.cos.color];
+      ctx.save();ctx.translate(cx,cy);
+      ctx.fillStyle=INK;ctx.beginPath();ctx.moveTo(Math.cos(a)*(rad+16),Math.sin(a)*(rad+16));ctx.lineTo(Math.cos(a+.55)*(rad+1),Math.sin(a+.55)*(rad+1));ctx.lineTo(Math.cos(a-.55)*(rad+1),Math.sin(a-.55)*(rad+1));ctx.closePath();ctx.fill();
+      ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(Math.cos(a)*(rad+11),Math.sin(a)*(rad+11));ctx.lineTo(Math.cos(a+.45)*(rad-1),Math.sin(a+.45)*(rad-1));ctx.lineTo(Math.cos(a-.45)*(rad-1),Math.sin(a-.45)*(rad-1));ctx.closePath();ctx.fill();
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,rad,0,7);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,rad+2,0,7);ctx.stroke();
+      drawPortrait(ctx,f,0,rad*.12,rad*.62,false);
+      // danger ring: fills as you near the blast zone
+      const dz=Math.max((-f.x)/1500,(f.x-W)/1500,(-f.y)/2600,(f.y-H)/650),dg=Math.max(0,Math.min(1,dz));
+      if(dg>.05){ctx.strokeStyle=dg>.7?'#ff3b3b':'#ffd23f';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(0,0,rad+6,-Math.PI/2,-Math.PI/2+6.283*dg);ctx.stroke()}
+      ctx.restore()}}
   sticks.forEach((s,i)=>{if(!G.fighters[i])return;const col=COLORS[G.fighters[i].cos.color];
     const ff=G.fighters[i];if(ff.cpu||ff.dummy)return;const two=humanFs().length>=2;
     const c=stickCenter(i),act=s.id!==null;

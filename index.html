@@ -354,7 +354,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.19 · Nov 15';
+const APP_VERSION='v1.20 · Nov 15';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game'),ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -415,7 +415,7 @@ const WEAP={
 const WKEYS=Object.keys(WEAP);
 const MODES=[['free','Free Play'],['stock','Stock (3 lives)'],['timed','Timed 2:00']];
 const CPUS=[['easy','Easy'],['normal','Normal'],['hard','Hard']];
-const DIFF={easy:{react:.8,err:.4,speed:.75,smart:0,jumpy:.35,aggro:.5},normal:{react:.45,err:.18,speed:.95,smart:1,jumpy:.6,aggro:.8},hard:{react:.22,err:.07,speed:1,smart:1,jumpy:.9,aggro:1}};
+const DIFF={easy:{react:.8,err:.38,speed:.75,smart:0,jumpy:.35,aggro:.5,turn:2.2,look:.55,hold:.2},normal:{react:.45,err:.22,speed:.95,smart:1,jumpy:.6,aggro:.8,turn:3.6,look:.35,hold:.35},hard:{react:.22,err:.12,speed:1,smart:1,jumpy:.9,aggro:1,turn:5.5,look:.2,hold:.55}};
 const THEMES=[
   {sky:['#5ccaff','#9fe2ff','#d8f5ff'],hill:'#5fd36a',hill2:'#8fe39a',stage:'#a9693a',top:'#59d15a',thin:'#ffffff',sun:1,clouds:1},
   {sky:['#3b2a8f','#7b4fd6','#ff8fd0'],hill:'#5b3fb8',hill2:'#8a63e6',stage:'#5a3fa0',top:'#ff7ad9',thin:'#ffe36b',stars:1,moon:1},
@@ -614,11 +614,18 @@ function aiInput(f,dt){
   if(!f.onGround&&!groundUnder(f.x,f.y)&&f.vy>200&&f.y>G.floor-40)inp.my=-1;
   if(D.jumpy>.5&&f.onGround&&f.jumpCd<=0)for(const p of G.proj){if(p.owner!==f&&Math.abs(p.y-(f.y-45))<60&&Math.sign(f.x-p.x)===Math.sign(p.vx)&&Math.abs(f.x-p.x)<260&&Math.random()<D.jumpy*.04){inp.my=-1;break}}
   // aim
+  // human-like aim: the CPU only "looks" at you every so often (so it aims where you WERE),
+  // turns its arm at a limited speed, and carries a personal aim offset that drifts
   const ex=o.x-f.x,ey=(o.y-50)-(f.y-62),dist=Math.hypot(ex,ey);
-  let ang=Math.atan2(ey,ex);
-  if(w.kind==='melee'){ang=Math.atan2(ey*.6,ex)+Math.sin(G.elapsed*7+f.idx)*.5}
-  if(f.ai.wob===undefined)f.ai.wob=0;
-  if(!(inp.my<0)){f.aimX=Math.cos(ang);f.aimY=Math.sin(ang)}
+  a.look=(a.look||0)-dt;
+  if(a.look<=0||a.sx===undefined){a.look=D.look*(.6+Math.random()*.8);a.sx=o.x;a.sy=o.y-50;a.off=(Math.random()-.5)*D.err*2}
+  const sx=a.sx-f.x,sy=a.sy-(f.y-62);
+  let want2=Math.atan2(sy,sx)+a.off;
+  if(w.kind==='melee')want2=Math.atan2(sy*.6,sx)+Math.sin(G.elapsed*7+f.idx)*.5;
+  if(a.ang===undefined)a.ang=Math.atan2(f.aimY,f.aimX);
+  let dA=Math.atan2(Math.sin(want2-a.ang),Math.cos(want2-a.ang));const mt=D.turn*dt;a.ang+=Math.max(-mt,Math.min(mt,dA));
+  if(!(inp.my<0)){f.aimX=Math.cos(a.ang);f.aimY=Math.sin(a.ang)}
+  const lined=Math.abs(Math.atan2(Math.sin(Math.atan2(ey,ex)-a.ang),Math.cos(Math.atan2(ey,ex)-a.ang)));
   // decide release
   let go=false;
   if(a.t<=0&&f.hitstun<=0&&o.invuln<=0&&!f.thrown){
@@ -637,10 +644,10 @@ function aiInput(f,dt){
       if(w.ab==='mend')go=f.dmg>35;
       else if(w.ab==='blink')go=dist>450;
       else if(w.ab==='chaos')go=dist>280&&dist<rng;
-      else if(dist<rng&&Math.abs(ey)<(w.ab==='rail'?900:380))go=true;
+      else if(dist<rng&&Math.abs(ey)<(w.ab==='rail'?900:380))go=lined<.5||Math.random()<.25; // sometimes fires before it's lined up
     }
   }
-  if(go){ang=Math.atan2(ey,ex)+(Math.random()-.5)*D.err*2;f.aimX=Math.cos(ang);f.aimY=Math.sin(ang);inp.release=true;a.t=D.react*(.6+Math.random()*.9)}
+  if(go){if(w.kind!=='melee'){a.ang+=(Math.random()-.5)*D.err;f.aimX=Math.cos(a.ang);f.aimY=Math.sin(a.ang)}inp.release=true;a.t=D.react*(.6+Math.random()*.9)}
   return inp;
 }
 
@@ -1052,7 +1059,7 @@ function announce(t,d){G.ann={t,life:d||1,ml:d||1}}
 
 // ---------- update ----------
 function respawn(f){
-  f.alive=true;f.jumps=1;f.dmg=0;f.dying=false;f.invuln=2.2;
+  f.alive=true;f.jumps=1;f.ai={t:.6,jt:0};f.dmg=0;f.dying=false;f.invuln=2.2;
   f.weapon=(G.test&&f.idx===0)?f.weapon:chooseWeapon(f);f.cd=.4;f.cdMax=WEAP[f.weapon].cd;f.thrown=false;f.burst=0;f.sprayT=0;f.slam=false;f.dashT=0;f.frozen=0;
   f.hitstun=0;f.crouch=0;f.crouchV=0;f.lastHitBy=null;f.jumpCd=.3;f.trail=[];buildBody(f,spawnPoint(f.idx).x,170);
   for(let i=0;i<20;i++){const a=Math.random()*6.28;part(f.x,f.y-45,Math.cos(a)*260,Math.sin(a)*260,.5,COLORS[f.cos.color],5,0)}

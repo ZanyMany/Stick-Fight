@@ -144,6 +144,20 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
 .lookprev{flex:0 0 26%;display:flex;align-items:center;justify-content:center;min-height:0}
 #preview{height:100%;max-height:260px;width:auto;max-width:100%;aspect-ratio:9/10;background:radial-gradient(circle at 50% 75%,#2c3350,#161a2a);border-radius:16px}
 .mapgrid .cell canvas{object-fit:cover;border-radius:6px}
+.msel{flex:1;display:flex;gap:12px;min-height:0;min-width:0;padding-bottom:8px}
+.mprev{flex:0 0 42%;display:flex;flex-direction:column;gap:6px;min-height:0}
+.mpic{position:relative;flex:1;min-height:0;border:3px solid var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 4px 0 var(--ink);background:#5fd0ff;cursor:pointer}
+.mpic canvas{width:100%;height:100%;object-fit:cover;display:block}
+.mname{position:absolute;left:8px;bottom:6px;font-family:'Lilita One',sans-serif;font-size:22px;color:#fff;-webkit-text-stroke:5px var(--ink);paint-order:stroke fill;letter-spacing:.5px}
+.mdesc{font-size:12px;font-weight:700;color:var(--ink);line-height:1.25}
+.mtags{display:flex;gap:4px;flex-wrap:wrap}.mtags span{font-size:10px;font-weight:800;background:#ffd23f;color:var(--ink);border:2px solid var(--ink);border-radius:20px;padding:1px 7px}
+.mpick{padding:9px 10px!important;font-size:17px!important;background:#ffd23f!important;color:var(--ink)!important;font-family:'Lilita One',sans-serif!important;letter-spacing:.5px}
+.mlist{flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:7px;min-width:0;min-height:0}
+.mcard{position:relative;padding:0;border:2.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;box-shadow:0 3px 0 var(--ink);min-height:0;display:flex;flex-direction:column;transition:transform .08s}
+.mcard canvas{width:100%;flex:1;min-height:0;display:block}
+.mcard span{flex:0 0 auto;border-top:2px solid var(--ink);font-size:10px;font-weight:800;color:var(--ink);background:rgba(255,255,255,.88);padding:2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.mcard.on{border-color:#ff8a1f;box-shadow:0 0 0 3px #ff8a1f,0 3px 0 var(--ink);transform:translateY(-1px)}
+.mcard:active{transform:scale(.96)}
 .pkfoot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 12px 10px;min-height:22px}
 .pkinfo{flex:1;font-size:12.5px;opacity:.9;text-align:left}
 .pkinfo b{color:#ffb347}
@@ -361,9 +375,9 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.25 · Nov 15';
+const APP_VERSION='v1.26 · Nov 15';
 // ---------- landscape-locked layout ----------
-const app=$('app'),cv=$('game'),ctx=cv.getContext('2d');
+const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
 // The game is always landscape. Ask the system to lock it where that's allowed (Android / installed app);
 // on iPhone, if the page turns portrait we counter-rotate so the game stays put in the same physical position.
@@ -448,12 +462,14 @@ const THEMES=[
   {sky:['#ff9fbf','#ffcfa0','#fff1c1'],hill:'#b98bd9',hill2:'#d9b8f0',stage:'#9d97b3',top:'#7ad36b',thin:'#ffffff',sun:1,ruins:1},
   {sky:['#56c2ff','#9fe2ff','#e8f8ff'],hill:'#6f7ba3',hill2:'#a3add0',stage:'#4b4f63',top:'#6b7085',thin:'#ffffff',sun:1,clouds:1,city:1}
 ];
+const MAP_INFO=['Wide meadow with floating ledges. A fair, classic fight.','Glowing candy ground under the night sky. A tight central stage.','Hop between floating islands; mind the gaps.','Two stone forts with a pass-through roof between them.','A rope bridge over a canyon. Smash the planks out!','Icy floating peaks high above the clouds.','Islands linked by rope bridges that snap.','A sunken pit between two cliffs. Hard to escape.','A city road. Cars race through — jump or get flattened!','Temple blocks that crumble and fall when you stand on them.','Sealed arena, no edges. Bombs rain from the ceiling.'];
+const MAP_TAGS=[['Classic'],['Small','Night'],['Islands'],['Forts'],['Bridge','Breakable'],['Islands','Snow'],['Bridges','Breakable'],['Pit'],['Cars','Hazard'],['Crumbling','Hazard'],['No void','Bombs']];
 const MAPS=[
   {name:'Meadow Mayhem',theme:0,plats:[{x:450,y:760,w:1500,h:240,solid:1,main:1},{x:620,y:600,w:330,h:30,solid:1},{x:1450,y:600,w:330,h:30,solid:1},{x:1035,y:450,w:330,h:14,thin:1}],spawns:[{x:700,y:760},{x:1700,y:760}]},
   {name:'Candy Night',theme:1,plats:[{x:350,y:740,w:1700,h:240,solid:1,main:1}],spawns:[{x:750,y:740},{x:1650,y:740}]},
   {name:'Cloud Hop',theme:2,plats:[{x:250,y:770,w:720,h:240,solid:1,main:1},{x:1430,y:770,w:720,h:240,solid:1,main:1},{x:1035,y:600,w:330,h:30,solid:1,move:{cx:1200,amp:260,spd:.55}}],spawns:[{x:560,y:770},{x:1840,y:770}]},
   {name:'Twin Forts',theme:3,plats:[{x:380,y:780,w:1640,h:240,solid:1,main:1},{x:600,y:560,w:150,h:220,solid:1},{x:1650,y:560,w:150,h:220,solid:1},{x:750,y:570,w:900,h:14,thin:1},{x:1110,y:400,w:180,h:28,solid:1}],spawns:[{x:950,y:780},{x:1450,y:780}]},
-  {name:'Rickety Canyon',theme:4,plats:[{x:150,y:720,w:700,h:380,solid:1,main:1},{x:1550,y:720,w:700,h:380,solid:1,main:1},{x:1110,y:450,w:180,h:28,solid:1}],bridges:[{x1:850,y1:720,x2:1550,y2:720,n:14}],spawns:[{x:500,y:720},{x:1900,y:720}]},
+  {name:'Rickety Canyon',theme:4,plats:[{x:150,y:720,w:700,h:380,solid:1,main:1},{x:1550,y:720,w:700,h:380,solid:1,main:1},{x:1100,y:440,w:200,h:56,solid:1}],bridges:[{x1:850,y1:720,x2:1550,y2:720,n:14}],spawns:[{x:500,y:720},{x:1900,y:720}]},
   {name:'Frosty Peaks',theme:5,plats:[{x:650,y:820,w:1100,h:240,solid:1,main:1},{x:380,y:660,w:260,h:30,solid:1},{x:1760,y:660,w:260,h:30,solid:1},{x:900,y:550,w:600,h:14,thin:1},{x:1080,y:370,w:240,h:30,solid:1}],spawns:[{x:900,y:820},{x:1500,y:820}]},
   {name:'Bridge Isles',theme:2,plats:[{x:180,y:760,w:400,h:200,solid:1,main:1},{x:1000,y:720,w:400,h:200,solid:1,main:1},{x:1820,y:760,w:400,h:200,solid:1,main:1},{x:560,y:540,w:200,h:26,solid:1},{x:1640,y:540,w:200,h:26,solid:1},{x:1050,y:480,w:300,h:14,thin:1}],bridges:[{x1:580,y1:760,x2:1000,y2:720,n:8},{x1:1400,y1:720,x2:1820,y2:760,n:8}],spawns:[{x:380,y:760},{x:2020,y:760}]},
   {name:'Sunset Pit',theme:0,plats:[{x:350,y:780,w:1700,h:240,solid:1,main:1},{x:350,y:620,w:80,h:160,solid:1},{x:1970,y:620,w:80,h:160,solid:1},{x:950,y:620,w:500,h:14,thin:1},{x:1090,y:450,w:220,h:28,solid:1,move:{cx:1200,amp:420,spd:.4}}],spawns:[{x:700,y:780},{x:1700,y:780}]},
@@ -691,13 +707,14 @@ function buildBody(f,x,footY){
   syncState(f);
 }
 function syncState(f){const P=f.P;f.x=P.hp.x;f.y=P.hp.y+39;f.vx=P.hp.vx;f.vy=P.hp.vy}
+let REACTMUL=1;
 function spring(p,tx,ty,k,c,ref,react){
   const ax=k*(tx-p.x)-c*(p.vx-(ref?ref.vx:0)),ay=k*(ty-p.y)-c*(p.vy-(ref?ref.vy:0));p.ax+=ax;p.ay+=ay;
-  if(react){const r=Math.min(1.6,p.m/react.m);react.ax-=ax*r;react.ay-=ay*r}
+  if(react){const r=Math.min(1.6,p.m/react.m)*REACTMUL;react.ax-=ax*r;react.ay-=ay*r}
 }
 function solve(a,b,len){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-4,df=(d-len)/d/(a.im+b.im);a.x+=dx*df*a.im;a.y+=dy*df*a.im;b.x-=dx*df*b.im;b.y-=dy*df*b.im}
 function craterDepth(p,x){if(!p.craters||!p.craters.length)return 0;let d=0;for(const c of p.craters){const t=(x-c.x)/c.r;if(t>-1&&t<1)d=Math.max(d,c.d*(1-t*t))}return d}
-function topAt(p,x){if(!p.plank)return p.y+(p.craters?craterDepth(p,x):0);const a=p.br.nodes[p.j],b=p.br.nodes[p.j+1],t=Math.max(0,Math.min(1,(x-a.x)/((b.x-a.x)||1e-4)));return a.y+(b.y-a.y)*t-7}
+function topAt(p,x){if(!p.plank)return p.y;const a=p.br.nodes[p.j],b=p.br.nodes[p.j+1],t=Math.max(0,Math.min(1,(x-a.x)/((b.x-a.x)||1e-4)));return a.y+(b.y-a.y)*t-7}
 function groundBelow(x,y,plats,drop){let best=null,by=0;for(const p of plats){if(p.gone||p.steep||(drop&&p.thin&&!p.noDrop))continue;if(x>=p.x-6&&x<=p.x+p.w+6){const ty=topAt(p,x);if(p.solid&&p.craters&&ty>=p.y+p.h-2)continue;if(ty>=y-12&&(!best||ty<by)){best=p;by=ty}}}if(best&&(best.plank||by!==best.y))return{y:by,plank:best.plank,br:best.br,j:best.j,x:best.x,w:best.w,dx:best.dx,dy:best.dy,gone:best.gone,thin:best.thin,noDrop:best.noDrop,ref:best};return best}
 function collideP(p,plats,drop,hipY){
   for(const pl of plats){
@@ -758,7 +775,7 @@ function physics(f,inp,dt,plats){
   if(f.slam){ax=dir*.25;ay=.97}
   spring(P.ha,P.nk.x+ax*reach,P.nk.y+ay*reach,kA*mus+8,30*mus+1,P.nk,P.nk);
   spring(P.ea,P.nk.x+ax*13-dir*2,P.nk.y+ay*13+7,220*mus+5,14*mus,P.nk,P.nk);
-  if(!f.thrown)spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,kW*mus+6,Math.sqrt(kW)*1.1*mus+1,P.ha,P.ha);
+  if(!f.thrown){REACTMUL=f.onGround?(w.mass>2?.75:1):(w.mass>2?.3:.55);if(!f.thrown)spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,kW*mus+6,Math.sqrt(kW)*1.1*mus+1,P.ha,P.ha);REACTMUL=1}
   // off arm (loose)
   let ohx,ohy;if(near&&fc){const sw=Math.sin(f.walkT)*Math.min(1,Math.abs(P.hp.vx)/SPEED);ohx=P.nk.x-dir*4+sw*16*dir;ohy=P.nk.y+29}else{ohx=P.nk.x-dir*18;ohy=P.nk.y-10}
   spring(P.hb,ohx,ohy,70*mus,4,P.nk,P.nk);spring(P.eb,(P.nk.x+ohx)/2-dir*6,(P.nk.y+ohy)/2,40*mus,3,P.nk,P.nk);
@@ -793,6 +810,9 @@ function physics(f,inp,dt,plats){
   // velocities + friction
   const wasG=f.onGround;
   for(const k in P){const p=P[k];p.vx=(p.x-p.ox)/dt;p.vy=(p.y-p.oy)/dt;
+    // a bouncing bridge can carry you, but never fling you like a trampoline; and no runaway speeds
+    if(p.hitP&&p.hitP.plank&&p.vy<-360&&f.jumpCd<JUMPCD-.001)p.vy=-360;
+    {const sp=Math.hypot(p.vx,p.vy),cap=f.slam?2600:2300;if(sp>cap){p.vx*=cap/sp;p.vy*=cap/sp}}
     if(p.hitP){p.c=.06;p.gp=p.hitP;if(p.vy>0)p.vy=0;
       const isFoot=p===P.fa||p===P.fb,stepping=isFoot&&f.steps[p===P.fa?0:1].on;
       if(stepping){}else if(isFoot&&!rag&&mus>.3)p.vx*=.12;else p.vx*=rag?.97:.86}}
@@ -871,7 +891,9 @@ function depenetrate(f){
     for(const pl of G.plats){if(!pl.solid||pl.gone)continue;
       const ty=pl.craters?topAt(pl,q.x):pl.y;if(ty>=pl.y+pl.h-2)continue;
       if(q.x>pl.x-r&&q.x<pl.x+pl.w+r&&q.y>ty-r&&q.y<pl.y+pl.h+r){
-        const l=q.x-(pl.x-r),rr5=pl.x+pl.w+r-q.x,t=q.y-(ty-r),b=pl.y+pl.h+r-q.y,m=Math.min(l,rr5,t,b);
+        const l=q.x-(pl.x-r),rr5=pl.x+pl.w+r-q.x,t=q.y-(ty-r),b=pl.y+pl.h+r-q.y;let m=Math.min(l,rr5,t,b);
+        // push back out the side it came in from (not through a thin block to the other side)
+        if(q.oy<=ty-r+2)m=t;else if(q.oy>=pl.y+pl.h+r-2)m=b;else if(q.ox<=pl.x-r+2)m=l;else if(q.ox>=pl.x+pl.w+r-2)m=rr5;
         if(m===t){q.y=ty-r;if(q.vy>0)q.vy=0}else if(m===b){q.y=pl.y+pl.h+r;if(q.vy<0)q.vy=0}else if(m===l){q.x=pl.x-r;if(q.vx>0)q.vx=0}else{q.x=pl.x+pl.w+r;if(q.vx<0)q.vx=0}}}}
   syncState(f);
 }
@@ -958,7 +980,7 @@ function updateBombs(dt){
 function updateDebris(dt){for(let i=G.debris.length-1;i>=0;i--){const d=G.debris[i];d.vy+=GRAV*.8*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.ang+=d.va*dt;d.life-=dt;if(d.life<=0)G.debris.splice(i,1)}}
 // ground with craters: the top surface follows the dents, holes go all the way through
 function drawCratered(p,th){
-  const step=8,pts=[];for(let x=p.x;x<=p.x+p.w+.1;x+=step){const xx=Math.min(x,p.x+p.w);pts.push([xx,Math.min(p.y+p.h,topAt(p,xx))])}
+  const step=8,pts=[];for(let x=p.x;x<=p.x+p.w+.1;x+=step){const xx=Math.min(x,p.x+p.w);pts.push([xx,Math.min(p.y+p.h,p.y+craterDepth(p,xx))])}
   // body (split into solid runs so holes are real gaps)
   let run=[];const runs=[];for(const pt of pts){if(pt[1]>=p.y+p.h-2){if(run.length)runs.push(run);run=[]}else run.push(pt)}if(run.length)runs.push(run);
   for(const r of runs){ctx.fillStyle=th.stage;ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(r[0][0],p.y+p.h);for(const pt of r)ctx.lineTo(pt[0],pt[1]);ctx.lineTo(r[r.length-1][0],p.y+p.h);ctx.closePath();ctx.fill();ctx.stroke();
@@ -1054,7 +1076,7 @@ function makeCrater(x,y,r,d){
   for(const p of G.plats){if(!p.solid||p.gone||p.wall||p.car||p.crumble&&p.falling)continue;if(x>p.x-r*.5&&x<p.x+p.w+r*.5){const ty=topAt(p,x);if(ty>=y-60&&ty<=y+60&&ty<gy){g=p;gy=ty}}}
   if(!g)return;
   if(!g.craters)g.craters=[];
-  const maxD=Math.min(16,g.h*.4); // just a small dent that shows the impact
+  const maxD=Math.min(10,g.h*.3); // just a small dent that shows the impact
   const prev=craterDepth(g,x);g.craters.push({x,r,d:Math.min(maxD,prev*.5+d)});
   if(g.craters.length>24)g.craters.shift();
   const th=G.theme;
@@ -1718,7 +1740,29 @@ function trailThumb(cv,i,col){const c=cv.getContext('2d'),w=cv.width,h=cv.height
   if(t==='fire')dots(['#ffd23f','#ff7a2f','#ff3b30'],5);if(t==='spark')dots(['#fff','#9ff'],3);if(t==='stars')dots(['#ffd23f','#fff6b0'],4);
   if(t==='smoke')for(let k=0;k<5;k++){c.globalAlpha=.25+k*.1;c.fillStyle='#9aa0aa';c.beginPath();c.arc(14+k*10,30-k*3,5+k*1.6,0,7);c.fill()}
   c.restore()}
-function mapThumb(cv,m){const c=cv.getContext('2d'),w=cv.width,h=cv.height;const thumbBridges=()=>{if(!m||!m.bridges)return;c.save();c.scale(w/W,h/H);for(const bd of m.bridges){c.strokeStyle='#1d1640';c.lineWidth=8;c.beginPath();c.moveTo(bd.x1,bd.y1-30);c.quadraticCurveTo((bd.x1+bd.x2)/2,(bd.y1+bd.y2)/2-10,bd.x2,bd.y2-30);c.stroke();for(let j=0;j<bd.n;j++){const x=bd.x1+(bd.x2-bd.x1)*(j+.08)/bd.n,y=bd.y1+(bd.y2-bd.y1)*j/bd.n+Math.sin((j+.5)/bd.n*Math.PI)*16;c.fillStyle='#b07a45';c.fillRect(x,y-8,(bd.x2-bd.x1)/bd.n*.85,16);c.strokeStyle='#1d1640';c.lineWidth=4;c.strokeRect(x,y-8,(bd.x2-bd.x1)/bd.n*.85,16)}}c.restore()};
+const THUMBS={};
+function renderMapImage(mi,w,h){
+  const key=mi+':'+w+'x'+h;if(THUMBS[key])return THUMBS[key];
+  const off=document.createElement('canvas');off.width=w;off.height=h;
+  const sv={G,ctx,CW,CH,DPR,cx:cam.x,cy:cam.y,cz:cam.z,ci:cam.init,vs:view.s,acc,hitStop,shake,sticks:sticks.map(t=>({id:t.id,vx:t.vx,vy:t.vy,rel:t.rel}))};
+  try{
+    startMatch({demo:true,mode:'free',map:mi,slots:[]});G.over=true;
+    for(let i=0;i<240;i++)updateBridges(1/120);
+    const ps=G.plats.filter(p=>!p.wall&&!p.car);let x0=Math.min(...ps.map(p=>p.x)),x1=Math.max(...ps.map(p=>p.x+p.w)),y0=Math.min(...ps.map(p=>p.y)),y1=Math.max(...ps.filter(p=>!p.main).map(p=>p.y+60).concat(ps.filter(p=>p.main).map(p=>p.y+140)));
+    if(G.map.arena){const all=G.plats;x0=Math.min(...all.map(p=>p.x));x1=Math.max(...all.map(p=>p.x+p.w));y0=Math.min(...all.map(p=>p.y));y1=Math.max(...all.map(p=>p.y))+40}
+    x0-=60;x1+=60;y0-=90;y1+=10;
+    ctx=off.getContext('2d');CW=w;CH=h;DPR=1;shake=0;
+    view.s=Math.min(w/(x1-x0),h/(y1-y0));cam.x=(x0+x1)/2;cam.y=(y0+y1)/2;
+    drawBG();worldT();drawStage();drawDynamic();
+  }catch(e){console.error(e)}
+  G=sv.G;ctx=sv.ctx;CW=sv.CW;CH=sv.CH;DPR=sv.DPR;cam.x=sv.cx;cam.y=sv.cy;cam.z=sv.cz;cam.init=sv.ci;view.s=sv.vs;acc=sv.acc;hitStop=sv.hitStop;shake=sv.shake;
+  sticks.forEach((t,i)=>Object.assign(t,sv.sticks[i]));
+  return THUMBS[key]=off;
+}
+function mapThumb(cv,m){
+  if(m){const mi=MAPS.indexOf(m);if(mi>=0){const c=cv.getContext('2d'),img=renderMapImage(mi,cv.width,cv.height);c.clearRect(0,0,cv.width,cv.height);c.drawImage(img,0,0);return}}
+  mapThumbOld(cv,m)}
+function mapThumbOld(cv,m){const c=cv.getContext('2d'),w=cv.width,h=cv.height;const thumbBridges=()=>{if(!m||!m.bridges)return;c.save();c.scale(w/W,h/H);for(const bd of m.bridges){c.strokeStyle='#1d1640';c.lineWidth=8;c.beginPath();c.moveTo(bd.x1,bd.y1-30);c.quadraticCurveTo((bd.x1+bd.x2)/2,(bd.y1+bd.y2)/2-10,bd.x2,bd.y2-30);c.stroke();for(let j=0;j<bd.n;j++){const x=bd.x1+(bd.x2-bd.x1)*(j+.08)/bd.n,y=bd.y1+(bd.y2-bd.y1)*j/bd.n+Math.sin((j+.5)/bd.n*Math.PI)*16;c.fillStyle='#b07a45';c.fillRect(x,y-8,(bd.x2-bd.x1)/bd.n*.85,16);c.strokeStyle='#1d1640';c.lineWidth=4;c.strokeRect(x,y-8,(bd.x2-bd.x1)/bd.n*.85,16)}}c.restore()};
   if(!m){const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#ff8fd0');g.addColorStop(.5,'#ffd23f');g.addColorStop(1,'#5ccaff');c.fillStyle=g;c.fillRect(0,0,w,h);c.font=`${h*.42}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('🎲',w/2,h*.45);return}
   const th=THEMES[m.theme],g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,th.sky[0]);g.addColorStop(.6,th.sky[1]);g.addColorStop(1,th.sky[2]);c.fillStyle=g;c.fillRect(0,0,w,h);
   c.save();c.scale(w/W,h/H);c.fillStyle=th.hill;c.fillRect(0,H-150,W,150);for(const p of m.plats){if(p.solid){c.fillStyle=th.stage;c.strokeStyle='#1d1640';c.lineWidth=10;c.fillRect(p.x,p.y,p.w,Math.min(p.h,240));c.strokeRect(p.x,p.y,p.w,Math.min(p.h,240));c.fillStyle=th.top;c.fillRect(p.x,p.y-6,p.w,18)}else{c.fillStyle='rgba(255,255,255,.75)';c.fillRect(p.x,p.y-3,p.w,10)}}c.restore();thumbBridges()}
@@ -1752,10 +1796,26 @@ function buildPicker(){
   document.querySelectorAll('#pkTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===pkMode));
   $('pkInfo').innerHTML='';
   if(pkMode==='map'){
-    $('pkTitle').textContent='CHOOSE MAP';const g=mkGrid(4,3,'mapgrid');body.appendChild(g);
-    cell(g,{label:'Random',on:setup.map==='random',thumb:cv=>mapThumb(cv,null),cw:224,ch:126,onTap:()=>{setup.map='random';svSetup();openLobby()}});
-    MAPS.forEach((m,i)=>cell(g,{label:m.name,on:setup.map===i,thumb:cv=>mapThumb(cv,m),cw:224,ch:126,onTap:()=>{setup.map=i;svSetup();openLobby()}}));
-    return}
+    $('pkTitle').textContent='CHOOSE MAP';
+    let sel=setup.map;
+    const wrap=document.createElement('div');wrap.className='msel';body.appendChild(wrap);
+    const pv=document.createElement('div');pv.className='mprev';
+    pv.innerHTML='<div class="mpic"><canvas width="640" height="340" style="position:absolute;inset:0"></canvas><div class="mname"></div></div><div class="mdesc"></div><div class="mtags"></div><button class="big go mpick">✓ PICK THIS MAP</button>';
+    wrap.appendChild(pv);
+    const g=document.createElement('div');g.className='mlist';wrap.appendChild(g);
+    const fit=cv=>{const w=cv.offsetWidth||cv.parentNode.offsetWidth,h=cv.offsetHeight||cv.parentNode.offsetHeight;if(w&&h){cv.width=Math.round(w*2);cv.height=Math.round(h*2)}};
+    const show=()=>{const m=sel==='random'?null:MAPS[sel];const pc=pv.querySelector('canvas');fit(pc);mapThumb(pc,m);
+      pv.querySelector('.mname').textContent=m?m.name:'Random';
+      pv.querySelector('.mdesc').textContent=m?MAP_INFO[sel]:'A surprise map every match.';
+      pv.querySelector('.mtags').innerHTML=(m?MAP_TAGS[sel]:['Surprise']).map(t=>'<span>'+t+'</span>').join('');
+      g.querySelectorAll('.mcard').forEach(c=>c.classList.toggle('on',c.dataset.k===String(sel)))};
+    const pick=()=>{setup.map=sel;svSetup();openLobby()};
+    pv.querySelector('.mpick').onclick=pick;pv.querySelector('.mpic').onclick=pick;
+    [['random','Random'],...MAPS.map((m,i)=>[i,m.name])].forEach(([k,nm])=>{const b=document.createElement('button');b.className='mcard';b.dataset.k=String(k);
+      b.innerHTML='<canvas width="200" height="112"></canvas><span>'+nm+'</span>';g.appendChild(b);
+      requestAnimationFrame(()=>{const c=b.querySelector('canvas');fit(c);mapThumb(c,k==='random'?null:MAPS[k])});
+      b.onclick=()=>{if(String(sel)===String(k)){pick();return}sel=k;show();sfx('pick')}});
+    requestAnimationFrame(show);return}
   if(pkMode==='weapon'){
     $('pkTitle').textContent=L?'LOCKER':who+' WEAPON';
     const testing=flow.type==='test',ch=setup.w[fp]||'random',g=mkGrid(8,4);body.appendChild(g);

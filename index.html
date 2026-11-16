@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.33 · Nov 16';
+const APP_VERSION='v1.34 · Nov 16';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -800,6 +800,7 @@ function physics(f,inp,dt,plats){
     P.hp.ay+=(dy*(dy<0?850:300)-P.hp.vy*42)*bal;
     for(const k of['hp','nk','hd','ea','ha','eb','hb'])P[k].ay-=GRAV*bal*.92;
     const kw=(tx?12:11)*bal,fx=(tx-P.hp.vx)*kw;for(const k of['hp','nk','hd','ea','ha','eb','hb','ka','kb'])P[k].ax+=fx;
+  }else if(rag&&f.frozen<=0&&tx&&!f.dying){const fx=(tx-P.hp.vx)*1.6;for(const k of['hp','nk','hd'])P[k].ax+=fx
   }else if(!rag&&f.frozen<=0&&tx){const fx=(tx*1.1-P.hp.vx)*7;for(const k of['hp','nk','hd','ea','ha','eb','hb','ka','kb','fa','fb'])P[k].ax+=fx}
   if(!near&&inp.my>.6&&!rag)P.hp.ay+=GRAV*.7;
   if(f.dashT>0)for(const k in P)P[k].ay-=GRAV*.85;
@@ -879,7 +880,7 @@ function hit(o,dmg,dx,dy,kb,att,opt){
   if(!opt.crush){dy=dy*.75-.42;l=Math.hypot(dx,dy);dx/=l;dy/=l}
   const P=o.P,keep=.25;for(const q in P){P[q].vx*=keep;P[q].vy*=keep}
   addVel(o,dx*k,dy*k,(dx>=0?1:-1)*k*.26);
-  o.hitstun=Math.min(1.1,.15+k/1700)*(opt.crush?1.3:1);o.slam=false;o.dashT=0;o.sprayT=0;o.flameT=0;
+  o.hitstun=Math.min(.85,.15+k/2000)*(opt.crush?1.3:1);o.jumps=1;o.slam=false;o.dashT=0;o.sprayT=0;o.flameT=0;
   if(opt.crush&&o.ground&&o.ground.plank)breakPlank(o.ground);
   if(opt.crush){o.squash=.55;o.crushT=.5;tag=tag||'CRUSH!';G.fx.push({k:'ring',x:o.x,y:Math.max(P.fa.y,P.fb.y),r:10,max:170,life:.35,ml:.35,col:'#fff'});
     for(let i=0;i<24;i++){const sd=i%2?1:-1;part(o.x,Math.max(P.fa.y,P.fb.y),sd*(150+Math.random()*450),-Math.random()*220,.5,i%3?'#d9c7a7':'#fff',6+Math.random()*6,700)}}
@@ -955,7 +956,7 @@ function ledge(f,inp,dt){
   for(const p of G.plats){if(!p.solid||p.gone||p.car||p.wall||p.w<90)continue;
     for(const side of[-1,1]){const cx=side<0?p.x:p.x+p.w,cy=p.y;if(solidAt(cx+side*16,cy+14)||solidAt(cx+side*16,cy+60)||solidAt(cx+side*16,cy-14))continue;
       const out=side<0?P.hp.x<cx+2:P.hp.x>cx-2;
-      if(out&&P.hp.y>cy-4&&Math.hypot(P.nk.x-(cx+side*15),P.nk.y-(cy+12))<48&&!groundBelow(cx+side*30,cy-5,G.plats,false)){
+      if(out&&P.hp.y>cy-4&&Math.hypot(P.nk.x-(cx+side*15),P.nk.y-(cy+12))<72&&!groundBelow(cx+side*30,cy-5,G.plats,false)){
         f.ledge={p,side,t:2.4,age:0};f.jumps=1;f.invuln=Math.max(f.invuln,.3);tone(700,900,.06,'triangle',.04);return}}}
 }
 // ---------- dynamic maps ----------
@@ -1423,7 +1424,8 @@ function updateFighter(f,inp,dt){
   if(ctrl){
     if(f.onGround&&f.jumpCd<=0)f.jumps=1;
     if(inp.my<-.55&&f.jumpCd<=0&&f.jumps>0){f.jumps--;
-      const P=f.P;for(const k in P){const p=P[k];p.vy=Math.min(p.vy,0)*.3-JUMP*(k==='fa'||k==='fb'?.75:1)}
+      const P=f.P,low=!f.onGround&&G.plats.some(q=>q.main&&f.y>q.y+20),jm=low?1.22:1;for(const k in P){const p=P[k];p.vy=Math.min(p.vy,0)*.3-JUMP*jm*(k==='fa'||k==='fb'?.75:1)}
+      if(low)for(let i=0;i<14;i++)part(f.x,f.y,(Math.random()-.5)*200,140+Math.random()*200,.4,COLORS[f.cos.color],6,0);
       f.jumpCd=JUMPCD;f.noSup=.3;f.crouchV-=100;f.steps[0].on=f.steps[1].on=false;f.slam=false;
       for(let i=0;i<8;i++)part(f.x,f.y,(Math.random()-.5)*300,Math.random()*80,.3,'rgba(255,255,255,.6)',5,0);sfx('jump')}
     if(inp.my>.6&&f.onGround&&f.ground&&f.ground.thin)f.dropT=.32;
@@ -1461,7 +1463,7 @@ function updateFighter(f,inp,dt){
       f.weapon=it.type;f.cd=Math.min(f.cd,.3);f.cdMax=WEAP[it.type].cd;f.burst=0;f.sprayT=0;G.items.splice(i,1);
       floatText(f.x,f.y-120,WEAP[it.type].name.toUpperCase(),'#ffd23f');sfx('pick');
       for(let j=0;j<12;j++){const a=Math.random()*6.28;part(it.x,it.y-15,Math.cos(a)*200,Math.sin(a)*200,.35,'#ffd23f',4,0)}}}
-  if(f.x<-1500||f.x>W+1500||f.y>H+650||f.y<-2600)ko(f);
+  if(f.x<-1500||f.x>W+1500||f.y>H+900||f.y<-2600)ko(f);
 }
 function updateProj(dt){
   for(let i=G.proj.length-1;i>=0;i--){const p=G.proj[i];let dead=false;
@@ -1869,7 +1871,7 @@ function drawHUD(){
       ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,rad,0,7);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,rad+2,0,7);ctx.stroke();
       drawPortrait(ctx,f,0,rad*.12,rad*.62,false);
       // danger ring: fills as you near the blast zone
-      const dz=Math.max((-f.x)/1500,(f.x-W)/1500,(-f.y)/2600,(f.y-H)/650),dg=Math.max(0,Math.min(1,dz));
+      const dz=Math.max((-f.x)/1500,(f.x-W)/1500,(-f.y)/2600,(f.y-H)/900),dg=Math.max(0,Math.min(1,dz));
       if(dg>.05){ctx.strokeStyle=dg>.7?'#ff3b3b':'#ffd23f';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(0,0,rad+6,-Math.PI/2,-Math.PI/2+6.283*dg);ctx.stroke()}
       ctx.restore()}}
   sticks.forEach((s,i)=>{if(!G.fighters[i])return;const col=COLORS[G.fighters[i].cos.color];

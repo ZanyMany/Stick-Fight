@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.32 · Nov 15';
+const APP_VERSION='v1.33 · Nov 16';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -479,7 +479,7 @@ const WEAP={
   heal:{mass:.5,arm:900,wrist:900,name:'Healing Staff',kind:'wand',len:46,contact:3,kb:220,ab:'mend',cd:9,abName:'Mend (+20 HP)'},
   laser:{mass:1.2,arm:1000,wrist:1300,name:'Laser Rifle',kind:'gun',len:60,ab:'beam',cd:2,abName:'Piercing Beam'},
   grenadeL:{mass:1.6,arm:900,wrist:1000,name:'Grenade Launcher',kind:'gun',len:50,ab:'grenade',cd:2.2,abName:'Bouncing Grenade'},
-  rail:{mass:1.8,arm:900,wrist:1200,name:'Railgun',kind:'gun',len:72,ab:'rail',cd:4.5,abName:'Rail Shot (thru walls)'},
+  rail:{mass:1.8,arm:900,wrist:1200,name:'Railgun',kind:'gun',len:72,ab:'rail',cd:5.5,abName:'Rail Shot'},
   flamer:{mass:1.8,arm:900,wrist:1000,name:'Flamethrower',kind:'gun',len:52,ab:'flame',cd:3.5,abName:'Flame Stream'},
   harpoon:{mass:1.4,arm:950,wrist:1100,name:'Harpoon Gun',kind:'gun',len:56,ab:'hook',cd:3,abName:'Harpoon Pull'},
   executioner:{crush:1,curve:1.7,minSpd:380,mass:4.6,arm:650,wrist:170,name:'Executioner',kind:'melee',len:100,contact:30,kb:950,ab:'swing',cd:1.3,abName:'Huge swing (needs speed!)',risky:1},
@@ -1164,7 +1164,7 @@ function release(f){
     case'blink':teleport(f,ax*240,ay*240);break;
     case'mend':f.dmg=Math.max(0,f.dmg-20);floatText(f.x,f.y-120,'+20 HP','#7dff6b');for(let i=0;i<24;i++){const a=Math.random()*6.28;part(f.x+Math.cos(a)*30,f.y-50+Math.sin(a)*40,0,-80-Math.random()*80,.8,i%2?'#7dff6b':'#fff',5,-100)}sfx('pick');break;
     case'beam':beam(f,{len:1300,dmg:13,kb:480,col:'#ff4d8d',w:6,pierceWalls:false});sfx('laser');break;
-    case'rail':beam(f,{len:1800,dmg:24,kb:820,col:'#7fd8ff',w:8,pierceWalls:true});recoil(f,260);shake=Math.max(shake,9);sfx('sniper');break;
+    case'rail':beam(f,{len:1800,dmg:18,kb:500,col:'#7fd8ff',w:8});recoil(f,260);shake=Math.max(shake,9);sfx('sniper');break;
     case'grenade':{const m=muzzle(f);G.proj.push({type:'grenade',x:m.x,y:m.y,px:m.x,py:m.y,vx:ax*720+f.vx*.3,vy:ay*720-200,owner:f,life:1.9,r:9,t:0,hitCd:0,dmg:15,kb:640,explode:120,spin:0});recoil(f,80);sfx('swing');break}
     case'flame':f.flameT=1.2;f.flameAcc=0;break;
     case'glass':shoot(f,{type:'bullet',speed:2800,dmg:45,kb:1500,color:'#9ff3ff',r:6,sniper:1});recoil(f,950);f.hitstun=Math.max(f.hitstun,.35);shake=Math.max(shake,16);G.flash=Math.max(G.flash||0,.1);sfx('sniper');sfx('boom');break;

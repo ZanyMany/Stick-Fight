@@ -19,4 +19,4 @@ A 1v1 ragdoll stickman duel game for phones, in one HTML file. Physics-based fig
 ## Modes
 Play (one fight-setup screen: P1 & P3 on the left, P2 & P4 on the right (add/remove P2-P4), set each to Player or CPU Easy/Normal/Hard, customize each on its own half of the screen, pick mode and map), Testing Grounds (training dummy, try any weapon, no-cooldown and slow-mo toggles) and the Locker (spend coins on weapons, colors, hats and trails).
 
-35 weapons, 11 maps (incl. breakable rope bridges, a highway with cars, crumbling ruins and the enclosed Bomb Box arena), ledge grabs, parries, 100 HP health, coins from KOs and wins.
+35 weapons, 14 maps (incl. breakable rope bridges, a highway with cars, crumbling ruins the enclosed Kaboom Box arena, a spinning wheel, floating rafts and a laser lab), ledge grabs, parries, 100 HP health, coins from KOs and wins.

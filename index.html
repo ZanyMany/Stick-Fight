@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.41 · Nov 17';
+const APP_VERSION='v1.42 · Nov 17';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -482,7 +482,7 @@ const WEAP={
   rail:{mass:1.8,arm:900,wrist:1200,name:'Railgun',kind:'gun',len:72,ab:'rail',cd:5.5,abName:'Rail Shot'},
   flamer:{mass:1.8,arm:900,wrist:1000,name:'Flamethrower',kind:'gun',len:52,ab:'flame',cd:2.98,abName:'Flame Stream'},
   harpoon:{mass:1.4,arm:950,wrist:1100,name:'Harpoon Gun',kind:'gun',len:56,ab:'hook',cd:2.55,abName:'Harpoon Pull'},
-  executioner:{crush:1,curve:1.7,minSpd:380,mass:4.6,arm:650,wrist:170,name:'Executioner',kind:'melee',len:100,contact:24,kb:900,ab:'swing',cd:1.6,abName:'Huge swing (needs speed!)',risky:1},
+  executioner:{crush:1,curve:1.7,minSpd:440,mass:4.6,arm:600,wrist:170,name:'Executioner',kind:'melee',len:100,contact:19,kb:800,ab:'swing',cd:2,abName:'Huge swing (needs speed!)',risky:1},
   rapier:{tipOnly:1,mass:.45,arm:1300,wrist:1100,name:'Rapier',kind:'melee',len:94,contact:7,kb:420,ab:'lunge',cd:1.5,abName:'Lunge (only the tip hurts)',thrust:1,risky:1},
   glass:{headMult:2,mass:2,arm:900,wrist:1300,name:'Glass Cannon',kind:'gun',len:72,ab:'glass',cd:6,abName:'45-dmg shot, huge recoil',risky:1},
   chaos:{mass:.6,arm:900,wrist:900,name:'Chaos Orb',kind:'wand',len:50,contact:3,kb:220,ab:'chaos',cd:5,abName:'Giant blast (hurts you too!)',risky:1}
@@ -829,7 +829,7 @@ function physics(f,inp,dt,plats){
   if(f.slam){ax=dir*.25;ay=.97}
   spring(P.ha,P.nk.x+ax*reach,P.nk.y+ay*reach,kA*mus+8,30*mus+1,P.nk,P.nk);
   spring(P.ea,P.nk.x+ax*13-dir*2,P.nk.y+ay*13+7,220*mus+5,14*mus,P.nk,P.nk);
-  if(!f.thrown){REACTMUL=f.onGround?(w.mass>2?.75:1):(w.mass>2?.3:.55);if(!f.thrown)spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,kW*mus+6,Math.sqrt(kW)*1.1*mus+1,P.ha,P.ha);REACTMUL=1}
+  if(!f.thrown){REACTMUL=f.hook?1.7:f.onGround?(w.mass>2?.75:1):(w.mass>2?.3:.55);if(!f.thrown)spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,kW*mus+6,Math.sqrt(kW)*1.1*mus+1,P.ha,P.ha);REACTMUL=1}
   // off arm (loose)
   let ohx,ohy;if(near&&fc){const sw=Math.sin(f.walkT)*Math.min(1,Math.abs(P.hp.vx)/SPEED);ohx=P.nk.x-dir*4+sw*16*dir;ohy=P.nk.y+29}else{ohx=P.nk.x-dir*18;ohy=P.nk.y-10}
   spring(P.hb,ohx,ohy,70*mus,4,P.nk,P.nk);spring(P.eb,(P.nk.x+ohx)/2-dir*6,(P.nk.y+ohy)/2,40*mus,3,P.nk,P.nk);
@@ -870,6 +870,27 @@ function physics(f,inp,dt,plats){
     if(p.hitP){p.c=.06;p.gp=p.hitP;if(p.vy>0)p.vy=0;
       const isFoot=p===P.fa||p===P.fb,stepping=isFoot&&f.steps[p===P.fa?0:1].on;
       if(stepping){}else if(isFoot&&!rag&&mus>.3)p.vx*=.12;else p.vx*=rag?.97:.86}}
+  // weapon hook: tip resting on a platform while you're in the air = hang, grind along it, pull up, fling
+  {const tp=P.tp,ha=P.ha;let gp=tp.hitP;
+    // the shaft can also hook over an edge: hand below the top surface, tip above it, crossing inside the platform's width
+    if(!gp&&!f.thrown&&!f.onGround)for(const pl of plats){if(!pl.solid||pl.gone||pl.car||pl.wall)continue;const top=pl.y;
+      if(ha.y>top+4&&tp.y<top+2&&ha.y-tp.y>8){const t=(ha.y-top)/(ha.y-tp.y),cx=ha.x+(tp.x-ha.x)*t;if(cx>pl.x+2&&cx<pl.x+pl.w-2){gp=pl;
+        // the shaft rests on the surface: keep the tip from sinking back through it
+        if(tp.y>top-tp.r-1)tp.y=top-tp.r-1;if(tp.vy>0)tp.vy=0;break}}}
+    // stay hooked while the tip is still over that platform near its top surface: the tip rests on it and bears your weight
+    if(!gp&&f.hook&&!f.hook.gone){const pl=f.hook;if(tp.x>pl.x-4&&tp.x<pl.x+pl.w+4&&tp.y>pl.y-40&&tp.y<pl.y+pl.h&&ha.y>pl.y-10){gp=pl;if(tp.y>pl.y-tp.r-1)tp.y=pl.y-tp.r-1;if(tp.vy>0)tp.vy=0}}
+    const hooked=!f.thrown&&!f.onGround&&!f.dying&&f.alive&&gp&&!gp.gone&&f.frozen<=0&&ha.y>tp.y-6&&f.hitstun<=.05;
+    if(hooked){if(!f.hook){f.hookT=0;sfx('clang',380)}f.hook=gp;f.hookT+=dt;
+      // arm strength carries your weight, with a little sag so it feels like hanging
+      for(const k in P){if(k==='tp')continue;const p=P[k];p.vy-=GRAV*.8*dt;p.vy*=1-1.8*dt}
+      // hold up to haul yourself over the edge
+      if(inp.my<-.5){const dx=tp.x-P.hp.x;for(const k in P){if(k==='tp')continue;P[k].vy-=1500*dt;P[k].vx+=Math.sign(dx)*500*dt}}
+      // grinding sparks when the tip slides along the top
+      if(Math.abs(tp.vx)>140&&Math.random()<.5)part(tp.x,tp.y+4,-tp.vx*.3+(Math.random()-.5)*80,-60-Math.random()*120,.25,Math.random()<.5?'#ffd23f':'#fff',3,700);
+      tp.vx*=1-1.2*dt;if(tp.vy<0&&inp.my>-.5)tp.vy*=.5;}
+    else if(f.hook){// letting go keeps your swing: a little boost in the direction you were moving
+      const sp=Math.hypot(f.vx,f.vy);if(sp>250&&f.hookT>.12){const bx=f.vx/sp,by=f.vy/sp;for(const k in P){P[k].vx+=bx*140;P[k].vy+=by*140-60}if(!f.cpu)floatText(f.x,f.y-110,'FLING!','#7fd8ff')}
+      f.hook=null}}
   syncState(f);
   // weapon tip
   let wx=P.tp.x-P.ha.x,wy=P.tp.y-P.ha.y,wl=Math.hypot(wx,wy)||1;f.wdx=wx/wl;f.wdy=wy/wl;
@@ -885,7 +906,7 @@ function hit(o,dmg,dx,dy,kb,att,opt){
   let tag=opt.tag||'';
   // frozen targets shatter on the next non-ice hit
   if(o.frozen>0&&!opt.ice){dmg*=1.5;kb*=1.4;o.frozen=0;tag=tag||'SHATTER!';for(let i=0;i<26;i++){const a=Math.random()*6.28,s2=200+Math.random()*500;part(o.x,o.y-50,Math.cos(a)*s2,Math.sin(a)*s2,.6,i%2?'#dff8ff':'#9be7ff',6+Math.random()*6,900)}}
-  if(att&&att!==o){const aw=WEAP[att.weapon];dmg=Math.min(dmg,aw&&aw.risky?42:32)}
+  if(att&&att!==o){const aw=WEAP[att.weapon];dmg=Math.min(dmg,aw&&aw.risky?35:30)}
   o.dmg=Math.min(100,o.dmg+dmg);
   // knockback grows with how hurt you are; big hits on a healthy fighter can't launch them off the map
   const k=Math.min(kb*1.12*1.3*(opt.kbMult||1)*(.62+.9*Math.min(1,o.dmg/100)),650+11*o.dmg);
@@ -957,6 +978,7 @@ function depenetrate(f){
 // ---------- ledge grab: catch an edge when falling, then climb up or let go ----------
 function ledge(f,inp,dt){
   f.ledgeCd=Math.max(0,(f.ledgeCd||0)-dt);const P=f.P;
+  if(f.hook&&!f.ledge)return;
   if(f.ledge){const L=f.ledge,p=L.p;
     if(p.gone||f.hitstun>0||f.dying||!G.plats.includes(p)){f.ledge=null;f.ledgeCd=.4;return}
     L.t-=dt;L.age+=dt;

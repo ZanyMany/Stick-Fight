@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.38 · Nov 17';
+const APP_VERSION='v1.39 · Nov 17';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -456,7 +456,7 @@ const WEAP={
   hammer:{crush:1,curve:1.3,mass:3.2,arm:700,wrist:260,name:'War Hammer',kind:'melee',len:68,contact:14,kb:640,stiff:.13,ab:'slam',cd:4,abName:'Ground Slam'},
   spear:{mass:1.6,arm:900,wrist:480,name:'Spear',kind:'melee',len:114,contact:9,kb:470,stiff:.3,ab:'thrust',cd:.6,abName:'Thrust',thrust:1},
   axe:{mass:2,arm:800,wrist:380,name:'Battle Axe',kind:'melee',len:64,contact:11,kb:500,stiff:.22,ab:'boomer',cd:3.2,abName:'Boomerang Throw'},
-  fire:{mass:0.5,arm:900,wrist:900,name:'Fire Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'fireball',cd:1.3,abName:'Fireball'},
+  fire:{mass:0.5,arm:900,wrist:900,name:'Fire Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'fireball',cd:1.8,abName:'Fireball'},
   ice:{mass:0.5,arm:900,wrist:900,name:'Frost Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'ice',cd:2.4,abName:'Freeze Shard'},
   bolt:{mass:0.7,arm:850,wrist:800,name:'Storm Staff',kind:'wand',len:66,contact:4,kb:250,stiff:.25,ab:'lightning',cd:2.6,abName:'Lightning'},
   void:{mass:0.5,arm:900,wrist:900,name:'Void Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'grav',cd:5,abName:'Black Hole'},
@@ -605,6 +605,7 @@ function chooseWeapon(f){
   if(f.dummy)return'fire';
   if(G.mode==='free'&&!f.cpu&&f.fixedW)return f.fixedW;
   if(G.mode==='free'&&!f.cpu){const k=(f.wchoice&&f.wchoice!=='random'&&WEAP[f.wchoice])?f.wchoice:pick(G.test?WKEYS:ownedWeapons());f.fixedW=k;return k}
+  if(G.mode==='rounds')return pick(WKEYS);
   if(f.wchoice&&f.wchoice!=='random'&&WEAP[f.wchoice])return f.wchoice;
   if(G.demo||f.cpu||G.test)return pick(WKEYS);
   return pick(ownedWeapons());
@@ -1143,7 +1144,7 @@ function release(f){
     case'dash':f.dashT=.22;addVel(f,ax*820-f.vx*.5,ay*640-(ay>-.2?160:0),0);startSwing(f,.28);sfx('dash');break;
     case'slam':if(!f.onGround){f.slam=true;addVel(f,-f.vx*.6,1250,0)}else{shockwave(f)}startSwing(f,.3,f.facing*.3,.95);break;
     case'boomer':{f.thrown=true;const m=muzzle(f);G.proj.push({wid:f.weapon,type:'axe',x:m.x,y:m.y,px:m.x,py:m.y,vx:ax*820,vy:ay*820,owner:f,life:2.4,r:22,t:0,hitCd:0,dmg:10,kb:440,spin:0});recoil(f,90);sfx('swing');break}
-    case'fireball':shoot(f,{type:'fire',speed:620,r:12,dmg:9,kb:620,explode:85,color:'#ff7a2f',pal:['#ffd23f','#ff7a2f','#ff3b30']});recoil(f,40);sfx('fire');break;
+    case'fireball':shoot(f,{type:'fire',speed:560,r:12,dmg:7,kb:460,explode:70,color:'#ff7a2f',pal:['#ffd23f','#ff7a2f','#ff3b30']});recoil(f,40);sfx('fire');break;
     case'ice':shoot(f,{type:'ice',speed:820,r:9,dmg:6,kb:200,color:'#9be7ff'});recoil(f,30);sfx('ice');break;
     case'lightning':lightning(f);break;
     case'grav':shoot(f,{type:'grav',speed:250,r:16,dmg:11,kb:1100,explode:140,word:'VOID!',life:2.4,color:'#b15cff',pal:['#b15cff','#7a2bd6','#fff','#e3c2ff']});sfx('void');break;

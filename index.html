@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.36 · Nov 16';
+const APP_VERSION='v1.37 · Nov 16';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -1424,7 +1424,7 @@ function updateFighter(f,inp,dt){
   if(ctrl){
     if(f.onGround&&f.jumpCd<=0)f.jumps=1;
     f.upHold=inp.my<-.6?(f.upHold||0)+dt:0;
-    if(inp.my<-.6&&(f.cpu?gtime-(f.lastJump||-9)>1:f.upHold>=1)&&f.jumpCd<=0&&f.jumps>0){f.jumps--;f.upHold=-1;f.lastJump=gtime;
+    if(inp.my<-.6&&(f.cpu?gtime-(f.lastJump||-9)>.5:f.upHold>=.5)&&f.jumpCd<=0&&f.jumps>0){f.jumps--;f.upHold=-1;f.lastJump=gtime;
       const P=f.P,low=!f.onGround&&G.plats.some(q=>q.main&&f.y>q.y+20),jm=low?1.22:1;for(const k in P){const p=P[k];p.vy=Math.min(p.vy,0)*.3-JUMP*jm*(k==='fa'||k==='fb'?.75:1)}
       if(low)for(let i=0;i<14;i++)part(f.x,f.y,(Math.random()-.5)*200,140+Math.random()*200,.4,COLORS[f.cos.color],6,0);
       f.jumpCd=JUMPCD;f.noSup=.3;f.crouchV-=100;f.steps[0].on=f.steps[1].on=false;f.slam=false;
@@ -1804,7 +1804,7 @@ function drawOverhead(){
       ctx.fillStyle=ready?'#ffd23f':'#7fd8ff';rr(x,y2,Math.max(h2,w*fr),h2,h2/2);ctx.fill();
       if(ready){ctx.globalAlpha=.5+.5*Math.sin(gtime*8);ctx.strokeStyle='#fff6b0';ctx.lineWidth=2;rr(x-3,y2-2.5,w+6,h2+5,(h2+5)/2);ctx.stroke();ctx.globalAlpha=1}}
     // jump charge: ring fills while you hold up
-    if(!f.cpu&&f.upHold>0&&f.jumps>0){const fx=CW/2+(f.x-cam.x)*view.s,fy=CH/2+(f.y-cam.y)*view.s+4,q=Math.min(1,f.upHold);ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.arc(fx,fy,13*S,0,7);ctx.stroke();ctx.strokeStyle=q>=1?'#ffd23f':'#7fd8ff';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(fx,fy,13*S,-Math.PI/2,-Math.PI/2+6.283*q);ctx.stroke()}
+    if(!f.cpu&&f.upHold>0&&f.jumps>0){const fx=CW/2+(f.x-cam.x)*view.s,fy=CH/2+(f.y-cam.y)*view.s+4,q=Math.min(1,f.upHold/.5);ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.arc(fx,fy,13*S,0,7);ctx.stroke();ctx.strokeStyle=q>=1?'#ffd23f':'#7fd8ff';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(fx,fy,13*S,-Math.PI/2,-Math.PI/2+6.283*q);ctx.stroke()}
     // jump pip
     if(!f.cpu&&!f.onGround){ctx.fillStyle=f.jumps>0?'#7fd8ff':'rgba(255,255,255,.35)';ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+w+9*S,y+h/2,4.5*S,0,7);ctx.fill();ctx.stroke()}
   }

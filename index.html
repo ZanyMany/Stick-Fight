@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.37 · Nov 16';
+const APP_VERSION='v1.38 · Nov 17';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -569,6 +569,7 @@ function newFighter(idx,cpu,lvl){const f={idx,cpu,lvl,cos:cos[idx],x:0,y:0,vx:0,
 function startMatch(opts){
   const map=MAPS[opts.map];
   const plats=map.plats.map(p=>Object.assign({dx:0},p));
+  for(const p of plats)if(p.main||p.wall&&p.h>500)p.h=Math.max(p.h,H+1400-p.y);
   G={demo:!!opts.demo,opts,map,theme:THEMES[map.theme],plats,mode:opts.mode,pool:opts.demo||opts.test?WKEYS:ownedWeapons(),noItems:true,
      fighters:(opts.slots||[0,1]).map((_,i)=>{const sl=(opts.slots||[])[i]||{t:i?'cpu':'human',lvl:'normal'};const f=newFighter(i,!!opts.demo||sl.t!=='human','normal');f.lvl=sl.lvl||'normal';f.slot=sl.t;f.pid=opts.pids?opts.pids[i]:i;f.cos=cos[f.pid]||cos[i];return f}),
      proj:[],items:[],parts:[],texts:[],bolts:[],fx:[],slowmo:0,flash:0,itemT:8,time:120,ready:opts.demo?0:1.3,over:false,overT:0,ann:null,elapsed:0};
@@ -1424,7 +1425,7 @@ function updateFighter(f,inp,dt){
   if(ctrl){
     if(f.onGround&&f.jumpCd<=0)f.jumps=1;
     f.upHold=inp.my<-.6?(f.upHold||0)+dt:0;
-    if(inp.my<-.6&&(f.cpu?gtime-(f.lastJump||-9)>.5:f.upHold>=.5)&&f.jumpCd<=0&&f.jumps>0){f.jumps--;f.upHold=-1;f.lastJump=gtime;
+    if(inp.my<-.6&&(f.cpu?gtime-(f.lastJump||-9)>.3:f.upHold>=.3)&&f.jumpCd<=0&&f.jumps>0){f.jumps--;f.upHold=-1;f.lastJump=gtime;
       const P=f.P,low=!f.onGround&&G.plats.some(q=>q.main&&f.y>q.y+20),jm=low?1.22:1;for(const k in P){const p=P[k];p.vy=Math.min(p.vy,0)*.3-JUMP*jm*(k==='fa'||k==='fb'?.75:1)}
       if(low)for(let i=0;i<14;i++)part(f.x,f.y,(Math.random()-.5)*200,140+Math.random()*200,.4,COLORS[f.cos.color],6,0);
       f.jumpCd=JUMPCD;f.noSup=.3;f.crouchV-=100;f.steps[0].on=f.steps[1].on=false;f.slam=false;
@@ -1575,7 +1576,10 @@ function drawBG(){
   else{layer(.3,th.hill2,200,690+(H-900),1);layer(.55,th.hill,150,800+(H-900),4)}
 }
 function worldT(){const s=view.s,sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;ctx.setTransform(DPR*s,0,0,DPR*s,DPR*(CW/2-cam.x*s+sx),DPR*(CH/2-cam.y*s+sy))}
-function drawStage(){
+function drawAbyss(){if(G.map.arena)return;const top=Math.min(...G.plats.filter(p=>p.main).map(p=>p.y))+40;
+  const g=ctx.createLinearGradient(0,top,0,top+520);g.addColorStop(0,'rgba(29,22,64,0)');g.addColorStop(.6,'rgba(29,22,64,.55)');g.addColorStop(1,'rgba(14,10,34,.92)');
+  ctx.fillStyle=g;ctx.fillRect(-4000,top,W+8000,520);ctx.fillStyle='rgba(14,10,34,.92)';ctx.fillRect(-4000,top+519,W+8000,3000)}
+function drawStage(){drawAbyss();
   const th=G.theme;ctx.lineJoin='round';
   for(const p of G.plats){
     if(p.gone||p.plank||p.car)continue;
@@ -1584,9 +1588,12 @@ function drawStage(){
       const big=p.main;
       if(p.craters&&p.craters.length){drawCratered(p,th);ctx.restore();continue}
       ctx.fillStyle=th.stage;ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.fill();
-      ctx.fillStyle='rgba(0,0,0,.14)';ctx.fillRect(p.x,p.y+p.h*.72,p.w,p.h*.28);ctx.strokeRect(p.x,p.y,p.w,p.h);
+      if(p.h>500){const g=ctx.createLinearGradient(0,p.y+140,0,p.y+760);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(20,14,50,.55)');ctx.fillStyle=g;ctx.fillRect(p.x,p.y+140,p.w,p.h-140);
+        ctx.strokeStyle='rgba(0,0,0,.10)';ctx.lineWidth=4;for(let yy=p.y+190;yy<p.y+700;yy+=110){ctx.beginPath();ctx.moveTo(p.x+6,yy);for(let xx=p.x+6;xx<p.x+p.w-6;xx+=60)ctx.lineTo(xx+60,yy+((xx*7+yy)%3-1)*6);ctx.stroke()}ctx.strokeStyle=INK;ctx.lineWidth=6}
+      else{ctx.fillStyle='rgba(0,0,0,.14)';ctx.fillRect(p.x,p.y+p.h*.72,p.w,p.h*.28)}
+      ctx.strokeRect(p.x,p.y,p.w,p.h);
       // spots for texture
-      ctx.fillStyle='rgba(0,0,0,.12)';for(let k=0;k<Math.floor(p.w/90);k++){const sx=p.x+45+k*90+((k*37)%30),sy=p.y+26+((k*53)%Math.max(8,p.h-30));if(sy<p.y+p.h-6){ctx.beginPath();ctx.ellipse(sx,sy,10,6,0,0,7);ctx.fill()}}
+      ctx.fillStyle='rgba(0,0,0,.12)';const sH=Math.min(p.h,260);for(let k=0;k<Math.floor(p.w/90);k++){const sx=p.x+45+k*90+((k*37)%30),sy=p.y+26+((k*53)%Math.max(8,sH-30));if(sy<p.y+p.h-6){ctx.beginPath();ctx.ellipse(sx,sy,10,6,0,0,7);ctx.fill()}}
       if(p.wall){ctx.restore();continue}
       // grass / snow / candy top with scallops
       const tH=big?16:12;ctx.fillStyle=th.top;ctx.beginPath();ctx.moveTo(p.x-4,p.y-4);ctx.lineTo(p.x+p.w+4,p.y-4);ctx.lineTo(p.x+p.w+4,p.y+tH-6);
@@ -1804,7 +1811,7 @@ function drawOverhead(){
       ctx.fillStyle=ready?'#ffd23f':'#7fd8ff';rr(x,y2,Math.max(h2,w*fr),h2,h2/2);ctx.fill();
       if(ready){ctx.globalAlpha=.5+.5*Math.sin(gtime*8);ctx.strokeStyle='#fff6b0';ctx.lineWidth=2;rr(x-3,y2-2.5,w+6,h2+5,(h2+5)/2);ctx.stroke();ctx.globalAlpha=1}}
     // jump charge: ring fills while you hold up
-    if(!f.cpu&&f.upHold>0&&f.jumps>0){const fx=CW/2+(f.x-cam.x)*view.s,fy=CH/2+(f.y-cam.y)*view.s+4,q=Math.min(1,f.upHold/.5);ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.arc(fx,fy,13*S,0,7);ctx.stroke();ctx.strokeStyle=q>=1?'#ffd23f':'#7fd8ff';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(fx,fy,13*S,-Math.PI/2,-Math.PI/2+6.283*q);ctx.stroke()}
+    if(!f.cpu&&f.upHold>0&&f.jumps>0){const fx=CW/2+(f.x-cam.x)*view.s,fy=CH/2+(f.y-cam.y)*view.s+4,q=Math.min(1,f.upHold/.3);ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.arc(fx,fy,13*S,0,7);ctx.stroke();ctx.strokeStyle=q>=1?'#ffd23f':'#7fd8ff';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(fx,fy,13*S,-Math.PI/2,-Math.PI/2+6.283*q);ctx.stroke()}
     // jump pip
     if(!f.cpu&&!f.onGround){ctx.fillStyle=f.jumps>0?'#7fd8ff':'rgba(255,255,255,.35)';ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+w+9*S,y+h/2,4.5*S,0,7);ctx.fill();ctx.stroke()}
   }

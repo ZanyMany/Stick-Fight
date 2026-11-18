@@ -341,8 +341,12 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 #menu .mhaze{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 32% 56%,rgba(255,255,255,.45),rgba(255,255,255,0) 70%);pointer-events:none}
 #menu .coinpill.tl{position:absolute;top:calc(10px + var(--st));left:calc(18px + var(--sl));z-index:3}
 #menu .ver{position:absolute;top:calc(16px + var(--st));left:50%;right:auto;bottom:auto;transform:translateX(-50%);z-index:3;opacity:.7}
-.mlayout{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:minmax(0,420px) auto;justify-content:center;column-gap:clamp(28px,7%,90px);align-items:end;padding:0 0 calc(30px + var(--sb))}
-.mleft{align-self:end}
+.mlayout{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:minmax(0,calc(420px * var(--mz,1))) auto;justify-content:center;column-gap:clamp(28px,7%,calc(90px * var(--mz,1)));align-items:end;padding:0 0 calc(30px + var(--sb))}
+.mleft{align-self:auto}
+.mleft,.mhero,#menu .coinpill.tl{zoom:var(--mz,1)}
+#menu .title{font-size:min(clamp(52px,15vh,84px),calc(15vh / var(--mz,1)))}
+@media (min-aspect-ratio:1/1) and (max-aspect-ratio:17/10){.mlayout{align-items:center;padding-bottom:var(--sb)}}
+
 .mleft{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
 #menu .title{font-size:clamp(52px,15vh,84px);margin:0 0 0 -4px;text-align:left;line-height:.9;white-space:nowrap;-webkit-text-stroke:10px var(--ink);paint-order:stroke fill;text-shadow:5px 6px 0 #ff8a1f,8px 10px 0 var(--ink);transform:rotate(-3deg);transform-origin:left center;letter-spacing:1px}
 #menu .sub{margin:12px 0 14px 6px;font:600 15px Fredoka,sans-serif;color:var(--ink);background:none;border:none;box-shadow:none;padding:0;opacity:.8}
@@ -521,7 +525,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.56 · Nov 18';
+const APP_VERSION='v1.57 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -545,6 +549,8 @@ function layout(){
   const ps=getComputedStyle(document.getElementById('safeProbe')),t=parseFloat(ps.paddingTop)||0,r=parseFloat(ps.paddingRight)||0,b=parseFloat(ps.paddingBottom)||0,l=parseFloat(ps.paddingLeft)||0;
   if(ROT){if(ROTDIR>0){SAFE.l=b;SAFE.r=t;SAFE.t=l;SAFE.b=r}else{SAFE.l=t;SAFE.r=b;SAFE.t=r;SAFE.b=l}}else{SAFE.l=l;SAFE.r=r;SAFE.t=t;SAFE.b=b;}
   for(const k of['l','r','t','b'])app.style.setProperty('--s'+k,SAFE[k]+'px');
+  // tablets: scale the main-menu group up so it isn't a tiny cluster at the bottom of a big screen
+  app.style.setProperty('--mz',Math.max(1,Math.min(2,(CW-SAFE.l-SAFE.r)/880,(CH-SAFE.t-SAFE.b)/420)).toFixed(3));
 }
 lastLandscape();
 addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,120));

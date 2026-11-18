@@ -564,7 +564,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.62 · Nov 18';
+const APP_VERSION='v1.63 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -2600,7 +2600,7 @@ function buildLobby(){
   $('startBtn').textContent=T?'START TESTING':hs===0?'WATCH!':'FIGHT!';
   seg($('optMode'),MODES.map(([v,l])=>[v,l.replace(' (3 lives)','')]),()=>setup.mode,v=>{setup.mode=v;svSetup();setTimeout(buildLobby,0)});
   if(!T)$('lHint').textContent=MODE_HINT[setup.mode]||$('lHint').textContent;
-  if(!T&&setup.mode==='rounds')$('mapCard').querySelector('.mname').textContent='New random map every round';
+  if(!T&&setup.mode==='rounds')$('mapCard').querySelector('.mname').textContent='Random map';
 }
 $('mapCard').onclick=()=>openPicker('map');
 function openLobby(){state='lobby';HP.forEach(ps=>{ps.mode=null;ps.el.classList.remove('open')});buildLobby();show('lobby')}

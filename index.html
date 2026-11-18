@@ -414,7 +414,7 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.43 · Nov 18';
+const APP_VERSION='v1.45 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -830,7 +830,7 @@ function physics(f,inp,dt,plats){
   if(f.slam){ax=dir*.25;ay=.97}
   spring(P.ha,P.nk.x+ax*reach,P.nk.y+ay*reach,kA*mus+8,30*mus+1,P.nk,P.nk);
   spring(P.ea,P.nk.x+ax*13-dir*2,P.nk.y+ay*13+7,220*mus+5,14*mus,P.nk,P.nk);
-  if(!f.thrown){REACTMUL=f.hook?1.7:f.onGround?(w.mass>2?.75:1):(w.mass>2?.3:.55);if(!f.thrown)spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,kW*mus+6,Math.sqrt(kW)*1.1*mus+1,P.ha,P.ha);REACTMUL=1}
+  if(!f.thrown){REACTMUL=f.hook?1.25:f.onGround?(w.mass>2?.75:1):(w.mass>2?.3:.55);if(!f.thrown){const hk=f.hook?.12+.88*Math.pow(GRIP[f.weapon]??.5,2):1;spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,(kW*mus+6)*hk,(Math.sqrt(kW)*1.1*mus+1)*Math.sqrt(hk),P.ha,P.ha)}REACTMUL=1}
   // off arm (loose)
   let ohx,ohy;if(near&&fc){const sw=Math.sin(f.walkT)*Math.min(1,Math.abs(P.hp.vx)/SPEED);ohx=P.nk.x-dir*4+sw*16*dir;ohy=P.nk.y+29}else{ohx=P.nk.x-dir*18;ohy=P.nk.y-10}
   spring(P.hb,ohx,ohy,70*mus,4,P.nk,P.nk);spring(P.eb,(P.nk.x+ohx)/2-dir*6,(P.nk.y+ohy)/2,40*mus,3,P.nk,P.nk);
@@ -870,32 +870,14 @@ function physics(f,inp,dt,plats){
     {const sp=Math.hypot(p.vx,p.vy),cap=f.slam?2600:2300;if(sp>cap){p.vx*=cap/sp;p.vy*=cap/sp}}
     if(p.hitP){p.c=.06;p.gp=p.hitP;if(p.vy>0)p.vy=0;
       const isFoot=p===P.fa||p===P.fb,stepping=isFoot&&f.steps[p===P.fa?0:1].on;
-      if(stepping){}else if(isFoot&&!rag&&mus>.3)p.vx*=.12;else p.vx*=rag?.97:.86}}
-  // weapon hook: tip resting on a platform while you're in the air = hang, grind along it, pull up, fling
-  {const tp=P.tp,ha=P.ha;let gp=tp.hitP;
-    // the shaft can also hook over an edge: hand below the top surface, tip above it, crossing inside the platform's width
-    if(!gp&&!f.thrown&&!f.onGround)for(const pl of plats){if(!pl.solid||pl.gone||pl.car||pl.wall)continue;const top=pl.y;
-      if(ha.y>top+4&&tp.y<top+2&&tp.y>top-tp.r-12&&ha.y-tp.y>8){const t=(ha.y-top)/(ha.y-tp.y),cx=ha.x+(tp.x-ha.x)*t;if(cx>pl.x+2&&cx<pl.x+pl.w-2){gp=pl;
-        // the shaft rests on the surface: keep the tip from sinking back through it
-        if(tp.y>top-tp.r-1)tp.y=top-tp.r-1;if(tp.vy>0)tp.vy=0;break}}}
-    // stay hooked while the tip is still over that platform near its top surface: the tip rests on it and bears your weight
-    if(!gp&&f.hook&&!f.hook.gone){const pl=f.hook;if(tp.x>pl.x-4&&tp.x<pl.x+pl.w+4&&tp.y>pl.y-tp.r-14&&tp.y<pl.y+pl.h&&ha.y>pl.y-10){gp=pl;if(tp.y>pl.y-tp.r-1)tp.y=pl.y-tp.r-1;if(tp.vy>0)tp.vy=0}}
-    const steering=f.cpu?false:Math.hypot(inp.mx,inp.my)>.3;
-    const hooked=steering&&!f.thrown&&!f.onGround&&!f.dying&&f.alive&&gp&&!gp.gone&&f.frozen<=0&&ha.y>tp.y-6&&f.hitstun<=.05;
-    if(hooked){if(!f.hook){f.hookT=0;sfx('clang',380)}f.hook=gp;f.hookT+=dt;
-      // arm strength carries your weight, with a little sag so it feels like hanging
-      for(const k in P){if(k==='tp')continue;const p=P[k];p.vy-=GRAV*.8*dt;p.vy*=1-1.8*dt}
-      // hold up to haul yourself over the edge
-      if(inp.my<-.5){const dx=tp.x-P.hp.x;for(const k in P){if(k==='tp')continue;P[k].vy-=1500*dt;P[k].vx+=Math.sign(dx)*500*dt}}
-      // GRIND: steer sideways along the surface to build speed and charge your ability faster;
-      // ride off the end of the platform to launch with everything you built up
-      const gdir=Math.abs(inp.mx)>.35?Math.sign(inp.mx):0;
-      if(gdir){for(const k in P){const p=P[k];if(p.vx*gdir<640)p.vx+=gdir*900*dt}f.grind=(f.grind||0)+dt;f.cd=Math.max(0,f.cd-dt*1.2);
-        if(Math.random()<.7)part(tp.x,tp.y+4,-gdir*(120+Math.random()*200),-40-Math.random()*140,.3,Math.random()<.5?'#ffd23f':'#fff',3.5,700);
-        if(Math.random()<.25)part(P.hp.x,P.hp.y,-gdir*80,0,.35,'rgba(255,255,255,.6)',8,0)}
-      else{f.grind=0;tp.vx*=1-1.2*dt}
-      if(tp.vy<0&&inp.my>-.5)tp.vy*=.5;}
-    else if(f.hook){f.hook=null;f.grind=0}}
+      if(p===P.tp){const g=GRIP[f.weapon]??.5;p.vx*=Math.pow(1-Math.min(.99,g),dt*20);if(g>.85&&p.vy<0)p.vy*=.6}
+      else if(stepping){}else if(isFoot&&!rag&&mus>.3)p.vx*=.12;else p.vx*=rag?.97:.86}}
+  // weapon resting on a surface while airborne: nothing holds you but your arm and the weapon's grip.
+  // Grinding the tip along a surface charges your ability faster (sparks show it).
+  {const tp=P.tp;const on=!f.thrown&&!f.onGround&&f.alive&&!f.dying&&tp.hitP&&!tp.hitP.gone;f.hook=on?tp.hitP:null;
+    // your hanging weight drags the tip toward you; slick blades slide off, hooks bite into the edge
+    if(on&&P.ha.y>tp.y+4){const out=Math.sign(P.ha.x-tp.x)||1,g=GRIP[f.weapon]??.5;tp.x+=out*(1-g)*(1-g)*260*dt;tp.vx+=out*(1-g)*(1-g)*5000*dt}
+    if(on&&Math.abs(tp.vx)>90){f.cd=Math.max(0,f.cd-dt*1.2);if(Math.random()<.6)part(tp.x,tp.y+4,-tp.vx*.4+(Math.random()-.5)*60,-40-Math.random()*120,.28,Math.random()<.5?'#ffd23f':'#fff',3.2,700)}}
   syncState(f);
   // weapon tip
   let wx=P.tp.x-P.ha.x,wy=P.tp.y-P.ha.y,wl=Math.hypot(wx,wy)||1;f.wdx=wx/wl;f.wdy=wy/wl;
@@ -982,6 +964,7 @@ function depenetrate(f){
 }
 // ---------- ledge grab: catch an edge when falling, then climb up or let go ----------
 function ledge(f,inp,dt){
+  f.ledge=null;return;
   f.ledgeCd=Math.max(0,(f.ledgeCd||0)-dt);const P=f.P;
   if(f.hook&&!f.ledge)return;
   if(f.ledge){const L=f.ledge,p=L.p;
@@ -1267,6 +1250,10 @@ function lightning(f){
   if(o){hit(o,12,ax,ay,720,f,{tag:'ZAP!'});o.hitstun=Math.max(o.hitstun,.7)}recoil(f,60);sfx('zap');shake=Math.max(shake,6);
 }
 function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((px-ax)*dx+(py-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-ax-dx*t,py-ay-dy*t)}
+const GRIP={scythe:.97,axe:.95,executioner:.95,hammer:.9,harpoon:.95,trident:.9,boomerang:.85,mace:.8,chainsaw:.75,
+  fire:.55,ice:.45,bolt:.55,void:.55,wind:.55,meteor:.55,tele:.55,heal:.55,chaos:.55,
+  blaster:.5,plasma:.5,shotgun:.5,sniper:.5,rocket:.55,minigun:.5,laser:.5,grenadeL:.55,rail:.5,flamer:.5,glass:.4,
+  spear:.3,claymore:.25,sword:.14,dagger:.12,rapier:.1,katana:.08};
 const BASH={};
 function bodyCollide(dt){
   const F=G.fighters.filter(f=>f.alive&&!f.removed&&!f.shattered);

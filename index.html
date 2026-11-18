@@ -374,6 +374,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .oncard p{font:600 13px Fredoka,sans-serif;color:#4a4670;margin:0}
 .oncard .big{padding:10px!important;font-size:19px!important}
 @keyframes onpop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+.onhead #onLeave{margin-left:auto;display:none}#online.inroom .onhead #onLeave{display:inline-flex}
 .onroom{flex:1;min-height:0;display:none;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;justify-items:center;column-gap:4%;padding:0 2% 6px}
 #online.inroom .onroom{display:grid}#online.inroom #onPick,#online.inroom #onStatus{display:none}
 .pcard{position:relative;height:min(100%,300px);aspect-ratio:4/5;max-width:100%;overflow:hidden;border:3px solid var(--ink);border-radius:22px;box-shadow:0 5px 0 var(--ink);background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--pc,#ff5a4e) 18%,#fff))}
@@ -388,7 +389,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .pcard.arrive{animation:onarrive .55s cubic-bezier(.3,1.5,.5,1)}
 @keyframes onarrive{0%{transform:translateX(40px) scale(.85);opacity:0}100%{transform:none;opacity:1}}
 .onmid{display:flex;flex-direction:column;align-items:center;gap:9px;max-width:230px;text-align:center}
-.onmid .onstat{max-width:220px}
+.onmid .onstat{max-width:240px;font-size:15px;line-height:1.25}
 .onmid .big{padding:10px 22px!important;font-size:19px!important}
 .onmid #onGo:disabled{filter:grayscale(1) opacity(.45);box-shadow:0 4px 0 var(--ink)}
 .onlbl{font:700 12px Fredoka,sans-serif;color:#6d6a8a}
@@ -509,7 +510,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 </div>
 <div class="screen" id="online">
   <div class="onwrap">
-    <div class="onhead"><button class="iconbtn" id="onBack">‹</button><div class="ftitle">Play online</div></div>
+    <div class="onhead"><button class="iconbtn" id="onBack">‹</button><div class="ftitle">Play online</div><button class="mhelp" id="onLeave">Leave room</button></div>
     <div class="oncols" id="onPick">
       <div class="oncard">
         <div class="onh">Host a room</div>
@@ -530,7 +531,6 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
         <div class="oncode" id="onCode">----</div>
         <div class="onstat" id="onStatus2"></div>
         <button class="big green" id="onGo">Set up fight</button>
-        <button class="mhelp" id="onLeave">Leave room</button>
       </div>
       <div class="pcard empty" id="onThemCard"><div class="mground"></div><canvas id="onThemCv" width="360" height="400"></canvas>
         <div class="pwait"><div class="pdots"><i></i><i></i><i></i></div><span id="onWaitTxt">Waiting for your friend</span></div>
@@ -554,7 +554,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.59 · Nov 18';
+const APP_VERSION='v1.60 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -2226,7 +2226,7 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,rin:{mx:0,my
       else if(m.t==='in'){this.rin.mx=m.mx;this.rin.my=m.my;this.rin.t=performance.now();if(m.rel)this.rin.rel=true}
       else if(m.t==='bye')this.lost()}
     else{
-      if(m.t==='hi'){this.hostCos=m.cos;this.refreshRoom();this.setStatus('Connected! Waiting for the host to start.',true);sfx('go')}
+      if(m.t==='hi'){this.hostCos=m.cos;this.refreshRoom();this.setStatus('Connected! The host will start the fight.',true);sfx('go')}
       else if(m.t==='start')guestStart(m);
       else if(m.t==='s'){this.snaps.push({at:performance.now(),d:m});if(this.snaps.length>4)this.snaps.shift();guestEvents(m)}
       else if(m.t==='over'){if(G&&G.netGuest){applySnap(this.snaps.length?this.snaps[this.snaps.length-1].d:null,null,1);showOver()}}

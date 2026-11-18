@@ -388,6 +388,15 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 @keyframes pdot{0%,80%,100%{transform:translateY(0);opacity:.45}40%{transform:translateY(-7px);opacity:1}}
 .pcard.arrive{animation:onarrive .55s cubic-bezier(.3,1.5,.5,1)}
 @keyframes onarrive{0%{transform:translateX(40px) scale(.85);opacity:0}100%{transform:none;opacity:1}}
+.onmany{display:none}
+#onRoom.many{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);row-gap:8px;align-items:stretch}
+#onRoom.many #onMeCard,#onRoom.many #onThemCard{display:none}
+#onRoom.many .onmid{flex-direction:row;flex-wrap:wrap;justify-content:center;max-width:none;gap:6px 14px}
+#onRoom.many .oncode{font-size:30px;letter-spacing:5px;padding:0 8px 0 13px;border-radius:11px}
+#onRoom.many .onmid .onstat{max-width:none}
+#onRoom.many .onmany{display:flex;gap:2.5%;justify-content:center;align-items:center;min-height:0;width:100%}
+.onmany .pcard{flex:0 1 auto;width:22.5%;height:auto;max-height:100%}
+.onmany .pcard.empty .mtag{visibility:visible;opacity:.55}
 .onmid{display:flex;flex-direction:column;align-items:center;gap:9px;max-width:230px;text-align:center}
 .onmid .onstat{max-width:240px;font-size:15px;line-height:1.25}
 .onmid .big{padding:10px 22px!important;font-size:19px!important}
@@ -535,6 +544,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
       <div class="pcard empty" id="onThemCard"><div class="mground"></div><canvas id="onThemCv" width="360" height="400"></canvas>
         <div class="pwait"><div class="pdots"><i></i><i></i><i></i></div><span id="onWaitTxt">Waiting for your friend</span></div>
         <div class="mtag"><b id="onThemTag">P2</b><span id="onThemName">Friend</span></div></div>
+      <div class="onmany" id="onMany"><div class="pcard empty" id="onP0"><div class="mground"></div><canvas id="onP0Cv" width="360" height="400"></canvas><div class="pwait"><div class="pdots"><i></i><i></i><i></i></div></div><div class="mtag"><b>P1</b><span>Open</span></div></div><div class="pcard empty" id="onP1"><div class="mground"></div><canvas id="onP1Cv" width="360" height="400"></canvas><div class="pwait"><div class="pdots"><i></i><i></i><i></i></div></div><div class="mtag"><b>P2</b><span>Open</span></div></div><div class="pcard empty" id="onP2"><div class="mground"></div><canvas id="onP2Cv" width="360" height="400"></canvas><div class="pwait"><div class="pdots"><i></i><i></i><i></i></div></div><div class="mtag"><b>P3</b><span>Open</span></div></div><div class="pcard empty" id="onP3"><div class="mground"></div><canvas id="onP3Cv" width="360" height="400"></canvas><div class="pwait"><div class="pdots"><i></i><i></i><i></i></div></div><div class="mtag"><b>P4</b><span>Open</span></div></div></div>
     </div>
     <div class="onstat" id="onStatus">Same Wi-Fi works best.</div>
   </div>
@@ -554,7 +564,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.60 · Nov 18';
+const APP_VERSION='v1.61 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -733,8 +743,7 @@ function startMatch(opts){resetInput();
     G.bridges.push(br)}
   for(const p of plats)if(p.crumble){p.ox0=p.x;p.oy0=p.y}
   const mains=plats.filter(p=>p.main);G.L=Math.min(...mains.map(p=>p.x));G.R=Math.max(...mains.map(p=>p.x+p.w));G.floor=Math.min(...mains.map(p=>p.y));
-  G.fighters.forEach(f=>{if(f.netRemote&&NET.role==='host'&&NET.guestCos){const c={...NET.guestCos},used=G.fighters.filter(o=>o!==f).map(o=>o.cos.color);
-    if(used.includes(c.color))c.color=[1,2,3,4,7,8,0].find(i=>!used.includes(i));f.cos=c}});
+  G.fighters.forEach(f=>{if(f.netRemote&&NET.role==='host'){const c=NET.cosForSeat(f.pid);if(c)f.cos={...c}}});
   G.fighters.forEach((f,i)=>{f.facing=f.aimX=spawnFace(i);f.wchoice=(opts.wchoice||[])[i]||'random';f.weapon=chooseWeapon(f);f.cd=.5;f.cdMax=WEAP[f.weapon].cd;const sp=spawnPoint(i);buildBody(f,sp.x,sp.y)});
   cam.init=false;acc=0;hitStop=0;
   G.test=!!opts.test;
@@ -808,7 +817,7 @@ function kbVec(i){
   const l=Math.hypot(x,y);return l>1?{x:x/l,y:y/l}:{x,y};
 }
 function humanInput(f){
-  if(f.netRemote&&NET.role==='host'){const r=NET.rin;if(performance.now()-(r.t||0)>900){r.mx=r.my=0}const o={mx:r.mx,my:r.my,release:r.rel};r.rel=false;return o}
+  if(f.netRemote&&NET.role==='host'){const r=NET.rinFor(f.pid);if(performance.now()-(r.t||0)>900){r.mx=r.my=0}const o={mx:r.mx,my:r.my,release:r.rel};r.rel=false;return o}
   const s=sticks[f.idx];let mx=0,my=0,rel=false;
   const k=kbVec(f.idx),p=kbPrev[f.idx];
   if((p.x||p.y)&&!k.x&&!k.y)rel=true;kbPrev[f.idx]=k;
@@ -2188,52 +2197,93 @@ function render(dt){
 }
 let last=performance.now();
 // =================== ONLINE (host-authoritative, phone to phone) ===================
-const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,rin:{mx:0,my:0,rel:false},snd:[],ev:[],lastSnap:0,snaps:[],myIdx:-1,lastIn:'',inT:0,
+const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:'',mySeat:-1,roster:[],snd:[],ev:[],lastSnap:0,snaps:[],myIdx:-1,lastIn:'',inT:0,
+  MAXP:4,
   setStatus(t,ok){for(const id of['onStatus','onStatus2']){const e=$(id);if(e){e.textContent=t;e.className='onstat'+(ok?' ok':'')}}},
-  // ---- room view: you on the left, your friend on the right ----
-  room(on){$('online').classList.toggle('inroom',!!on);if(!on){this.them(null)}},
-  them(c,arrive){const card=$('onThemCard');onThemP.cosO=c;card.classList.toggle('empty',!c);
-    if(c){card.style.setProperty('--pc',COLORS[c.color]);if(arrive){card.classList.remove('arrive');void card.offsetWidth;card.classList.add('arrive')}}else card.style.removeProperty('--pc')},
-  colors(){const h=this.role==='host'?cos[0]:(this.hostCos||null),g=this.role==='host'?(this.guestCos||null):cos[0];if(!h||!g)return{h,g};
-    const gc={...g};if(gc.color===h.color)gc.color=h.color===1?2:1;return{h,g:gc}},
-  refreshRoom(){const{h,g}=this.colors(),me=this.role==='host'?h:g,other=this.role==='host'?g:h;onMeP.cosO=me||cos[0];
-    $('onMeCard').style.setProperty('--pc',COLORS[(me||cos[0]).color]);if(other&&$('onThemCard').classList.contains('empty'))this.them(other,true);else if(other)this.them(other)},
-  send(m){try{if(this.bc)this.bc.postMessage({from:this.role,m});else if(this.conn&&this.conn.open)this.conn.send(m)}catch(e){}},
+  // ---------- who is in the room ----------
+  // roster: [{seat, cos}] in seat order. seat 0 is always the host. Colours are made unique the same way on every device.
+  makeRoster(){return[{seat:0,cos:cos[0]},...this.gs.map(g=>({seat:g.seat,cos:g.cos}))].sort((a,b)=>a.seat-b.seat)},
+  uniq(list){const used=[];return list.map(p=>{const c={...p.cos};if(used.includes(c.color))c.color=[1,2,3,4,7,8,0,5,9,10,11,12,13].find(i=>!used.includes(i));used.push(c.color);return{seat:p.seat,cos:c}})},
+  cosForSeat(seat){const r=this.uniq(this.role==='host'?this.makeRoster():this.roster).find(p=>p.seat===seat);return r?r.cos:null},
+  guestBySeat(seat){return this.gs.find(g=>g.seat===seat)},
+  rinFor(seat){const g=this.guestBySeat(seat);return g?g.rin:{mx:0,my:0,rel:false,t:0}},
+  get guestCos(){const g=this.gs[0];return g?g.cos:null},
+  // ---------- room view ----------
+  room(on){$('online').classList.toggle('inroom',!!on);if(!on){this.roster=[];this.drawRoom()}},
+  drawRoom(arriveSeat){const list=this.uniq(this.role==='host'?this.makeRoster():this.roster),me=this.role==='host'?0:this.mySeat,n=list.length;
+    const many=n>=3;$('onRoom').classList.toggle('many',many);
+    if(!many){const mine=list.find(p=>p.seat===me),other=list.find(p=>p.seat!==me);
+      const mc=mine?mine.cos:cos[0];onMeP.cosO=mc;$('onMeCard').style.setProperty('--pc',COLORS[mc.color]);$('onMeTag').textContent='P'+((me<0?0:me)+1);
+      const card=$('onThemCard');onThemP.cosO=other?other.cos:null;card.classList.toggle('empty',!other);
+      if(other){card.style.setProperty('--pc',COLORS[other.cos.color]);$('onThemTag').textContent='P'+(other.seat+1);$('onThemName').textContent=other.seat===0?'Host':'Friend';
+        if(arriveSeat===other.seat){card.classList.remove('arrive');void card.offsetWidth;card.classList.add('arrive')}}
+      else{card.style.removeProperty('--pc');$('onThemTag').textContent=this.role==='host'?'P2':'P1';$('onThemName').textContent=this.role==='host'?'Friend':'Host'}}
+    for(let i=0;i<4;i++){const card=$('onP'+i),p=list.find(q=>q.seat===i);manyP[i].cosO=p?p.cos:null;card.classList.toggle('empty',!p);card.querySelector('b').textContent='P'+(i+1);
+      card.querySelector('span').textContent=p?(i===me?'You':i===0?'Host':'Friend'):'Open';
+      if(p){card.style.setProperty('--pc',COLORS[p.cos.color]);if(arriveSeat===i){card.classList.remove('arrive');void card.offsetWidth;card.classList.add('arrive')}}else card.style.removeProperty('--pc')}
+    if(this.role==='host'){const k=this.gs.length;$('onGo').disabled=k<1;
+      if(k<1)$('onWaitTxt').textContent='Waiting for your friend. Send them the code!'}},
+  // ---------- transport ----------
+  send(m,to){try{
+    if(this.bc){this.bc.postMessage(this.role==='host'?{from:'host',to:to||null,m}:{from:'guest',gid:this.gid,m});return}
+    if(this.role==='host'){for(const g of this.gs)if((!to||g.gid===to)&&g.conn&&g.conn.open)g.conn.send(m)}
+    else if(this.conn&&this.conn.open)this.conn.send(m)}catch(e){}},
   makeCode(){const A='ABCDEFGHJKMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c},
   usesBC(){return location.hash.includes('bc')},
   loadPeer(){return new Promise((res,rej)=>{if(window.Peer)return res();const sc=document.createElement('script');sc.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';sc.onload=()=>res();sc.onerror=()=>rej(new Error('load'));document.head.appendChild(sc)})},
-  async host(){this.close();this.role='host';this.code=this.makeCode();$('onCode').textContent=this.code;this.guestCos=null;this.room(true);$('onMeTag').textContent='P1';$('onThemTag').textContent='P2';$('onThemName').textContent='Friend';$('onWaitTxt').textContent='Waiting for your friend. Send them the code!';$('onGo').style.display='';$('onGo').disabled=true;this.refreshRoom();this.setStatus('');
-    if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+this.code);this.bc.onmessage=e=>{if(e.data.from==='guest')this.onMsg(e.data.m)};return}
+  inMatch(){return!!(G&&!G.demo&&(state==='play'||state==='over'))},
+  async host(){this.close();this.role='host';this.live=true;this.code=this.makeCode();$('onCode').textContent=this.code;this.gs=[];this.room(true);$('onGo').style.display='';this.drawRoom();this.setStatus('');
+    if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+this.code);this.bc.onmessage=e=>{if(e.data.from==='guest')this.onGuestMsg(e.data.gid,e.data.m,null)};return}
     try{await this.loadPeer()}catch(e){this.setStatus('Could not load online play. Check your internet connection.');return}
     this.peer=new Peer('stickfight-zm-'+this.code,{debug:0});
     this.peer.on('error',e=>{if(e.type==='unavailable-id'){this.host()}else this.setStatus('Connection problem: '+e.type)});
-    this.peer.on('connection',c=>{if(this.conn&&this.conn.open){c.close();return}this.conn=c;c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost());c.on('open',()=>{})});},
-  async join(code){this.close();this.role='guest';this.code=code;this.hostCos=null;$('onCode').textContent=code;this.room(true);$('onMeTag').textContent='P2';$('onThemTag').textContent='P1';$('onThemName').textContent='Host';$('onWaitTxt').textContent='Connecting to the host...';$('onGo').style.display='none';this.refreshRoom();this.setStatus('');
-    if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+code);this.bc.onmessage=e=>{if(e.data.from==='host')this.onMsg(e.data.m)};this.live=true;this.send({t:'hello',cos:cos[0]});return}
+    this.peer.on('connection',c=>{c.on('data',m=>this.onGuestMsg(c.peer,m,c));c.on('close',()=>this.guestLeft(c.peer))});},
+  async join(code){this.close();this.role='guest';this.code=code;this.gid='g'+Math.random().toString(36).slice(2,9);this.mySeat=-1;this.roster=[];$('onCode').textContent=code;this.room(true);
+    $('onWaitTxt').textContent='Connecting to the host...';$('onGo').style.display='none';this.drawRoom();this.setStatus('');
+    if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+code);this.bc.onmessage=e=>{const d=e.data;if(d.from==='host'&&(!d.to||d.to===this.gid))this.onMsg(d.m)};this.live=true;this.send({t:'hello',cos:cos[0]});return}
     try{await this.loadPeer()}catch(e){this.setStatus('Could not load online play. Check your internet connection.');return}
     this.peer=new Peer(undefined,{debug:0});
     this.peer.on('error',e=>{this.room(false);this.role=null;this.setStatus(e.type==='peer-unavailable'?'No room with code '+code+'. Check the code and try again.':'Connection problem: '+e.type)});
     this.peer.on('open',()=>{const c=this.peer.connect('stickfight-zm-'+code,{reliable:true});this.conn=c;
       c.on('open',()=>{this.live=true;this.send({t:'hello',cos:cos[0]});$('onWaitTxt').textContent='Saying hi to the host...'});c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost())});},
-  close(){try{if(this.conn)this.conn.close()}catch(e){}try{if(this.peer)this.peer.destroy()}catch(e){}try{if(this.bc)this.bc.close()}catch(e){}
-    this.conn=this.peer=this.bc=null;this.live=false;this.role=null;this.snaps=[];this.rin={mx:0,my:0,rel:false,t:0};resetInput();if(setup.slots[1]&&setup.slots[1].t==='remote'){setup.slots[1]={t:'cpu',lvl:'normal'};svSetup()}},
+  close(){try{if(this.conn)this.conn.close()}catch(e){}for(const g of this.gs){try{g.conn&&g.conn.close()}catch(e){}}try{if(this.peer)this.peer.destroy()}catch(e){}try{if(this.bc)this.bc.close()}catch(e){}
+    this.conn=this.peer=this.bc=null;this.gs=[];this.live=false;this.role=null;this.snaps=[];this.mySeat=-1;resetInput();
+    let ch=false;setup.slots.forEach((sl,i)=>{if(sl&&sl.t==='remote'){setup.slots[i]={t:'cpu',lvl:'normal'};ch=true}});if(ch)svSetup()},
   lost(){if(!this.role)return;const was=this.role;this.close();KOFX=null;paused=false;startDemo();state='online';show('online');this.room(false);this.setStatus(was==='host'?'Your friend left the room.':'The host closed the room.')},
-  friendJoined(){this.refreshRoom();this.setStatus('Your friend is here!',true);$('onGo').disabled=false;
-    sfx('go');setTimeout(()=>sfx('pick'),180);try{navigator.vibrate&&navigator.vibrate([60,40,60])}catch(_){}},
+  // ---------- host side ----------
+  onGuestMsg(gid,m,conn){if(!m||!m.t||this.role!=='host')return;let g=this.gs.find(x=>x.gid===gid);
+    if(m.t==='hello'){if(g)return;
+      if(this.inMatch()){this.replyTo(gid,conn,{t:'busy'});return}
+      const seat=[1,2,3].find(i=>!this.guestBySeat(i));if(seat===undefined||this.gs.length>=this.MAXP-1){this.replyTo(gid,conn,{t:'full'});return}
+      g={gid,conn,cos:m.cos,seat,rin:{mx:0,my:0,rel:false,t:0}};this.gs.push(g);
+      this.send({t:'hi',seat},gid);this.sendRoster();this.drawRoom(seat);
+      const n=this.gs.length;this.setStatus(n===1?'Your friend is here!':n+' friends are here!',true);
+      sfx('go');setTimeout(()=>sfx('pick'),180);try{navigator.vibrate&&navigator.vibrate([60,40,60])}catch(_){}}
+    else if(!g)return;
+    else if(m.t==='in'){const r=g.rin;r.mx=m.mx;r.my=m.my;r.t=performance.now();if(m.rel)r.rel=true}
+    else if(m.t==='bye')this.guestLeft(gid)},
+  replyTo(gid,conn,m){if(this.bc)this.send(m,gid);else if(conn){const go=()=>{try{conn.send(m)}catch(e){}setTimeout(()=>{try{conn.close()}catch(e){}},400)};if(conn.open)go();else conn.on('open',go)}},
+  sendRoster(){this.send({t:'roster',ps:this.makeRoster()})},
+  guestLeft(gid){const i=this.gs.findIndex(x=>x.gid===gid);if(i<0||this.role!=='host')return;const g=this.gs[i];this.gs.splice(i,1);
+    if(setup.slots[g.seat]&&setup.slots[g.seat].t==='remote'){setup.slots[g.seat]={t:'cpu',lvl:'normal'};svSetup()}
+    if(this.inMatch()){
+      if(!this.gs.length){KOFX=null;paused=false;startDemo();state='online';show('online');this.room(true);this.drawRoom();this.setStatus('Your friend left the room.');return}
+      const f=G.fighters.find(o=>o.pid===g.seat);if(f&&f.netRemote){f.netRemote=false;f.cpu=true;f.lvl='normal';f.slot='cpu'}alertMsg('P'+(g.seat+1)+' left. A CPU took over.')}
+    this.sendRoster();if(state==='lobby')buildLobby();this.drawRoom();if(state==='online')this.setStatus(this.gs.length?'A friend left the room.':'Your friend left the room.')},
+  // ---------- guest side ----------
   onMsg(m){if(!m||!m.t)return;
-    if(this.role==='host'){
-      if(m.t==='hello'){this.live=true;this.guestCos=m.cos;this.rin={mx:0,my:0,rel:false,t:0};this.send({t:'hi',cos:cos[0]});this.friendJoined()}
-      else if(m.t==='in'){this.rin.mx=m.mx;this.rin.my=m.my;this.rin.t=performance.now();if(m.rel)this.rin.rel=true}
-      else if(m.t==='bye')this.lost()}
-    else{
-      if(m.t==='hi'){this.hostCos=m.cos;this.refreshRoom();this.setStatus('Connected! The host will start the fight.',true);sfx('go')}
-      else if(m.t==='start')guestStart(m);
-      else if(m.t==='s'){this.snaps.push({at:performance.now(),d:m});if(this.snaps.length>4)this.snaps.shift();guestEvents(m)}
-      else if(m.t==='over'){if(G&&G.netGuest){applySnap(this.snaps.length?this.snaps[this.snaps.length-1].d:null,null,1);showOver()}}
-      else if(m.t==='lobby'){if(state!=='online'){state='online';show('online')}this.room(true);this.refreshRoom();this.setStatus('Waiting for the host to start the next fight...',true)}
-      else if(m.t==='bye')this.lost()}},
+    if(this.role!=='guest')return;
+    if(m.t==='hi'){this.mySeat=m.seat;this.setStatus('Connected! The host will start the fight.',true);sfx('go')}
+    else if(m.t==='roster'){const had=this.roster.map(p=>p.seat);this.roster=m.ps;const nw=m.ps.find(p=>!had.includes(p.seat)&&p.seat!==this.mySeat);this.drawRoom(nw?nw.seat:undefined)}
+    else if(m.t==='full'||m.t==='busy'){const t=m.t==='full'?'That room is full (4 players max).':'That room is in a fight right now. Try again when it ends.';try{this.conn&&this.conn.close()}catch(e){}this.role='guest';this.close();this.room(false);this.setStatus(t)}
+    else if(m.t==='start')guestStart(m);
+    else if(m.t==='s'){this.snaps.push({at:performance.now(),d:m});if(this.snaps.length>4)this.snaps.shift();guestEvents(m)}
+    else if(m.t==='over'){if(G&&G.netGuest){applySnap(this.snaps.length?this.snaps[this.snaps.length-1].d:null,null,1);showOver()}}
+    else if(m.t==='lobby'){if(state!=='online'){state='online';show('online')}this.room(true);this.drawRoom();this.setStatus('Waiting for the host to start the next fight...',true)}
+    else if(m.t==='bye')this.lost()},
   sendStart(opts){const F=G.fighters;this.send({t:'start',opts:{map:opts.map,mode:G.mode,pids:opts.pids,slots:opts.slots,wchoice:opts.wchoice},cos:F.map(f=>f.cos),weapons:F.map(f=>f.weapon),rnd:RND?{n:RND.n}:null});this.lastSnap=0},
-  tick(now){if(now-this.lastSnap<45)return;this.lastSnap=now;this.flush()},
+  // 1v1 gets ~30 updates a second; bigger rooms ~22 so the host phone keeps up
+  tick(now){if(now-this.lastSnap<(this.gs.length<=1?32:45))return;this.lastSnap=now;this.flush()},
   flush(){if(!G)return;this.send(makeSnap())},
   sendInput(){const i=this.myIdx,s=sticks[i];if(i<0||!s)return;const k=kbVec(0);let mx=s.id!==null?s.vx:k.x,my=s.id!==null?s.vy:k.y;const rel=s.rel||(this._kp&&!k.x&&!k.y&&s.id===null);this._kp=(k.x||k.y)?1:0;if(s.rel)s.rel=false;
     const key=mx.toFixed(2)+','+my.toFixed(2);const t=performance.now();if(key===this.lastIn&&!rel&&t-this.inT<150)return;this.lastIn=key;this.inT=t;this.send({t:'in',mx,my,rel:rel?1:0})}
@@ -2260,8 +2310,8 @@ function makeSnap(){
 const PKEYS=['hd','nk','hp','ka','fa','kb','fb','ea','ha','eb','hb','tp'];
 function guestStart(m){
   NET.snaps=[];
-  const me=m.opts.slots.findIndex(sl=>sl&&sl.t==='remote');NET.myIdx=me;
-  const slots=m.opts.slots.map((sl,i)=>i===me?{t:'human'}:(sl.t==='human'?{t:'remote'}:sl));
+  let me=NET.mySeat>=0&&m.opts.pids?m.opts.pids.indexOf(NET.mySeat):-1;if(me<0)me=m.opts.slots.findIndex(sl=>sl&&sl.t==='remote');NET.myIdx=me;
+  const slots=m.opts.slots.map((sl,i)=>i===me?{t:'human'}:((sl&&(sl.t==='human'||sl.t==='remote'))?{t:'remote'}:sl));
   startMatch({map:m.opts.map,mode:m.opts.mode,pids:m.opts.pids,slots,wchoice:m.weapons});
   G.netGuest=true;G.ready=0;G.fighters.forEach((f,i)=>{f.cos=m.cos[i];f.weapon=m.weapons[i]});
   KOFX=null;state='play';paused=false;show(null);sizeSticks();TS=.72;
@@ -2490,7 +2540,7 @@ function cycleSlot(i){
   const list=T?TEST_CYCLE:SLOT_CYCLE,cur=slotOf(i),k=list.findIndex(x=>x.t===cur.t&&(x.lvl||'')===(cur.lvl||''));
   const nx=Object.assign({},list[(k+1)%list.length]);if(T)setup.testSlot=nx;else setup.slots[i]=nx;svSetup();buildLobby();tone(500,700,.06,'triangle',.04);
 }
-function setOn(i,v){setup.on[i]=v;svSetup();const ps=HP[i];if(!v&&ps.mode){ps.mode=null;ps.el.classList.remove('open')}buildLobby();tone(v?600:400,v?900:300,.08,'triangle',.05)}
+function setOn(i,v){if(!v&&slotOf(i).t==='remote')return;setup.on[i]=v;svSetup();const ps=HP[i];if(!v&&ps.mode){ps.mode=null;ps.el.classList.remove('open')}buildLobby();tone(v?600:400,v?900:300,.08,'triangle',.05)}
 const slotSide=i=>i%2===0?'l':'r';
 const SLOTS=[0,1,2,3].map(i=>{
   const el=document.createElement('div');el.className='slot';
@@ -2581,7 +2631,9 @@ function buildHalf(ps){
 const mainPrev={ctx:$('preview').getContext('2d'),f:newFighter(0,false,'normal'),t:0,acc:0,w:''};
 const menuPrev={ctx:null,f:null,t:0,acc:0,w:''};
 const onMeP={ctx:null,f:null,t:0,acc:0,w:'',face:1,cosO:null},onThemP={ctx:null,f:null,t:1.1,acc:0,w:'',face:-1,cosO:null};
+const manyP=[0,1,2,3].map(i=>({ctx:null,f:null,t:i*.7,acc:0,w:'',face:i<2?1:-1,cosO:null}));
 function drawOnline(dt){if(!$('online').classList.contains('inroom'))return;
+  if($('onRoom').classList.contains('many')){manyP.forEach((P,i)=>{if(!P.cosO)return;if(!P.ctx){P.ctx=$('onP'+i+'Cv').getContext('2d');P.f=newFighter(i,false,'normal')}renderPreview(P,i,dt,'random')});return}
   for(const [P,id,ix] of [[onMeP,'onMeCv',0],[onThemP,'onThemCv',1]]){if(ix&&!P.cosO)continue;const c=$(id);if(!P.ctx){P.ctx=c.getContext('2d');P.f=newFighter(ix,false,'normal')}renderPreview(P,ix,dt,ix?'random':null)}}
 function drawMenuHero(dt){const cv2=document.getElementById('menuPrev');if(!cv2)return;if(!menuPrev.ctx){menuPrev.ctx=cv2.getContext('2d');menuPrev.f=newFighter(0,false,'normal')}
   const col=COLORS[cos[0].color];if(menuPrev.col!==col){menuPrev.col=col;document.getElementById('menu').style.setProperty('--pc',col)}
@@ -2589,7 +2641,7 @@ function drawMenuHero(dt){const cv2=document.getElementById('menuPrev');if(!cv2)
 function drawPreview(dt){if(pkMode==='look')renderPreview(mainPrev,fp,dt,null)}
 const pPlats=[{x:-200,y:180,w:600,h:30,solid:1,dx:0}];
 function renderPreview(P,idx,dt,force){
-  const pf=P.f,pctx=P.ctx;P.t+=dt;pf.cos=P.cosO||((state==='lobby'&&slotOf(idx).t==='remote'&&NET.guestCos)?NET.colors().g:cos[idx]);pf.invuln=0;
+  const pf=P.f,pctx=P.ctx;P.t+=dt;pf.cos=P.cosO||((state==='lobby'&&slotOf(idx).t==='remote'&&NET.cosForSeat(idx))?NET.cosForSeat(idx):cos[idx]);pf.invuln=0;
   const sl=slotOf(idx),ch=force||setup.w[idx]||'random',pool=(flow.type==='test'||sl.t==='cpu')?WKEYS:ownedWeapons();
   let w=ch==='random'?pool[Math.floor(P.t/2.2)%pool.length]:ch;if(!WEAP[w])w='sword';
   const face=P.face||(state==='lobby'&&slotSide(idx)==='r'?-1:1),px=face<0?100:80;
@@ -2622,7 +2674,7 @@ $('wlist').innerHTML=WKEYS.map(k=>`<div><b>${WEAP[k].name}</b> – ${WEAP[k].abN
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{initAudio();const g=b.dataset.go;
   if(g==='play'||g==='test'){flow={type:g};openLobby()}
   else if(g==='locker'){flow={type:'locker'};openPicker('look',0)}
-  else if(g==='online'){state='online';show('online');if(!NET.role){NET.room(false);NET.setStatus('Same Wi-Fi works best.')}else{NET.room(true);NET.refreshRoom()}}
+  else if(g==='online'){state='online';show('online');if(!NET.role){NET.room(false);NET.setStatus('Same Wi-Fi works best.')}else{NET.room(true);NET.drawRoom()}}
   else{state='menu';show(g)}
 }));
 let RND=null;
@@ -2702,7 +2754,7 @@ $('onHost').onclick=()=>{initAudio();NET.host()};
 $('onJoin').onclick=()=>{initAudio();const c=($('onIn').value||'').toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){NET.setStatus('Enter the 4-letter code.');return}NET.join(c)};
 $('onIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('onJoin').click()});
 $('onLeave').onclick=()=>{if(NET.role)NET.send({t:'bye'});NET.close();NET.room(false);NET.setStatus('You left the room.')};
-$('onGo').onclick=()=>{if($('onGo').disabled)return;setup.on[1]=true;setup.slots[1]={t:'remote'};svSetup();flow={type:'play'};openLobby()};
+$('onGo').onclick=()=>{if($('onGo').disabled)return;setup.slots.forEach((sl,i)=>{if(sl&&sl.t==='remote'&&!NET.guestBySeat(i))setup.slots[i]={t:'cpu',lvl:'normal'}});for(const g of NET.gs){setup.on[g.seat]=true;setup.slots[g.seat]={t:'remote'}}svSetup();flow={type:'play'};openLobby()};
 $('quitBtn').onclick=toMenu;$('menuBtn').onclick=toMenu;
 function showOver(){
   state='over';const F=G.fighters;

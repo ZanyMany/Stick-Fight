@@ -235,7 +235,9 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 .big.blue{background:var(--blu);color:#fff}
 .big.green{background:var(--grn);color:#fff;box-shadow:0 5px 0 var(--ink)}
 .big.pink{background:#ff6fb5;color:#fff}.big.blue{background:#4f8dff;color:#fff}.big.ora{background:#ff9a3c;color:#fff}.big.red{background:#ff5a5a;color:#fff}
-.big.green,.big.pink,.big.blue,.big.ora,.big.red{-webkit-text-stroke:3.5px var(--ink);paint-order:stroke fill;letter-spacing:.8px}
+.big.pur{background:#8d5bff;color:#fff}
+.big.green,.big.pink,.big.blue,.big.ora,.big.red,.big.pur{border:3px solid var(--ink)!important;box-shadow:0 5px 0 var(--ink)!important;-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;letter-spacing:.8px;font-weight:700}
+#menu .big{font-size:20px}#menu .big.small{font-size:17px}
 .big.mi{display:flex;align-items:center;justify-content:center;gap:10px}.big.mi svg{width:1.15em;height:1.15em;flex:0 0 auto;-webkit-text-stroke:0}
 .big.primary.mi svg{width:1em;height:1em}
 .sbtn.sweap{background:#ffe2b8!important}.sbtn.slook{background:#ffd3ea!important}
@@ -352,9 +354,9 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
   <div class="sub">1v1 ragdoll stickman duels</div>
   <div class="ver" id="verText"></div>
   <div class="menu-grid">
-    <button class="big primary mi" data-go="play" style="grid-column:1/-1;font-size:24px"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="#1d1640"/></svg>PLAY</button>
+    <button class="big ora mi" data-go="play" style="grid-column:1/-1;font-size:24px"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="#fff" stroke="#1d1640" stroke-width="2.2" stroke-linejoin="round"/></svg>PLAY</button>
     <button class="big green mi" data-go="test"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3" fill="#fff" stroke="#1d1640" stroke-width="2.2" stroke-linejoin="round"/><path d="M7.2 15h9.6l1.6 3H5.6z" fill="#7dff6b"/></svg>TESTING</button>
-    <button class="big pink mi" data-go="locker"><svg viewBox="0 0 24 24"><path d="M8 4l-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3c-.5 1.6-2 2.5-4 2.5S8.5 5.6 8 4z" fill="#fff" stroke="#1d1640" stroke-width="2.1" stroke-linejoin="round"/></svg>LOCKER</button>
+    <button class="big pur mi" data-go="locker"><svg viewBox="0 0 24 24"><path d="M8 4l-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3c-.5 1.6-2 2.5-4 2.5S8.5 5.6 8 4z" fill="#fff" stroke="#1d1640" stroke-width="2.1" stroke-linejoin="round"/></svg>LOCKER</button>
     <button class="big small blue mi" data-go="help" style="grid-column:1/-1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#fff" stroke="#1d1640" stroke-width="2.2"/><path d="M9.3 9.4a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2 1-1.2 1.8v.5" fill="none" stroke="#1d1640" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.3" fill="#1d1640"/></svg>HOW TO PLAY</button>
   </div>
 </div>
@@ -406,9 +408,9 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
   <h2>PAUSED</h2>
   <div class="ver pv" id="verText2"></div>
   <div class="btns">
-    <button class="big primary" id="resumeBtn">RESUME</button>
+    <button class="big green" id="resumeBtn">RESUME</button>
     <button class="big ora" id="restartBtn">RESTART</button>
-    <div class="pfree" id="pFree"><button class="big pink" id="pSwapW">SWAP WEAPON</button><button class="big blue" id="pAddCpu">+ CPU</button><button class="big blue" id="pRemCpu">− CPU</button></div>
+    <div class="pfree" id="pFree"><button class="big pur" id="pSwapW">SWAP WEAPON</button><button class="big blue" id="pAddCpu">+ CPU</button><button class="big blue" id="pRemCpu">− CPU</button></div>
     <button class="big red" id="quitBtn">QUIT TO MENU</button>
   </div>
 </div>
@@ -442,7 +444,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.48 · Nov 18';
+const APP_VERSION='v1.49 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -1157,7 +1159,7 @@ function drawWater(){if(!G.map.water)return;const y0=G.map.water,c=ctx;c.save();
   c.beginPath();c.moveTo(-4000,y0+600);for(let x=-4000;x<=W+4000;x+=40)c.lineTo(x,y0+Math.sin(x*.012+gtime*2)*8+Math.sin(x*.031-gtime*1.3)*4);c.lineTo(W+4000,y0+3000);c.lineTo(-4000,y0+3000);c.closePath();c.fill();
   c.strokeStyle='#e8fbff';c.lineWidth=5;c.beginPath();for(let x=-4000;x<=W+4000;x+=40){const y=y0+Math.sin(x*.012+gtime*2)*8+Math.sin(x*.031-gtime*1.3)*4;x===-4000?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();
   c.globalAlpha=.25;c.fillStyle='#fff';for(let i=0;i<14;i++){const x=((i*397+gtime*40)%(W+800))-400;c.fillRect(x,y0+40+(i*53)%220,60,4)}c.restore()}
-function drawDynamic(){drawWater();
+function drawDynamic(){drawWater();drawRoadWarning();
   // rope bridges
   for(const br of G.bridges){const N=br.nodes;ctx.lineCap='round';
     for(const off of[-30,-2]){ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.beginPath();let pen=false;
@@ -1185,12 +1187,34 @@ function drawDynamic(){drawWater();
   for(const d of G.debris){ctx.save();ctx.translate(d.x,d.y);ctx.rotate(d.ang);ctx.globalAlpha=Math.min(1,d.life);ctx.fillStyle=d.col;ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.fillRect(-d.w/2,-d.h/2,d.w,d.h);ctx.strokeRect(-d.w/2,-d.h/2,d.w,d.h);if(d.top){ctx.fillStyle=d.top;ctx.fillRect(-d.w/2,-d.h/2-4,d.w,10);ctx.strokeRect(-d.w/2,-d.h/2-4,d.w,10)}ctx.restore()}
 }
 function drawCarWarning(){
-  if(!G.carWarn)return;const road=G.plats.find(p=>p.road);if(!road)return;const cw=G.carWarn;
-  const sy=CH/2+(road.y-50-cam.y)*view.s,sx=cw.dir>0?40+SAFE.l:CW-40-SAFE.r;
-  if(Math.floor(gtime*8)%2)return;ctx.save();ctx.translate(sx,Math.max(60,Math.min(CH-60,sy)));
-  ctx.fillStyle='#ffd23f';ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(26,20);ctx.lineTo(-26,20);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle=INK;ctx.font="700 26px Fredoka,sans-serif";ctx.textAlign='center';ctx.fillText('!',0,15);
-  ctx.font="700 13px Fredoka,sans-serif";ctx.fillText(cw.dir>0?'CAR →':'← CAR',0,40);ctx.restore()}
+  // screen part: a big pulsing arrow on the side the car is coming from
+  if(!G.carWarn)return;const road=G.plats.find(p=>p.road);if(!road)return;const cw=G.carWarn,u=1-cw.t/1.4;
+  const sy=Math.max(70,Math.min(CH-90,CH/2+(road.y-60-cam.y)*view.s)),sx=cw.dir>0?46+SAFE.l:CW-46-SAFE.r,pulse=1+.12*Math.sin(gtime*18);
+  ctx.save();ctx.translate(sx,sy);ctx.scale(cw.dir*pulse,pulse);ctx.fillStyle=Math.floor(gtime*10)%2?'#ff3b3b':'#ffd23f';ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(-26,-16);ctx.lineTo(4,-16);ctx.lineTo(4,-32);ctx.lineTo(34,0);ctx.lineTo(4,32);ctx.lineTo(4,16);ctx.lineTo(-26,16);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+// world part: the whole lane lights up as a hazard while the car is on its way
+function drawRoadWarning(){
+  if(!G.carWarn)return;const road=G.plats.find(p=>p.road);if(!road)return;const cw=G.carWarn,u=Math.min(1,1-cw.t/1.4),c=ctx;
+  const top=road.y-110,hgt=110,x0=road.x,x1=road.x+road.w,flash=Math.floor(gtime*(6+u*14))%2;
+  c.save();
+  // red wash over the whole lane, getting stronger as the car gets closer
+  c.fillStyle=`rgba(255,59,59,${.12+.22*u+(flash?.08:0)})`;c.fillRect(x0,top,x1-x0,hgt);
+  // hazard stripes along the road edge
+  c.beginPath();c.rect(x0,road.y-14,x1-x0,14);c.clip();
+  for(let x=x0-40;x<x1+40;x+=40){c.fillStyle=(Math.floor((x-x0)/40)%2)?'#ffd23f':INK;c.beginPath();c.moveTo(x,road.y);c.lineTo(x+20,road.y-14);c.lineTo(x+40,road.y-14);c.lineTo(x+20,road.y);c.fill()}
+  c.restore();c.save();
+  // chevrons sweeping in the car's direction
+  c.globalAlpha=.55+.35*u;c.fillStyle='#fff';c.strokeStyle=INK;c.lineWidth=4;
+  const step=180,off=((gtime*600*cw.dir)%step+step)%step;
+  for(let x=x0-step+off;x<x1+step;x+=step){const cx=x,cy=top+hgt*.48;c.beginPath();c.moveTo(cx-18*cw.dir,cy-26);c.lineTo(cx+14*cw.dir,cy);c.lineTo(cx-18*cw.dir,cy+26);c.lineTo(cx-34*cw.dir,cy+26);c.lineTo(cx-2*cw.dir,cy);c.lineTo(cx-34*cw.dir,cy-26);c.closePath();c.fill();c.stroke()}
+  c.restore();
+  // headlight glow pouring in from the entry side
+  const ex=cw.dir>0?x0:x1,g=c.createLinearGradient(ex,0,ex+cw.dir*900,0);g.addColorStop(0,`rgba(255,240,170,${.35+.45*u})`);g.addColorStop(1,'rgba(255,240,170,0)');
+  c.fillStyle=g;c.fillRect(Math.min(ex,ex+cw.dir*900),top-30,900,hgt+30);
+  // big label on the road
+  if(flash||u>.6){c.save();c.font="400 64px 'Lilita One',Fredoka,sans-serif";c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.lineWidth=12;c.strokeStyle=INK;c.fillStyle='#ffd23f';
+    const tx=W/2,ty=top+hgt*.5;c.strokeText('CAR INCOMING',tx,ty);c.fillText('CAR INCOMING',tx,ty);c.restore()}
+}
 function makeCrater(x,y,r,d){
   let g=null,gy=1e9;
   for(const p of G.plats){if(!p.solid||p.gone||p.wall||p.car||p.crumble&&p.falling)continue;if(x>p.x-r*.5&&x<p.x+p.w+r*.5){const ty=topAt(p,x);if(ty>=y-60&&ty<=y+60&&ty<gy){g=p;gy=ty}}}

@@ -234,6 +234,12 @@ h2,.ftitle{color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill
 .big.primary{background:var(--yel);color:var(--ink);box-shadow:0 5px 0 var(--ink)}
 .big.blue{background:var(--blu);color:#fff}
 .big.green{background:var(--grn);color:#fff;box-shadow:0 5px 0 var(--ink)}
+.big.pink{background:#ff6fb5;color:#fff}.big.blue{background:#4f8dff;color:#fff}.big.ora{background:#ff9a3c;color:#fff}.big.red{background:#ff5a5a;color:#fff}
+.big.green,.big.pink,.big.blue,.big.ora,.big.red{-webkit-text-stroke:3.5px var(--ink);paint-order:stroke fill;letter-spacing:.8px}
+.big.mi{display:flex;align-items:center;justify-content:center;gap:10px}.big.mi svg{width:1.15em;height:1.15em;flex:0 0 auto;-webkit-text-stroke:0}
+.big.primary.mi svg{width:1em;height:1em}
+.sbtn.sweap{background:#ffe2b8!important}.sbtn.slook{background:#ffd3ea!important}
+.slot .stype.cpu{background:#9b6bff}
 .big.green,.big.blue{text-shadow:0 2px 0 rgba(0,0,0,.25)}
 .iconbtn{background:#fff;color:var(--ink);border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
 .coinpill{background:var(--yel);color:var(--ink);border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
@@ -303,7 +309,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .ver.pv{position:static;margin:-4px 0 12px}
 #pause{background:rgba(10,8,30,.6)!important;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 #pause h2{font-size:clamp(30px,7vw,52px)}
-.pfree{display:flex;gap:8px;justify-content:center}.pfree .big{font-size:15px!important;padding:9px 14px!important}
+.pfree{display:flex;gap:8px;justify-content:center}.pfree .big{font-size:15px!important;padding:9px 14px!important;white-space:nowrap;flex:0 0 auto}
 #wswap{background:linear-gradient(#5fd0ff,#b9ecff)!important;flex-direction:column;justify-content:flex-start!important;align-items:stretch!important;gap:8px}
 .wsHead{display:flex;align-items:center;gap:10px}
 .wsBody{flex:1;display:flex;gap:12px;min-height:0}
@@ -346,10 +352,10 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
   <div class="sub">1v1 ragdoll stickman duels</div>
   <div class="ver" id="verText"></div>
   <div class="menu-grid">
-    <button class="big primary" data-go="play" style="grid-column:1/-1;font-size:24px">PLAY</button>
-    <button class="big green" data-go="test">TESTING</button>
-    <button class="big" data-go="locker">LOCKER</button>
-    <button class="big small" data-go="help" style="grid-column:1/-1">HOW TO PLAY</button>
+    <button class="big primary mi" data-go="play" style="grid-column:1/-1;font-size:24px"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="#1d1640"/></svg>PLAY</button>
+    <button class="big green mi" data-go="test"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3" fill="#fff" stroke="#1d1640" stroke-width="2.2" stroke-linejoin="round"/><path d="M7.2 15h9.6l1.6 3H5.6z" fill="#7dff6b"/></svg>TESTING</button>
+    <button class="big pink mi" data-go="locker"><svg viewBox="0 0 24 24"><path d="M8 4l-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3c-.5 1.6-2 2.5-4 2.5S8.5 5.6 8 4z" fill="#fff" stroke="#1d1640" stroke-width="2.1" stroke-linejoin="round"/></svg>LOCKER</button>
+    <button class="big small blue mi" data-go="help" style="grid-column:1/-1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#fff" stroke="#1d1640" stroke-width="2.2"/><path d="M9.3 9.4a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2 1-1.2 1.8v.5" fill="none" stroke="#1d1640" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.3" fill="#1d1640"/></svg>HOW TO PLAY</button>
   </div>
 </div>
 
@@ -401,9 +407,9 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
   <div class="ver pv" id="verText2"></div>
   <div class="btns">
     <button class="big primary" id="resumeBtn">RESUME</button>
-    <button class="big" id="restartBtn">RESTART</button>
-    <div class="pfree" id="pFree"><button class="big" id="pSwapW">SWAP WEAPON</button><button class="big" id="pAddCpu">+ CPU</button><button class="big" id="pRemCpu">− CPU</button></div>
-    <button class="big" id="quitBtn">QUIT TO MENU</button>
+    <button class="big ora" id="restartBtn">RESTART</button>
+    <div class="pfree" id="pFree"><button class="big pink" id="pSwapW">SWAP WEAPON</button><button class="big blue" id="pAddCpu">+ CPU</button><button class="big blue" id="pRemCpu">− CPU</button></div>
+    <button class="big red" id="quitBtn">QUIT TO MENU</button>
   </div>
 </div>
 
@@ -436,7 +442,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.47 · Nov 18';
+const APP_VERSION='v1.48 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -563,9 +569,10 @@ const muteBtn=$('muteBtn');
 function setMuteIcon(){muteBtn.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#1d1640" stroke="#1d1640" stroke-width="1.5" stroke-linejoin="round"/>'+(muted?'<path d="M16 9l5 6M21 9l-5 6" stroke="#ff4d4d" stroke-width="2.6" stroke-linecap="round"/>':'<path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="#1d1640" stroke-width="2.2" stroke-linecap="round"/>')+'</svg>'}setMuteIcon();
 muteBtn.addEventListener('click',()=>{muted=!muted;save('sc_mute',muted);setMuteIcon();initAudio()});
 function initAudio(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
-function tone(f1,f2,dur,type,vol){if(!AC||muted)return;try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(Math.max(30,f2),t+dur);g.gain.setValueAtTime(vol||.08,t);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02)}catch(e){}}
-function noise(dur,vol,freq){if(!AC||muted)return;try{const t=AC.currentTime,n=Math.floor(AC.sampleRate*dur),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=freq||1200;const g=AC.createGain();g.gain.value=vol||.2;s.connect(f).connect(g).connect(AC.destination);s.start(t)}catch(e){}}
-function sfx(n,k){if(G&&G.demo&&state!=='picker'&&state!=='lobby')return;switch(n){
+let SIM_QUIET=false;
+function tone(f1,f2,dur,type,vol){if(!AC||muted||SIM_QUIET)return;try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(Math.max(30,f2),t+dur);g.gain.setValueAtTime(vol||.08,t);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02)}catch(e){}}
+function noise(dur,vol,freq){if(!AC||muted||SIM_QUIET)return;try{const t=AC.currentTime,n=Math.floor(AC.sampleRate*dur),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=freq||1200;const g=AC.createGain();g.gain.value=vol||.2;s.connect(f).connect(g).connect(AC.destination);s.start(t)}catch(e){}}
+function sfx(n,k){if(SIM_QUIET)return;switch(n){
   case'jump':tone(260,520,.14,'triangle',.05);break;
   case'swing':noise(.1,.1,2200);break;
   case'clang':tone(1800,1200,.18,'square',.05);tone(2600,1900,.15,'triangle',.04);break;
@@ -1767,7 +1774,8 @@ function drawHat(c,hat,hx,hy,ang,dir){
   c.stroke=function(){const ss=this.strokeStyle,lw=this.lineWidth;if(ss!==INK){this.strokeStyle=INK;this.lineWidth=lw+3;S.call(this);this.strokeStyle=ss;this.lineWidth=lw}S.call(this)};
   const tail=cl=>{c.strokeStyle=cl;c.lineWidth=4;c.beginPath();c.moveTo(-11,-4);c.quadraticCurveTo(-22,-2+Math.sin(gtime*14)*3,-30,4+Math.sin(gtime*12)*5);c.stroke();c.beginPath();c.moveTo(-11,-4);c.quadraticCurveTo(-20,4,-26,12+Math.sin(gtime*11+1)*4);c.stroke()};
   switch(hat){
-    case'cap':c.fillStyle='#e23b3b';c.beginPath();c.arc(0,-3,13.5,Math.PI,0);c.fill();c.fillRect(2,-6,19,4);c.fillStyle='#fff';c.fillRect(-2,-16,4,3);break;
+    case'cap':c.fillStyle='#e23b3b';c.beginPath();c.arc(0,-3,13.5,Math.PI,0);c.lineTo(13.5,-6);c.lineTo(21,-6);c.quadraticCurveTo(23,-4,21,-2);c.lineTo(-13.5,-2);c.closePath();c.fill();
+      c.fillStyle='rgba(0,0,0,.18)';CanvasRenderingContext2D.prototype.fillRect.call(c,2,-5,19,3);c.fillStyle='#fff';c.beginPath();c.arc(0,-16.2,2.2,0,7);CanvasRenderingContext2D.prototype.fill.call(c);break;
     case'crown':c.fillStyle='#ffd23f';c.beginPath();c.moveTo(-11,-8);c.lineTo(-12,-24);c.lineTo(-5,-15);c.lineTo(0,-27);c.lineTo(5,-15);c.lineTo(12,-24);c.lineTo(11,-8);c.closePath();c.fill();c.fillStyle='#e23b3b';c.beginPath();c.arc(0,-12,2.5,0,7);c.fill();break;
     case'headband':tail('#ff4d6d');c.strokeStyle='#ff4d6d';c.lineWidth=5;line(c,-13,-4,13,-4);break;
     case'tophat':c.fillStyle='#15151b';c.fillRect(-16,-13,32,5);c.fillRect(-10,-36,20,24);c.fillStyle='#c0392b';c.fillRect(-10,-18,20,4);break;
@@ -2039,7 +2047,7 @@ function frame(now){
   if(G&&!paused&&(state==='play'||G.demo)&&!koFreeze()){
     if(G.ann){G.ann.life-=dt;if(G.ann.life<=0)G.ann=null}
     if(G.slowmo>0)G.slowmo-=dt;if(G.flash>0)G.flash-=dt;
-    if(hitStop>0)hitStop-=dt;else{acc+=dt*TS*(G.slowmo>0?.3:1);let n=0;while(acc>=STEP&&n<12){step(STEP);acc-=STEP;n++}if(n>=12)acc=0}
+    if(hitStop>0)hitStop-=dt;else{acc+=dt*TS*(G.slowmo>0?.3:1);let n=0;SIM_QUIET=!!G.demo;while(acc>=STEP&&n<12){step(STEP);acc-=STEP;n++}SIM_QUIET=false;if(n>=12)acc=0}
   }
   render(dt);
   if(state==='picker')drawPreview(dt);if(state==='lobby')drawSlots(dt);

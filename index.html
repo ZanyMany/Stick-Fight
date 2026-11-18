@@ -372,6 +372,12 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .onh{font:400 26px 'Lilita One',sans-serif;color:var(--ink)}
 .oncard p{font:600 13px Fredoka,sans-serif;color:#4a4670;margin:0}
 .oncard .big{padding:10px!important;font-size:19px!important}
+.onfriend{display:none;align-items:center;gap:10px;background:#3ddc84;border:3px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink);padding:8px 18px 8px 10px;font:400 24px 'Lilita One',sans-serif;color:#fff;-webkit-text-stroke:5px var(--ink);paint-order:stroke fill}
+.onfriend.show{display:flex;animation:onpop .5s cubic-bezier(.3,1.6,.5,1)}
+.onfriend i{width:30px;height:30px;border-radius:50%;border:3px solid var(--ink);flex:none}
+.oncard.joined{animation:onflash 1.2s ease-out}
+@keyframes onpop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+@keyframes onflash{0%,40%{background:#c9ffd9;box-shadow:0 0 0 6px #3ddc84,0 5px 0 var(--ink)}}
 .onhost{display:none;flex-direction:column;align-items:center;gap:6px;margin-top:4px}.onhost.show{display:flex}
 .onlbl{font:700 12px Fredoka,sans-serif;color:#6d6a8a}
 .oncode{font:400 46px 'Lilita One',sans-serif;letter-spacing:8px;color:var(--ink);background:#ffe78a;border:3px solid var(--ink);border-radius:14px;padding:0 14px 0 22px;box-shadow:0 4px 0 var(--ink)}
@@ -497,7 +503,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
         <div class="onh">Host a room</div>
         <p>You pick the map and mode. Your friend joins with the code.</p>
         <button class="big ora" id="onHost">Host</button>
-        <div class="onhost" id="onHostBox"><div class="onlbl">Room code</div><div class="oncode" id="onCode">----</div>
+        <div class="onhost" id="onHostBox"><div class="onlbl">Room code</div><div class="oncode" id="onCode">----</div><div class="onfriend" id="onFriend"></div>
           <button class="big green" id="onGo" style="display:none">Set up fight</button></div>
       </div>
       <div class="oncard">
@@ -525,7 +531,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.57 · Nov 18';
+const APP_VERSION='v1.58 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -704,7 +710,8 @@ function startMatch(opts){
     G.bridges.push(br)}
   for(const p of plats)if(p.crumble){p.ox0=p.x;p.oy0=p.y}
   const mains=plats.filter(p=>p.main);G.L=Math.min(...mains.map(p=>p.x));G.R=Math.max(...mains.map(p=>p.x+p.w));G.floor=Math.min(...mains.map(p=>p.y));
-  G.fighters.forEach(f=>{if(f.netRemote&&NET.role==='host'&&NET.guestCos)f.cos=NET.guestCos});
+  G.fighters.forEach(f=>{if(f.netRemote&&NET.role==='host'&&NET.guestCos){const c={...NET.guestCos},used=G.fighters.filter(o=>o!==f).map(o=>o.cos.color);
+    if(used.includes(c.color))c.color=[1,2,3,4,7,8,0].find(i=>!used.includes(i));f.cos=c}});
   G.fighters.forEach((f,i)=>{f.facing=f.aimX=spawnFace(i);f.wchoice=(opts.wchoice||[])[i]||'random';f.weapon=chooseWeapon(f);f.cd=.5;f.cdMax=WEAP[f.weapon].cd;const sp=spawnPoint(i);buildBody(f,sp.x,sp.y)});
   cam.init=false;acc=0;hitStop=0;
   G.test=!!opts.test;
@@ -2159,25 +2166,29 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,rin:{mx:0,my
   makeCode(){const A='ABCDEFGHJKMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c},
   usesBC(){return location.hash.includes('bc')},
   loadPeer(){return new Promise((res,rej)=>{if(window.Peer)return res();const sc=document.createElement('script');sc.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';sc.onload=()=>res();sc.onerror=()=>rej(new Error('load'));document.head.appendChild(sc)})},
-  async host(){this.close();this.role='host';this.code=this.makeCode();$('onCode').textContent=this.code;$('onHostBox').classList.add('show');this.setStatus('Waiting for your friend to join...');
+  async host(){this.close();this.role='host';this.code=this.makeCode();$('onCode').textContent=this.code;$('onHostBox').classList.add('show');$('onFriend').classList.remove('show');$('onHost').style.display='';this.setStatus('Waiting for your friend to join...');
     if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+this.code);this.bc.onmessage=e=>{if(e.data.from==='guest')this.onMsg(e.data.m)};return}
     try{await this.loadPeer()}catch(e){this.setStatus('Could not load online play. Check your internet connection.');return}
     this.peer=new Peer('stickfight-zm-'+this.code,{debug:0});
     this.peer.on('error',e=>{if(e.type==='unavailable-id'){this.host()}else this.setStatus('Connection problem: '+e.type)});
     this.peer.on('connection',c=>{if(this.conn&&this.conn.open){c.close();return}this.conn=c;c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost());c.on('open',()=>{})});},
   async join(code){this.close();this.role='guest';this.code=code;this.setStatus('Connecting to '+code+'...');
-    if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+code);this.bc.onmessage=e=>{if(e.data.from==='host')this.onMsg(e.data.m)};this.live=true;this.send({t:'hello',cos:cos[0]});return}
+    if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+code);this.bc.onmessage=e=>{if(e.data.from==='host')this.onMsg(e.data.m)};this.live=true;this.send({t:'hello',cos:cos[0]});this.setStatus('Connected! Waiting for the host to start.',true);return}
     try{await this.loadPeer()}catch(e){this.setStatus('Could not load online play. Check your internet connection.');return}
     this.peer=new Peer(undefined,{debug:0});
     this.peer.on('error',e=>this.setStatus(e.type==='peer-unavailable'?'No room with code '+code+'. Check the code and try again.':'Connection problem: '+e.type));
     this.peer.on('open',()=>{const c=this.peer.connect('stickfight-zm-'+code,{reliable:true});this.conn=c;
-      c.on('open',()=>{this.live=true;this.send({t:'hello',cos:cos[0]})});c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost())});},
+      c.on('open',()=>{this.live=true;this.send({t:'hello',cos:cos[0]});this.setStatus('Connected! Waiting for the host to start.',true);sfx('go')});c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost())});},
   close(){try{if(this.conn)this.conn.close()}catch(e){}try{if(this.peer)this.peer.destroy()}catch(e){}try{if(this.bc)this.bc.close()}catch(e){}
     this.conn=this.peer=this.bc=null;this.live=false;this.role=null;this.snaps=[];if(setup.slots[1]&&setup.slots[1].t==='remote'){setup.slots[1]={t:'cpu',lvl:'normal'};svSetup()}},
-  lost(){if(!this.role)return;const was=this.role;this.close();KOFX=null;paused=false;startDemo();state='online';show('online');$('onHostBox').classList.remove('show');this.setStatus(was==='host'?'Your friend left the room.':'The host closed the room.')},
+  lost(){if(!this.role)return;const was=this.role;this.close();KOFX=null;paused=false;startDemo();state='online';show('online');$('onHostBox').classList.remove('show');$('onFriend').classList.remove('show');$('onHost').style.display='';this.setStatus(was==='host'?'Your friend left the room.':'The host closed the room.')},
+  friendJoined(){const host=(cos[0]||{}).color,g=this.guestCos||{};let c=g.color;if(c===host||c==null)c=host===1?2:1;
+    $('onHost').style.display='none';const e=$('onFriend');e.innerHTML='<i style="background:'+COLORS[c]+'"></i>Friend joined!';e.classList.remove('show');void e.offsetWidth;e.classList.add('show');
+    const card=e.closest('.oncard');if(card){card.classList.remove('joined');void card.offsetWidth;card.classList.add('joined')}
+    sfx('go');setTimeout(()=>sfx('pick'),180);try{navigator.vibrate&&navigator.vibrate([60,40,60])}catch(_){}},
   onMsg(m){if(!m||!m.t)return;
     if(this.role==='host'){
-      if(m.t==='hello'){this.live=true;this.guestCos=m.cos;this.setStatus('Your friend joined!',true);$('onGo').style.display='';sfx('pick')}
+      if(m.t==='hello'){this.live=true;this.guestCos=m.cos;this.setStatus('Tap Set up fight to start.',true);$('onGo').style.display='';this.friendJoined()}
       else if(m.t==='in'){this.rin.mx=m.mx;this.rin.my=m.my;if(m.rel)this.rin.rel=true}
       else if(m.t==='bye')this.lost()}
     else{

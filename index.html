@@ -341,7 +341,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 #menu .mhaze{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 32% 56%,rgba(255,255,255,.45),rgba(255,255,255,0) 70%);pointer-events:none}
 #menu .coinpill.tl{position:absolute;top:calc(10px + var(--st));left:calc(18px + var(--sl));z-index:3}
 #menu .ver{position:absolute;top:calc(16px + var(--st));left:50%;right:auto;bottom:auto;transform:translateX(-50%);z-index:3;opacity:.7}
-.mlayout{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:minmax(0,min(440px,58%)) minmax(0,1fr);column-gap:4%;align-items:end;padding:0 0 calc(30px + var(--sb)) 2%}
+.mlayout{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:minmax(0,420px) auto;justify-content:center;column-gap:clamp(28px,7%,90px);align-items:end;padding:0 0 calc(30px + var(--sb))}
 .mleft{align-self:end}
 .mleft{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
 #menu .title{font-size:clamp(52px,15vh,84px);margin:0 0 0 -4px;text-align:left;line-height:.9;white-space:nowrap;-webkit-text-stroke:10px var(--ink);paint-order:stroke fill;text-shadow:5px 6px 0 #ff8a1f,8px 10px 0 var(--ink);transform:rotate(-3deg);transform-origin:left center;letter-spacing:1px}
@@ -353,7 +353,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .mrow .big{height:clamp(44px,13vh,54px);font-size:18px!important;padding:0 10px!important;letter-spacing:.3px}
 .mhelp{align-self:flex-start;display:flex;align-items:center;gap:7px;background:#fff;border:2.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);border-radius:14px;padding:6px 14px 6px 8px;font:700 14px Fredoka,sans-serif;color:var(--ink)}
 .mhelp svg{width:20px;height:20px}
-.mhero{position:relative;height:min(80vh,340px);width:100%;max-width:340px;justify-self:end;padding:0;cursor:pointer;overflow:hidden;border:3px solid var(--ink);border-radius:22px;box-shadow:0 5px 0 var(--ink);background:linear-gradient(180deg,#ffffff,color-mix(in srgb,var(--pc,#ff5a4e) 18%,#ffffff))}
+.mhero{position:relative;height:min(70vh,300px);width:auto;aspect-ratio:4/5;justify-self:center;padding:0;cursor:pointer;overflow:hidden;border:3px solid var(--ink);border-radius:22px;box-shadow:0 5px 0 var(--ink);background:linear-gradient(180deg,#ffffff,color-mix(in srgb,var(--pc,#ff5a4e) 18%,#ffffff))}
 .mhero canvas{position:absolute;left:50%;bottom:-2.4%;height:124%;width:auto;aspect-ratio:9/10;transform:translateX(-50%)}
 .mground{position:absolute;left:0;right:0;bottom:0;height:10%;background:var(--pc,#ff5a4e);border-top:3px solid var(--ink);box-shadow:inset 0 6px 0 rgba(255,255,255,.25)}
 .mtag{position:absolute;left:50%;top:5%;bottom:auto;transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:#fff;border:2.5px solid var(--ink);border-radius:12px;padding:3px 10px 3px 4px;box-shadow:0 3px 0 var(--ink);font:700 13px Fredoka,sans-serif;color:var(--ink);white-space:nowrap}
@@ -521,7 +521,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.55 · Nov 18';
+const APP_VERSION='v1.56 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -543,10 +543,7 @@ function layout(){
   app.style.width=CW+'px';app.style.height=CH+'px';cv.width=Math.round(CW*DPR);cv.height=Math.round(CH*DPR);
   // notch / home-bar insets, mapped into the (possibly rotated) landscape layout
   const ps=getComputedStyle(document.getElementById('safeProbe')),t=parseFloat(ps.paddingTop)||0,r=parseFloat(ps.paddingRight)||0,b=parseFloat(ps.paddingBottom)||0,l=parseFloat(ps.paddingLeft)||0;
-  if(ROT){if(ROTDIR>0){SAFE.l=b;SAFE.r=t;SAFE.t=l;SAFE.b=r}else{SAFE.l=t;SAFE.r=b;SAFE.t=r;SAFE.b=l}}else{SAFE.l=l;SAFE.r=r;SAFE.t=t;SAFE.b=b;
-    // iOS pads BOTH sides in landscape; only the camera side really needs it, so the other edge can be used
-    const a=(screen.orientation&&typeof screen.orientation.angle==='number')?screen.orientation.angle:(typeof window.orientation==='number'?window.orientation:null);
-    if(l>0&&r>0){if(a===90)SAFE.r=0;else if(a===270||a===-90)SAFE.l=0}}
+  if(ROT){if(ROTDIR>0){SAFE.l=b;SAFE.r=t;SAFE.t=l;SAFE.b=r}else{SAFE.l=t;SAFE.r=b;SAFE.t=r;SAFE.b=l}}else{SAFE.l=l;SAFE.r=r;SAFE.t=t;SAFE.b=b;}
   for(const k of['l','r','t','b'])app.style.setProperty('--s'+k,SAFE[k]+'px');
 }
 lastLandscape();

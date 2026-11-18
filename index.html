@@ -338,25 +338,25 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 
 /* ---- main menu ---- */
 #menu{padding:calc(10px + var(--st)) calc(18px + var(--sr)) calc(10px + var(--sb)) calc(18px + var(--sl))!important}#menu.show{display:block!important}
-#menu .mhaze{position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,.18) 58%,rgba(255,255,255,0));pointer-events:none}
+#menu .mhaze{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 32% 56%,rgba(255,255,255,.45),rgba(255,255,255,0) 70%);pointer-events:none}
 #menu .coinpill.tl{position:absolute;top:calc(10px + var(--st));left:calc(18px + var(--sl));z-index:3}
 #menu .ver{position:absolute;top:calc(16px + var(--st));left:50%;right:auto;bottom:auto;transform:translateX(-50%);z-index:3;opacity:.7}
-.mlayout{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);gap:3%;align-items:center;padding:34px 34px 24px 2%}
+.mlayout{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:min(440px,54%) auto;justify-content:center;column-gap:5%;align-items:center;padding:44px 0 30px}
 .mleft{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
-#menu .title{font-size:clamp(44px,10.5vh,74px);margin:0;text-align:left;line-height:.92;white-space:nowrap}
-#menu .sub{margin:8px 0 16px 4px;font:600 15px Fredoka,sans-serif;color:var(--ink);background:none;border:none;box-shadow:none;padding:0;opacity:.8}
-.mbtns{display:flex;flex-direction:column;gap:10px;width:min(100%,420px)}
+#menu .title{font-size:clamp(52px,15vh,84px);margin:0 0 0 -4px;text-align:left;line-height:.9;white-space:nowrap;-webkit-text-stroke:10px var(--ink);paint-order:stroke fill;text-shadow:5px 6px 0 #ff8a1f,8px 10px 0 var(--ink);transform:rotate(-3deg);transform-origin:left center;letter-spacing:1px}
+#menu .sub{margin:12px 0 14px 6px;font:600 15px Fredoka,sans-serif;color:var(--ink);background:none;border:none;box-shadow:none;padding:0;opacity:.8}
+.mbtns{display:flex;flex-direction:column;gap:10px;width:100%}
 #menu .mplay{height:clamp(54px,17vh,72px);font:400 clamp(28px,8.5vh,38px) 'Lilita One',sans-serif!important;letter-spacing:1.5px;border-radius:18px}
 #menu .mplay svg{width:.8em;height:.8em}
 .mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mrow .big{height:clamp(44px,13vh,54px);font-size:18px!important;padding:0 10px!important;letter-spacing:.3px}
 .mhelp{align-self:flex-start;display:flex;align-items:center;gap:7px;background:#fff;border:2.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);border-radius:14px;padding:6px 14px 6px 8px;font:700 14px Fredoka,sans-serif;color:var(--ink)}
 .mhelp svg{width:20px;height:20px}
-.mhero{position:relative;height:min(78%,270px);aspect-ratio:9/10;margin-bottom:6%;justify-self:center;background:none;border:none;padding:0;cursor:pointer}
+.mhero{position:relative;height:min(62vh,262px);width:auto;aspect-ratio:9/10;margin-top:-4%;justify-self:center;background:none;border:none;padding:0;cursor:pointer}
 .mhero canvas{position:absolute;left:0;top:0;width:100%;height:100%}
 .mspot{position:absolute;left:8%;right:8%;top:4%;bottom:10%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.95),rgba(255,255,255,.55) 55%,rgba(255,255,255,0))}
 .mpod{position:absolute;left:18%;right:18%;bottom:6%;height:13%;border-radius:50%;background:var(--pc,#ff5a4e);border:3px solid var(--ink);box-shadow:0 6px 0 var(--ink),inset 0 -8px 0 rgba(0,0,0,.18)}
-.mtag{position:absolute;left:50%;bottom:-9%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:#fff;border:2.5px solid var(--ink);border-radius:12px;padding:3px 10px 3px 4px;box-shadow:0 3px 0 var(--ink);font:700 13px Fredoka,sans-serif;color:var(--ink);white-space:nowrap}
+.mtag{position:absolute;left:50%;bottom:-6%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:#fff;border:2.5px solid var(--ink);border-radius:12px;padding:3px 10px 3px 4px;box-shadow:0 3px 0 var(--ink);font:700 13px Fredoka,sans-serif;color:var(--ink);white-space:nowrap}
 .mtag b{background:var(--pc,#ff5a4e);color:#fff;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;border:2px solid var(--ink);border-radius:8px;padding:0 6px;font:400 14px 'Lilita One',sans-serif}
 .mhero:active .mpod{transform:translateY(2px)}
 
@@ -521,7 +521,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.51 · Nov 18';
+const APP_VERSION='v1.52 · Nov 18';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};

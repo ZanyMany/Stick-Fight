@@ -564,7 +564,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.65 · Nov 19';
+const APP_VERSION='v1.66 · Nov 19';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -605,39 +605,39 @@ const TRAILS=['none','ghost','fire','spark','rainbow','stars','smoke'];
 const WEAP={
   sword:{mass:1.1,arm:900,wrist:520,name:'Sword',kind:'melee',len:72,contact:9,kb:430,stiff:.3,ab:'dash',cd:2.6,abName:'Dash Slash'},
   katana:{mass:0.8,arm:1100,wrist:700,name:'Katana',kind:'melee',len:80,contact:8,kb:277,stiff:.42,ab:'swing',cd:.45,abName:'Quick Swing'},
-  hammer:{crush:1,curve:1.3,mass:3.2,arm:700,wrist:260,name:'War Hammer',kind:'melee',len:68,contact:12.5,kb:640,stiff:.13,ab:'slam',cd:4,abName:'Ground Slam'},
+  hammer:{crush:1,curve:1.3,mass:3.2,arm:700,wrist:260,name:'War Hammer',kind:'melee',len:68,contact:12.5,kb:600,stiff:.13,ab:'slam',cd:4,abName:'Ground Slam'},
   spear:{mass:1.6,arm:900,wrist:480,name:'Spear',kind:'melee',len:114,contact:9,kb:470,stiff:.3,ab:'thrust',cd:.6,abName:'Thrust',thrust:1},
-  axe:{mass:2,arm:800,wrist:380,name:'Battle Axe',kind:'melee',len:64,contact:11,kb:500,stiff:.22,ab:'boomer',cd:3.2,abName:'Boomerang Throw'},
-  fire:{mass:0.5,arm:900,wrist:900,name:'Fire Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'fireball',cd:1.8,abName:'Fireball'},
-  ice:{mass:0.5,arm:900,wrist:900,name:'Frost Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'ice',cd:2.04,abName:'Freeze Shard'},
-  bolt:{mass:0.7,arm:850,wrist:800,name:'Storm Staff',kind:'wand',len:66,contact:4,kb:250,stiff:.25,ab:'lightning',cd:2.21,abName:'Lightning'},
-  void:{mass:0.5,arm:900,wrist:900,name:'Void Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'grav',cd:5,abName:'Black Hole (pulls)'},
-  blaster:{mass:0.7,arm:1100,wrist:1400,name:'Blaster',kind:'gun',len:32,stiff:.35,ab:'burst',cd:1.19,abName:'3-Shot Burst'},
-  plasma:{mass:1.6,arm:900,wrist:1100,name:'Plasma Cannon',kind:'gun',len:46,stiff:.22,ab:'plasma',cd:2.72,abName:'Plasma Ball'},
-  shotgun:{mass:1.2,arm:1000,wrist:1200,name:'Shotgun',kind:'gun',len:46,stiff:.3,ab:'shotgun',cd:1.7,abName:'Spread Shot'},
-  sniper:{headMult:1.9,mass:1.4,arm:1000,wrist:1400,name:'Sniper',kind:'gun',len:64,stiff:.3,ab:'sniper',cd:3,abName:'Power Shot'},
-  rocket:{mass:1.8,arm:900,wrist:1000,name:'Rocket Launcher',kind:'gun',len:50,stiff:.2,ab:'rocket',cd:3.06,abName:'Rocket'},
-  minigun:{mass:2,arm:900,wrist:1000,name:'Minigun',kind:'gun',len:54,stiff:.2,ab:'spray',cd:3.82,abName:'Bullet Spray'},
+  axe:{mass:2,arm:800,wrist:380,name:'Battle Axe',kind:'melee',len:64,contact:12.5,kb:500,stiff:.22,ab:'boomer',cd:2.6,abName:'Boomerang Throw'},
+  fire:{mass:0.5,arm:900,wrist:900,name:'Fire Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'fireball',cd:1.25,abName:'Fireball'},
+  ice:{mass:0.5,arm:900,wrist:900,name:'Frost Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'ice',cd:1.3,abName:'Freeze Shard'},
+  bolt:{mass:0.7,arm:850,wrist:800,name:'Storm Staff',kind:'wand',len:66,contact:4,kb:250,stiff:.25,ab:'lightning',cd:1.7,abName:'Lightning'},
+  void:{mass:0.5,arm:900,wrist:900,name:'Void Wand',kind:'wand',len:44,contact:3,kb:220,stiff:.3,ab:'grav',cd:3.6,abName:'Black Hole (pulls)'},
+  blaster:{mass:0.7,arm:1100,wrist:1400,name:'Blaster',kind:'gun',len:32,stiff:.35,ab:'burst',cd:1,abName:'3-Shot Burst'},
+  plasma:{mass:1.6,arm:900,wrist:1100,name:'Plasma Cannon',kind:'gun',len:46,stiff:.22,ab:'plasma',cd:2.1,abName:'Plasma Ball'},
+  shotgun:{mass:1.2,arm:1000,wrist:1200,name:'Shotgun',kind:'gun',len:46,stiff:.3,ab:'shotgun',cd:1.35,abName:'Spread Shot'},
+  sniper:{headMult:1.9,mass:1.4,arm:1000,wrist:1400,name:'Sniper',kind:'gun',len:64,stiff:.3,ab:'sniper',cd:2.4,abName:'Power Shot'},
+  rocket:{mass:1.8,arm:900,wrist:1000,name:'Rocket Launcher',kind:'gun',len:50,stiff:.2,ab:'rocket',cd:2.4,abName:'Rocket'},
+  minigun:{mass:2,arm:900,wrist:1000,name:'Minigun',kind:'gun',len:54,stiff:.2,ab:'spray',cd:3,abName:'Bullet Spray'},
   scythe:{mass:1.8,arm:850,wrist:420,name:'Scythe',kind:'melee',len:96,contact:10,kb:470,ab:'spin',cd:3,abName:'Reaper Spin'},
-  claymore:{crush:1,curve:1.15,mass:2.6,arm:750,wrist:300,name:'Claymore',kind:'melee',len:96,contact:11.5,kb:650,ab:'swing',cd:.75,abName:'Heavy Swing'},
+  claymore:{crush:1,curve:1.15,mass:2.6,arm:750,wrist:300,name:'Claymore',kind:'melee',len:96,contact:10.5,kb:650,ab:'swing',cd:0.95,abName:'Heavy Swing'},
   dagger:{mass:.5,arm:1200,wrist:900,name:'Dagger',kind:'melee',len:38,contact:7,kb:300,ab:'backstab',cd:3.5,abName:'Backstab Teleport'},
-  chainsaw:{mass:2,arm:850,wrist:600,name:'Chainsaw',kind:'melee',len:64,contact:6,kb:260,ab:'rev',cd:3.4,abName:'Rev Up'},
+  chainsaw:{mass:2,arm:850,wrist:600,name:'Chainsaw',kind:'melee',len:64,contact:7.5,kb:260,ab:'rev',cd:3.4,abName:'Rev Up'},
   mace:{crush:1,curve:1.2,mass:2.8,arm:750,wrist:280,name:'Mace',kind:'melee',len:62,contact:11.5,kb:600,ab:'spin',cd:3.5,abName:'Whirlwind'},
   trident:{mass:1.7,arm:900,wrist:480,name:'Trident',kind:'melee',len:112,contact:10,kb:450,ab:'lunge',cd:2.2,abName:'Lunge',thrust:1},
-  boomerang:{mass:.6,arm:1100,wrist:800,name:'Boomerang',kind:'melee',len:36,contact:5,kb:280,ab:'boomer',cd:1.53,abName:'Throw'},
-  wind:{mass:.6,arm:900,wrist:800,name:'Wind Staff',kind:'wand',len:62,contact:3,kb:220,ab:'gust',cd:2.5,abName:'Gust (deflects shots)'},
-  meteor:{mass:.8,arm:850,wrist:750,name:'Meteor Staff',kind:'wand',len:62,contact:4,kb:250,ab:'meteor',cd:5.1,abName:'Meteor Shower'},
-  tele:{mass:.5,arm:900,wrist:900,name:'Warp Wand',kind:'wand',len:44,contact:3,kb:220,ab:'blink',cd:2.5,abName:'Teleport'},
-  heal:{mass:.5,arm:900,wrist:900,name:'Healing Staff',kind:'wand',len:46,contact:3,kb:220,ab:'mend',cd:9,abName:'Mend (+20 HP)'},
-  laser:{mass:1.2,arm:1000,wrist:1300,name:'Laser Rifle',kind:'gun',len:60,ab:'beam',cd:1.7,abName:'Piercing Beam'},
+  boomerang:{mass:.6,arm:1100,wrist:800,name:'Boomerang',kind:'melee',len:36,contact:7,kb:280,ab:'boomer',cd:1.3,abName:'Throw'},
+  wind:{mass:.6,arm:900,wrist:800,name:'Wind Staff',kind:'wand',len:62,contact:3,kb:220,ab:'gust',cd:2.1,abName:'Gust (deflects shots)'},
+  meteor:{mass:.8,arm:850,wrist:750,name:'Meteor Staff',kind:'wand',len:62,contact:4,kb:250,ab:'meteor',cd:3.8,abName:'Meteor Shower'},
+  tele:{mass:.5,arm:900,wrist:900,name:'Warp Wand',kind:'wand',len:44,contact:3,kb:220,ab:'blink',cd:1.7,abName:'Teleport and blast anyone nearby'},
+  heal:{mass:.5,arm:900,wrist:900,name:'Healing Staff',kind:'wand',len:46,contact:3,kb:220,ab:'mend',cd:4.2,abName:'Heal +18 and blast nearby enemies away'},
+  laser:{mass:1.2,arm:1000,wrist:1300,name:'Laser Rifle',kind:'gun',len:60,ab:'beam',cd:1.35,abName:'Piercing Beam'},
   bombs:{mass:1.1,arm:900,wrist:1000,name:'Bombs',kind:'gun',len:20,ab:'bombtoss',cd:.85,abName:'Throw bomb',special:1},
-  grenadeL:{mass:1.6,arm:900,wrist:1000,name:'Grenade Launcher',kind:'gun',len:50,ab:'grenade',cd:1.87,abName:'Bouncing Grenade'},
-  rail:{mass:1.8,arm:900,wrist:1200,name:'Railgun',kind:'gun',len:72,ab:'rail',cd:5.5,abName:'Rail Shot'},
-  flamer:{mass:1.8,arm:900,wrist:1000,name:'Flamethrower',kind:'gun',len:52,ab:'flame',cd:2.98,abName:'Flame Stream'},
-  harpoon:{mass:1.4,arm:950,wrist:1100,name:'Harpoon Gun',kind:'gun',len:56,ab:'hook',cd:2.55,abName:'Harpoon Pull'},
+  grenadeL:{mass:1.6,arm:900,wrist:1000,name:'Grenade Launcher',kind:'gun',len:50,ab:'grenade',cd:1.45,abName:'Bouncing Grenade'},
+  rail:{mass:1.8,arm:900,wrist:1200,name:'Railgun',kind:'gun',len:72,ab:'rail',cd:3.9,abName:'Rail Shot'},
+  flamer:{mass:1.8,arm:900,wrist:1000,name:'Flamethrower',kind:'gun',len:52,ab:'flame',cd:2.6,abName:'Flame Stream'},
+  harpoon:{mass:1.4,arm:950,wrist:1100,name:'Harpoon Gun',kind:'gun',len:56,ab:'hook',cd:1.8,abName:'Harpoon Pull'},
   executioner:{crush:1,curve:1.3,minSpd:500,mass:4.6,arm:560,wrist:160,name:'Executioner',kind:'melee',len:100,contact:14,kb:640,cap:24,ab:'swing',cd:2.4,abName:'Huge swing (needs speed!)',risky:1},
   rapier:{tipOnly:1,mass:.45,arm:1300,wrist:1100,name:'Rapier',kind:'melee',len:94,contact:7,kb:420,ab:'lunge',cd:1.5,abName:'Lunge (only the tip hurts)',thrust:1,risky:1},
-  glass:{headMult:2,mass:2,arm:900,wrist:1300,name:'Glass Cannon',kind:'gun',len:72,ab:'glass',cd:6,abName:'45-dmg shot, huge recoil',risky:1},
+  glass:{headMult:2,mass:2,arm:900,wrist:1300,name:'Glass Cannon',kind:'gun',len:72,ab:'glass',cd:4.5,abName:'45-dmg shot, huge recoil',risky:1},
   chaos:{mass:.6,arm:900,wrist:900,name:'Chaos Wand',kind:'wand',len:50,contact:3,kb:220,ab:'chaos',cd:1.7,abName:'Random spell every shot: fireball, freeze, black hole, teleport, heal or a giant blast',risky:1}
 };
 const WKEYS=Object.keys(WEAP).filter(k=>!WEAP[k].special);
@@ -913,7 +913,8 @@ function aiInput(f,dt){
       else if(dist<w.len+45&&f.swingCd<=0&&!ready)go=true;
     }else if(ready){
       const rng={bombs:560,glass:1300,chaos:620,sniper:1200,bolt:740,shotgun:420,minigun:700,void:650,wind:250,flamer:300,harpoon:680,grenadeL:650,rail:1600,laser:1200,meteor:600,tele:9999,heal:9999}[f.weapon]||800;
-      if(w.ab==='bombtoss')go=dist>90&&dist<820;
+      if(w.ab==='glass'&&!groundUnder(f.x-Math.sign(o.x-f.x||1)*240,f.y))go=false; // its kick would throw us off the edge
+      else if(w.ab==='bombtoss')go=dist>90&&dist<820;
       else if(w.ab==='mend')go=f.dmg>35;
       else if(w.ab==='blink')go=dist>450;
       else if(w.ab==='chaos')go=dist>280&&dist<rng;
@@ -1407,16 +1408,16 @@ function release(f){
     case'thrust':startSwing(f,.28);addVel(f,ax*90,0,0);break;
     case'dash':f.dashT=.22;addVel(f,ax*820-f.vx*.5,ay*640-(ay>-.2?160:0),0);startSwing(f,.28);sfx('dash');break;
     case'slam':if(!f.onGround){f.slam=true;addVel(f,-f.vx*.6,1250,0)}else{shockwave(f)}startSwing(f,.3,f.facing*.3,.95);break;
-    case'boomer':{f.thrown=true;const m=muzzle(f);G.proj.push({wid:f.weapon,type:'axe',x:m.x,y:m.y,px:m.x,py:m.y,vx:ax*820,vy:ay*820,owner:f,life:2.4,r:22,t:0,hitCd:0,dmg:10,kb:440,spin:0});recoil(f,90);sfx('swing');break}
-    case'fireball':shoot(f,{type:'fire',speed:560,r:12,dmg:7,kb:460,explode:70,color:'#ff7a2f',pal:['#ffd23f','#ff7a2f','#ff3b30']});recoil(f,40);sfx('fire');break;
-    case'ice':shoot(f,{type:'ice',speed:820,r:9,dmg:6,kb:200,color:'#9be7ff'});recoil(f,30);sfx('ice');break;
+    case'boomer':{f.thrown=true;const m=muzzle(f);G.proj.push({wid:f.weapon,type:'axe',x:m.x,y:m.y,px:m.x,py:m.y,vx:ax*900,vy:ay*900,owner:f,life:2.4,r:22,t:0,hitCd:0,dmg:15,kb:520,spin:0});recoil(f,90);sfx('swing');break}
+    case'fireball':shoot(f,{type:'fire',speed:720,r:13,dmg:14,kb:520,explode:90,color:'#ff7a2f',pal:['#ffd23f','#ff7a2f','#ff3b30']});recoil(f,40);sfx('fire');break;
+    case'ice':shoot(f,{type:'ice',speed:1050,r:10,dmg:10,kb:240,color:'#9be7ff'});recoil(f,30);sfx('ice');break;
     case'lightning':lightning(f);break;
-    case'grav':shoot(f,{type:'grav',speed:210,r:16,dmg:11,kb:850,explode:130,word:'VOID!',life:2.4,color:'#b15cff',pal:['#b15cff','#7a2bd6','#fff','#e3c2ff']});sfx('void');break;
+    case'grav':shoot(f,{type:'grav',speed:260,r:16,dmg:16,kb:900,explode:130,word:'VOID!',life:2.4,color:'#b15cff',pal:['#b15cff','#7a2bd6','#fff','#e3c2ff']});sfx('void');break;
     case'burst':f.burst=3;f.burstT=0;break;
-    case'plasma':shoot(f,{type:'plasma',speed:470,r:16,dmg:17,kb:680,explode:115,color:'#7dff6b',pal:['#7dff6b','#d9ffcf','#2ecc71','#fff']});recoil(f,240);sfx('laser');break;
-    case'shotgun':for(let i=0;i<7;i++)shoot(f,{type:'bullet',speed:950+Math.random()*200,dmg:4,kb:190,life:.38,off:(i/6-.5)*.38});recoil(f,300);sfx('shotgun');break;
-    case'sniper':shoot(f,{type:'bullet',speed:2400,dmg:22,kb:720,color:'#ff5b5b',r:5,sniper:1});recoil(f,200);shake=Math.max(shake,7);sfx('sniper');break;
-    case'rocket':shoot(f,{type:'rocket',speed:560,r:9,dmg:16,kb:700,explode:125,life:2.5});recoil(f,170);sfx('rocket');break;
+    case'plasma':shoot(f,{type:'plasma',speed:560,r:16,dmg:22,kb:720,explode:115,color:'#7dff6b',pal:['#7dff6b','#d9ffcf','#2ecc71','#fff']});recoil(f,240);sfx('laser');break;
+    case'shotgun':for(let i=0;i<7;i++)shoot(f,{type:'bullet',speed:1000+Math.random()*200,dmg:6,kb:210,life:.38,off:(i/6-.5)*.38});recoil(f,300);sfx('shotgun');break;
+    case'sniper':shoot(f,{type:'bullet',speed:2600,dmg:28,kb:760,color:'#ff5b5b',r:5,sniper:1});recoil(f,200);shake=Math.max(shake,7);sfx('sniper');break;
+    case'rocket':shoot(f,{type:'rocket',speed:650,r:9,dmg:24,kb:760,explode:125,life:2.5});recoil(f,170);sfx('rocket');break;
     case'spray':f.sprayT=1.3;f.sprayAcc=0;break;
     case'spin':startSwing(f,.55,ax,ay,true);addVel(f,ax*120,-60,0);break;
     case'backstab':{const o=nearestEnemy(f);
@@ -1426,22 +1427,27 @@ function release(f){
     case'lunge':startSwing(f,.3);f.dashT=.18;addVel(f,ax*620-f.vx*.4,ay*420-80,0);sfx('dash');break;
     case'gust':gust(f);break;
     case'meteor':{const tx=Math.max(G.L-150,Math.min(G.R+150,f.x+ax*380));
-      for(let i=0;i<3;i++)G.proj.push({type:'meteor',x:tx+(i-1)*95+(Math.random()-.5)*30,y:cam.y-CH/view.s/2-80-i*170,px:0,py:0,vx:(Math.random()-.5)*60,vy:620,owner:f,life:5,r:14,t:0,hitCd:0,dmg:11,kb:820,explode:90,pal:['#ff7a2f','#ffd23f','#5a3a2a','#fff']});
+      for(let i=0;i<3;i++)G.proj.push({type:'meteor',x:tx+(i-1)*95+(Math.random()-.5)*30,y:cam.y-CH/view.s/2-80-i*170,px:0,py:0,vx:(Math.random()-.5)*60,vy:700,owner:f,life:5,r:14,t:0,hitCd:0,dmg:15,kb:820,explode:90,pal:['#ff7a2f','#ffd23f','#5a3a2a','#fff']});
       sfx('fire');break}
-    case'blink':teleport(f,ax*240,ay*240);break;
-    case'mend':f.dmg=Math.max(0,f.dmg-20);floatText(f.x,f.y-120,'+20 HP','#7dff6b');for(let i=0;i<24;i++){const a=Math.random()*6.28;part(f.x+Math.cos(a)*30,f.y-50+Math.sin(a)*40,0,-80-Math.random()*80,.8,i%2?'#7dff6b':'#fff',5,-100)}sfx('pick');break;
-    case'beam':beam(f,{len:1300,dmg:13,kb:480,col:'#ff4d8d',w:6,pierceWalls:false});sfx('laser');break;
-    case'rail':beam(f,{len:1800,dmg:18,kb:500,col:'#7fd8ff',w:8});recoil(f,260);shake=Math.max(shake,9);sfx('sniper');break;
+    case'blink':{teleport(f,ax*380,ay*380);warpBurst(f);break}
+    case'mend':f.dmg=Math.max(0,f.dmg-18);floatText(f.x,f.y-120,'+18 HP','#7dff6b');
+      for(const o of enemies(f)){const dx=o.x-f.x,dy=(o.y-40)-(f.y-40),d=Math.hypot(dx,dy)||1;if(d<190)hit(o,10,dx/d,dy/d-.4,820,f,{tag:'MEND!'})}
+      G.fx.push({k:'ring',x:f.x,y:f.y-45,r:20,max:190,life:.35,ml:.35,col:'#7dff6b'});for(let i=0;i<24;i++){const a=Math.random()*6.28;part(f.x+Math.cos(a)*30,f.y-50+Math.sin(a)*40,0,-80-Math.random()*80,.8,i%2?'#7dff6b':'#fff',5,-100)}sfx('pick');break;
+    case'beam':beam(f,{len:1300,dmg:18,kb:520,col:'#ff4d8d',w:6,pierceWalls:false});sfx('laser');break;
+    case'rail':beam(f,{len:1800,dmg:26,kb:560,col:'#7fd8ff',w:8});recoil(f,260);shake=Math.max(shake,9);sfx('sniper');break;
     case'bombtoss':{const mine=G.proj.filter(q=>q.fuse&&q.owner===f).length;if(mine>=3){f.cd=.25;break}
       const m=muzzle(f);G.proj.push({type:'grenade',bomb:1,fuse:1,x:m.x,y:m.y,px:m.x,py:m.y,vx:ax*860+f.vx*.35,vy:ay*760-260+f.vy*.2,owner:f,life:3,r:13,t:0,hitCd:0,dmg:24,kb:980,explode:150,selfFull:1,spin:0,word:'BOOM!'});
       recoil(f,60);sfx('swing');break}
-    case'grenade':{const m=muzzle(f);G.proj.push({type:'grenade',x:m.x,y:m.y,px:m.x,py:m.y,vx:ax*720+f.vx*.3,vy:ay*720-200,owner:f,life:1.9,r:9,t:0,hitCd:0,dmg:15,kb:640,explode:120,spin:0});recoil(f,80);sfx('swing');break}
+    case'grenade':{const m=muzzle(f);G.proj.push({type:'grenade',x:m.x,y:m.y,px:m.x,py:m.y,vx:ax*760+f.vx*.3,vy:ay*760-200,owner:f,life:1.9,r:9,t:0,hitCd:0,dmg:22,kb:680,explode:120,spin:0});recoil(f,80);sfx('swing');break}
     case'flame':f.flameT=1.2;f.flameAcc=0;break;
-    case'glass':shoot(f,{type:'bullet',speed:2800,dmg:45,kb:1500,color:'#9ff3ff',r:6,sniper:1});recoil(f,950);f.hitstun=Math.max(f.hitstun,.35);shake=Math.max(shake,16);G.flash=Math.max(G.flash||0,.1);sfx('sniper');sfx('boom');break;
+    case'glass':shoot(f,{type:'bullet',speed:2800,dmg:45,kb:1500,color:'#9ff3ff',r:6,sniper:1});recoil(f,560);f.hitstun=Math.max(f.hitstun,.2);shake=Math.max(shake,16);G.flash=Math.max(G.flash||0,.1);sfx('sniper');sfx('boom');break;
     case'chaosblast':shoot(f,{type:'chaos',speed:300,r:18,dmg:35,kb:1500,explode:210,life:3,selfFull:1,word:'KABOOM!',color:'#ff3fa4',pal:['#ff3fa4','#ffd23f','#3d8bff','#fff','#7dff6b']});sfx('void');break;
-    case'hook':shoot(f,{type:'hook',speed:1150,r:9,dmg:5,kb:60,life:.75,color:'#ddd'});recoil(f,90);sfx('shot');break;
+    case'hook':shoot(f,{type:'hook',speed:1250,r:9,dmg:10,kb:60,life:.75,color:'#ddd'});recoil(f,90);sfx('shot');break;
   }
 }
+function warpBurst(f){const cx=f.P.hp.x,cy=f.P.hp.y-10;
+  for(const o of enemies(f)){const dx=o.x-cx,dy=(o.y-40)-cy,d=Math.hypot(dx,dy)||1;if(d<150){hit(o,13,dx/d,dy/d-.35,760,f,{tag:'WARP!'});o.hitstun=Math.max(o.hitstun,.45)}}
+  G.fx.push({k:'ring',x:cx,y:cy,r:16,max:150,life:.32,ml:.32,col:'#c77dff'});shake=Math.max(shake,5)}
 function teleport(f,dx,dy){
   if(!isFinite(dx)||!isFinite(dy)){window.__tpBad=(window.__tpBad||0)+1;return}
   const P=f.P;let tx=P.hp.x+dx,ty=P.hp.y+dy;
@@ -1453,7 +1459,7 @@ function teleport(f,dx,dy){
 }
 function gust(f){
   const m=muzzle(f),ax=f.aimX,ay=f.aimY;
-  for(const o of enemies(f)){const dx=o.P.nk.x-m.x,dy=o.P.nk.y+15-m.y,d=Math.hypot(dx,dy)||1;if(d<300&&(dx*ax+dy*ay)/d>.55)hit(o,4,ax,ay-.35,1350,f,{tag:'WHOOSH!'})}
+  for(const o of enemies(f)){const dx=o.P.nk.x-m.x,dy=o.P.nk.y+15-m.y,d=Math.hypot(dx,dy)||1;if(d<300&&(dx*ax+dy*ay)/d>.55)hit(o,7,ax,ay-.35,1350,f,{tag:'WHOOSH!'})}
   for(const p of G.proj){if(p.owner===f||p.type==='axe')continue;const dx=p.x-m.x,dy=p.y-m.y,d=Math.hypot(dx,dy)||1;if(d<260&&(dx*ax+dy*ay)/d>.3){const sp=Math.hypot(p.vx,p.vy)*1.1;p.vx=ax*sp;p.vy=ay*sp;p.owner=f;p.life=Math.max(p.life,1)}}
   for(let i=0;i<26;i++){const a=Math.atan2(ay,ax)+(Math.random()-.5)*.9,s=500+Math.random()*500;part(m.x,m.y,Math.cos(a)*s,Math.sin(a)*s,.35,'rgba(220,255,250,.8)',4,0)}
   recoil(f,260);sfx('dash');
@@ -1471,7 +1477,7 @@ function lightning(f){
   const pts=[[m.x,m.y]],n=10;for(let i=1;i<n;i++){const t=i/n,j=(Math.random()-.5)*28;pts.push([m.x+(x-m.x)*t-ay*j,m.y+(y-m.y)*t+ax*j])}pts.push([x,y]);
   G.bolts.push({pts,life:.25});
   for(let i=0;i<10;i++)part(x,y,(Math.random()-.5)*400,(Math.random()-.5)*400,.3,i%2?'#fff':'#ffe66b',4,0);
-  if(o){hit(o,12,ax,ay,720,f,{tag:'ZAP!'});o.hitstun=Math.max(o.hitstun,.7)}recoil(f,60);sfx('zap');shake=Math.max(shake,6);
+  if(o){hit(o,16,ax,ay,760,f,{tag:'ZAP!'});o.hitstun=Math.max(o.hitstun,.7)}recoil(f,60);sfx('zap');shake=Math.max(shake,6);
 }
 function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((px-ax)*dx+(py-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-ax-dx*t,py-ay-dy*t)}
 const GRIP={scythe:.97,axe:.95,executioner:.95,hammer:.9,harpoon:.95,trident:.9,boomerang:.85,mace:.8,chainsaw:.75,
@@ -1730,10 +1736,10 @@ function updateFighter(f,inp,dt){
     if(inp.my>.6&&f.onGround&&f.ground&&f.ground.thin)f.dropT=.32;
     if(inp.release&&!G.over)release(f);
   }
-  if(f.burst>0&&f.hitstun<=0){f.burstT-=dt;if(f.burstT<=0){shoot(f,{type:'bullet',speed:1050,dmg:5,kb:230,color:'#4ef0ff',r:5});recoil(f,50);f.burst--;f.burstT=.1;sfx('laser')}}
+  if(f.burst>0&&f.hitstun<=0){f.burstT-=dt;if(f.burstT<=0){shoot(f,{type:'bullet',speed:1150,dmg:7.5,kb:250,color:'#4ef0ff',r:5});recoil(f,50);f.burst--;f.burstT=.1;sfx('laser')}}
   if(f.revT>0){f.revT-=dt;if(Math.random()<.5)part(f.tipX,f.tipY,(Math.random()-.5)*200,-Math.random()*200,.25,'#ffd23f',3,600)}
-  if(f.flameT>0&&f.hitstun<=0){f.flameT-=dt;f.flameAcc+=dt;while(f.flameAcc>=1/28){f.flameAcc-=1/28;shoot(f,{type:'flame',speed:430+Math.random()*120,r:13,dmg:1.1,kb:70,spread:.3,life:.45});}if(Math.random()<.3)sfx('fire');recoil(f,6)}
-  if(f.sprayT>0){f.sprayT-=dt;f.sprayAcc+=dt;while(f.sprayAcc>=1/13){f.sprayAcc-=1/13;shoot(f,{type:'bullet',speed:1000,dmg:1.6,kb:80,spread:.16,life:1.2});recoil(f,28);sfx('shot')}}
+  if(f.flameT>0&&f.hitstun<=0){f.flameT-=dt;f.flameAcc+=dt;while(f.flameAcc>=1/28){f.flameAcc-=1/28;shoot(f,{type:'flame',speed:460+Math.random()*120,r:13,dmg:1.7,kb:80,spread:.3,life:.45});}if(Math.random()<.3)sfx('fire');recoil(f,6)}
+  if(f.sprayT>0){f.sprayT-=dt;f.sprayAcc+=dt;while(f.sprayAcc>=1/13){f.sprayAcc-=1/13;shoot(f,{type:'bullet',speed:1100,dmg:2.4,kb:90,spread:.14,life:1.2});recoil(f,28);sfx('shot')}}
   const wasG=f.onGround,vyBefore=f.vy,pvx=f.P.hp.vx,pvy=f.P.hp.vy;
   physics(f,inp,dt,G.plats);
   ledge(f,inp,dt);

@@ -564,7 +564,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.66 · Nov 19';
+const APP_VERSION='v1.67 · Nov 19';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -2072,7 +2072,7 @@ function drawProj(){
     else if(p.type==='grav'){const rr=18+Math.sin(gtime*12)*2;ctx.fillStyle='rgba(177,92,255,.15)';ctx.beginPath();ctx.arc(p.x,p.y,90,0,7);ctx.fill();glow(ctx,'#b15cff',26);ctx.fillStyle='#0b0414';ctx.beginPath();ctx.arc(p.x,p.y,rr,0,7);ctx.fill();ctx.strokeStyle='#d6a6ff';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y,rr+10,rr*.45,gtime*4,0,7);ctx.stroke()}
     ctx.restore();
   }
-  for(const b of G.bolts){ctx.save();const bc=b.col||'#ffe66b';glow(ctx,bc,20);ctx.globalAlpha=Math.min(1,b.life/.25);ctx.strokeStyle=bc;ctx.lineWidth=b.w||5;ctx.lineJoin='round';ctx.beginPath();b.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.restore()}
+  for(const b of G.bolts){if(!b.pts||!b.pts.length)continue;ctx.save();const bc=b.col||'#ffe66b';glow(ctx,bc,20);ctx.globalAlpha=Math.min(1,b.life/.25);ctx.strokeStyle=bc;ctx.lineWidth=b.w||5;ctx.lineJoin='round';ctx.beginPath();b.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.restore()}
 }
 function drawParts(){
   for(const p of G.parts){const a=Math.max(0,p.life/p.ml);
@@ -2164,22 +2164,26 @@ function drawHUD(){
   let half=CW/2-10-Math.max(SAFE.l,SAFE.r);for(const hf of humanFs()){const c2=stickCenter(hf.idx);half=Math.min(half,Math.abs(c2.x-CW/2)-R-12)}
   const gap=8*base;let pw=(humanFs().length>=2?128:150)*base;if(N*pw+(N-1)*gap>half*2)pw=(half*2-(N-1)*gap)/N;const sc=pw/150,ph=58*sc,y0=CH-ph-8-SAFE.b;
   let x=CW/2-(N*pw+(N-1)*gap)/2;
+  const pts=[];if(!G.demo)for(const o of G.fighters){if(!o.alive)continue;for(const q of ['hd','hp','fa','fb','ha','hb','tp']){const P=o.P[q];if(P)pts.push([CW/2+(P.x-cam.x)*view.s,CH/2+(P.y-cam.y)*view.s])}}
   for(const f of vis){
     const col=COLORS[f.cos.color],w=WEAP[f.weapon],hp=f.alive?Math.max(0,Math.ceil(100-f.dmg)):0;
     if(f._hd===undefined)f._hd=f.dmg;if(f.dmg>f._hd+.5)f._hs=.35;f._hd=f.dmg;f._hs=Math.max(0,(f._hs||0)-1/60);
     const shk=f._hs>0?(Math.random()-.5)*10*f._hs/.35:0;
-    ctx.save();ctx.translate(x+shk,y0);
+    // fade the card when a fighter is behind it so it never hides the action
+    let cov=false;for(const o of pts)if(o[0]>x-14&&o[0]<x+pw+14&&o[1]>y0-14&&o[1]<y0+ph+14){cov=true;break}
+    f._ca=(f._ca===undefined?1:f._ca)+((cov?.28:1)-(f._ca===undefined?1:f._ca))*.2;const CA=f._ca;
+    ctx.save();ctx.translate(x+shk,y0);ctx.globalAlpha=CA;
     // slanted plate
     const sl=10*sc;ctx.beginPath();ctx.moveTo(sl,0);ctx.lineTo(pw,0);ctx.lineTo(pw-sl,ph);ctx.lineTo(0,ph);ctx.closePath();
     ctx.fillStyle=INK;ctx.save();ctx.translate(0,3*sc);ctx.fill();ctx.restore();
     const g=ctx.createLinearGradient(0,0,0,ph);g.addColorStop(0,f.alive?col:'#9a98ad');g.addColorStop(1,f.alive?shade(col,-.25):'#77758c');ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=3;ctx.stroke();
-    ctx.globalAlpha=.18;ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(sl+2,2);ctx.lineTo(pw-2,2);ctx.lineTo(pw-4,ph*.42);ctx.lineTo(4,ph*.42);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    ctx.globalAlpha=(.18)*CA;ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(sl+2,2);ctx.lineTo(pw-2,2);ctx.lineTo(pw-4,ph*.42);ctx.lineTo(4,ph*.42);ctx.closePath();ctx.fill();ctx.globalAlpha=(1)*CA;
     // portrait with ability-cooldown ring
     const pr=19*sc,px=pr+6*sc,py=ph*.5;
     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px,py,pr+3*sc,0,7);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.5;ctx.stroke();
     const ready=f.cd<=0&&!f.thrown,fr=f.thrown?0:1-Math.min(1,f.cd/(f.cdMax||1));
     ctx.strokeStyle=ready?'#ffd23f':'rgba(29,22,64,.35)';ctx.lineWidth=4*sc;ctx.beginPath();ctx.arc(px,py,pr+.5*sc,-Math.PI/2,-Math.PI/2+6.283*fr);ctx.stroke();
-    if(ready&&f.alive){ctx.globalAlpha=.4+.3*Math.sin(gtime*6);ctx.strokeStyle='#fff3a0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,pr+4.5*sc,0,7);ctx.stroke();ctx.globalAlpha=1}
+    if(ready&&f.alive){ctx.globalAlpha=(.4+.3*Math.sin(gtime*6))*CA;ctx.strokeStyle='#fff3a0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,pr+4.5*sc,0,7);ctx.stroke();ctx.globalAlpha=CA}
     drawPortrait(ctx,f,px,py+2*sc,pr*.62,!f.alive);
     // big HP number, Smash style
     const nx=pr*2+12*sc;
@@ -2298,7 +2302,11 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     else if(this.conn&&this.conn.open)this.conn.send(m)}catch(e){}},
   makeCode(){const A='ABCDEFGHJKMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c},
   usesBC(){return location.hash.includes('bc')},
-  popts(){return location.hash.includes('lp')?{host:'127.0.0.1',port:9000,path:'/sf',debug:0}:{debug:0}}, // #lp = local test server
+  // ICE servers: STUN finds each phone's public address; TURN relays the game when two networks will not connect directly
+  ICE:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'},
+    {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}],
+  popts(){if(location.hash.includes('lp'))return{host:'127.0.0.1',port:9000,path:'/sf',debug:0}; // #lp = local test server
+    return{debug:0,config:{iceServers:this.ICE}}},
   loadPeer(){return new Promise((res,rej)=>{if(window.Peer)return res();const sc=document.createElement('script');sc.src=location.hash.includes('lp')?'peerjs.min.js':'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';sc.onload=()=>res();sc.onerror=()=>rej(new Error('load'));document.head.appendChild(sc)})},
   inMatch(){return!!(G&&!G.demo&&(state==='play'||state==='over'))},
   async host(){this.close();this.role='host';this.live=true;this.code=this.makeCode();$('onCode').textContent=this.code;this.gs=[];this.room(true);$('onGo').style.display='';this.drawRoom();this.setStatus('');
@@ -2314,6 +2322,7 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     this.peer=new Peer(undefined,this.popts());
     this.peer.on('error',e=>{this.room(false);this.role=null;this.setStatus(e.type==='peer-unavailable'?'No room with code '+code+'. Check the code and try again.':'Connection problem: '+e.type)});
     this.peer.on('open',()=>{const c=this.peer.connect('stickfight-zm-'+code,{reliable:true});this.conn=c;
+      clearTimeout(this.joinTO);this.joinTO=setTimeout(()=>{if(this.role==='guest'&&!this.live){this.close();this.room(false);this.setStatus('Found the room but could not link up. This happens on some different Wi-Fi or mobile networks. Try both on the same Wi-Fi, or one of you on mobile data.')}},15000);
       c.on('open',()=>{this.live=true;this.send({t:'hello',cos:cos[0],v:APP_VERSION});$('onWaitTxt').textContent='Saying hi to the host...'});c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost())});},
   close(){try{if(this.conn)this.conn.close()}catch(e){}for(const g of this.gs){try{g.conn&&g.conn.close()}catch(e){}}try{if(this.peer)this.peer.destroy()}catch(e){}try{if(this.bc)this.bc.close()}catch(e){}
     this.conn=this.peer=this.bc=null;this.gs=[];this.live=false;this.role=null;this.snaps=[];this.mySeat=-1;resetInput();
@@ -2362,7 +2371,8 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
 function alertMsg(t){const e=$('toast');if(e){e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2600)}}
 const r1=v=>Math.round(v*10)/10;
 const NOSEND=new Set(['br','deco','hitSet','hit','owner','ref','craters','plat','target','homing']);
-function packObj(o){const r={};for(const k in o){if(NOSEND.has(k))continue;const v=o[k];const t=typeof v;if(t==='number')r[k]=Math.round(v*10)/10;else if(t==='string'||t==='boolean')r[k]=v}return r}
+function packObj(o){const r={};for(const k in o){if(NOSEND.has(k))continue;const v=o[k];const t=typeof v;if(t==='number')r[k]=Math.round(v*10)/10;else if(t==='string'||t==='boolean')r[k]=v;else if(Array.isArray(v)&&v.length<80)r[k]=packArr(v)}return r}
+function packArr(a){return a.map(x=>typeof x==='number'?Math.round(x*10)/10:Array.isArray(x)?packArr(x):(typeof x==='string'||typeof x==='boolean')?x:0)}
 function makeSnap(){
   const F=G.fighters;
   const snap={t:'s',e:r1(G.elapsed),ready:r1(G.ready),ann:G.ann,time:r1(G.time||0),ro:G.roundOver||0,sh:r1(shake),fl:r1(G.flash||0),sm:r1(G.slowmo||0),cw:G.carWarn?{dir:G.carWarn.dir,t:r1(G.carWarn.t)}:null,pu:Math.round((G.punch||0)*1000)/1000,

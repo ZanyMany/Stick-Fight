@@ -564,7 +564,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.67 · Nov 19';
+const APP_VERSION='v1.68 · Nov 19';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -625,10 +625,10 @@ const WEAP={
   mace:{crush:1,curve:1.2,mass:2.8,arm:750,wrist:280,name:'Mace',kind:'melee',len:62,contact:11.5,kb:600,ab:'spin',cd:3.5,abName:'Whirlwind'},
   trident:{mass:1.7,arm:900,wrist:480,name:'Trident',kind:'melee',len:112,contact:10,kb:450,ab:'lunge',cd:2.2,abName:'Lunge',thrust:1},
   boomerang:{mass:.6,arm:1100,wrist:800,name:'Boomerang',kind:'melee',len:36,contact:7,kb:280,ab:'boomer',cd:1.3,abName:'Throw'},
-  wind:{mass:.6,arm:900,wrist:800,name:'Wind Staff',kind:'wand',len:62,contact:3,kb:220,ab:'gust',cd:2.1,abName:'Gust (deflects shots)'},
+  wind:{mass:.6,arm:900,wrist:800,name:'Wind Staff',kind:'wand',len:62,contact:3,kb:220,ab:'gust',cd:2.1,abName:'Gust (deflects shots)',special:1},
   meteor:{mass:.8,arm:850,wrist:750,name:'Meteor Staff',kind:'wand',len:62,contact:4,kb:250,ab:'meteor',cd:3.8,abName:'Meteor Shower'},
-  tele:{mass:.5,arm:900,wrist:900,name:'Warp Wand',kind:'wand',len:44,contact:3,kb:220,ab:'blink',cd:1.7,abName:'Teleport and blast anyone nearby'},
-  heal:{mass:.5,arm:900,wrist:900,name:'Healing Staff',kind:'wand',len:46,contact:3,kb:220,ab:'mend',cd:4.2,abName:'Heal +18 and blast nearby enemies away'},
+  tele:{mass:.55,arm:900,wrist:900,name:'Magic Wand',kind:'wand',len:48,contact:5.5,kb:320,ab:'magic',cd:1.25,abName:'Random every shot: teleport, heal or a knockback blast'},
+  heal:{mass:.5,arm:900,wrist:900,name:'Healing Staff',kind:'wand',len:46,contact:3,kb:220,ab:'mend',cd:4.2,abName:'Heal +18 and blast nearby enemies away',special:1},
   laser:{mass:1.2,arm:1000,wrist:1300,name:'Laser Rifle',kind:'gun',len:60,ab:'beam',cd:1.35,abName:'Piercing Beam'},
   bombs:{mass:1.1,arm:900,wrist:1000,name:'Bombs',kind:'gun',len:20,ab:'bombtoss',cd:.85,abName:'Throw bomb',special:1},
   grenadeL:{mass:1.6,arm:900,wrist:1000,name:'Grenade Launcher',kind:'gun',len:50,ab:'grenade',cd:1.45,abName:'Bouncing Grenade'},
@@ -774,6 +774,7 @@ const humanFs=()=>G?G.fighters.filter(f=>!f.cpu&&!f.dummy&&!f.netRemote):[];
 const fname=f=>f.dummy?'DUMMY':f.cpu?'CPU':'P'+((f.pid!==undefined?f.pid:f.idx)+1);
 function chooseWeapon(f){
   if(f.dummy)return'fire';
+  if(f.wchoice==='heal'||f.wchoice==='wind')f.wchoice='tele';
   if(G.map&&G.map.bombMode)return'bombs';
   if(G.mode==='free'&&!f.cpu&&f.fixedW)return f.fixedW;
   if(G.mode==='free'&&!f.cpu){const k=(f.wchoice&&f.wchoice!=='random'&&WEAP[f.wchoice])?f.wchoice:pick(G.test?WKEYS:ownedWeapons());f.fixedW=k;return k}
@@ -869,7 +870,7 @@ function aiInput(f,dt){
     else if(a.mode==='strafe')want=a.sdir*.6;
     else want=Math.sign(dx)*.8; // keep pressing in: the blade swings as it moves
     if(Math.abs(dx)<w.len*.3)want=-Math.sign(dx)*.6;
-  }else{const ideal={chaos:450,glass:650,sniper:600,bolt:420,shotgun:220,minigun:380,void:380,wind:180,flamer:200,harpoon:450,rail:650,laser:550}[f.weapon]||440;
+  }else{const ideal={chaos:450,glass:650,sniper:600,bolt:420,shotgun:220,minigun:380,void:380,wind:180,tele:260,flamer:200,harpoon:450,rail:650,laser:550}[f.weapon]||440;
     if(Math.abs(dx)>ideal+90)want=Math.sign(dx);else if(Math.abs(dx)<ideal-140)want=-Math.sign(dx);
     else want=a.mode==='in'?Math.sign(dx)*.5:a.mode==='out'?-Math.sign(dx)*.6:a.sdir*.7;}
   // occasional hop to stay hard to hit (only from the ground, keeps the air jump for recovery)
@@ -912,7 +913,7 @@ function aiInput(f,dt){
       else if(dist<w.len+45&&(ready||f.swingCd<=0)&&['swing','thrust'].includes(w.ab))go=true;
       else if(dist<w.len+45&&f.swingCd<=0&&!ready)go=true;
     }else if(ready){
-      const rng={bombs:560,glass:1300,chaos:620,sniper:1200,bolt:740,shotgun:420,minigun:700,void:650,wind:250,flamer:300,harpoon:680,grenadeL:650,rail:1600,laser:1200,meteor:600,tele:9999,heal:9999}[f.weapon]||800;
+      const rng={bombs:560,glass:1300,chaos:620,sniper:1200,bolt:740,shotgun:420,minigun:700,void:650,wind:250,flamer:300,harpoon:680,grenadeL:650,rail:1600,laser:1200,meteor:600,tele:330,heal:9999}[f.weapon]||800;
       if(w.ab==='glass'&&!groundUnder(f.x-Math.sign(o.x-f.x||1)*240,f.y))go=false; // its kick would throw us off the edge
       else if(w.ab==='bombtoss')go=dist>90&&dist<820;
       else if(w.ab==='mend')go=f.dmg>35;
@@ -1399,6 +1400,9 @@ function release(f){
   if(f.cd>0){if(w.kind==='melee'&&f.swingCd<=0){startSwing(f,.3);f.swingCd=.5}return}
   const ax=f.aimX,ay=f.aimY;f.cd=(G.noCd&&!f.cpu)?.12:w.cd;f.cdMax=f.cd;
   let ab=w.ab;
+  if(ab==='magic'){ // Magic Wand: the small utility spells in one, a random one each shot
+    const roll=[['blink','TELEPORT','#c77dff'],['mend','HEAL','#7dff6b'],['gust','KNOCKBACK','#9ff3e6']],r=roll[Math.floor(Math.random()*roll.length)];
+    ab=r[0];floatText(f.x,f.y-135,r[1],r[2])}
   if(ab==='chaos'){ // Chaos Wand: every wand rolled into one, a random spell each shot
     const roll=[['fireball','FIREBALL','#ff7a2f',3],['ice','FREEZE','#9be7ff',3],['grav','BLACK HOLE','#b15cff',1.5],['blink','TELEPORT','#7fd8ff',2],['mend','HEAL','#7dff6b',1.5],['chaosblast','KABOOM','#ff3fa4',1]];
     let tot=roll.reduce((t,r)=>t+r[3],0),x=Math.random()*tot,r=roll[0];for(const q of roll){x-=q[3];if(x<=0){r=q;break}}
@@ -1430,7 +1434,7 @@ function release(f){
       for(let i=0;i<3;i++)G.proj.push({type:'meteor',x:tx+(i-1)*95+(Math.random()-.5)*30,y:cam.y-CH/view.s/2-80-i*170,px:0,py:0,vx:(Math.random()-.5)*60,vy:700,owner:f,life:5,r:14,t:0,hitCd:0,dmg:15,kb:820,explode:90,pal:['#ff7a2f','#ffd23f','#5a3a2a','#fff']});
       sfx('fire');break}
     case'blink':{teleport(f,ax*380,ay*380);warpBurst(f);break}
-    case'mend':f.dmg=Math.max(0,f.dmg-18);floatText(f.x,f.y-120,'+18 HP','#7dff6b');
+    case'mend':{const hv=w.ab==='magic'?14:18;f.dmg=Math.max(0,f.dmg-hv);floatText(f.x,f.y-110,'+'+hv+' HP','#7dff6b')}
       for(const o of enemies(f)){const dx=o.x-f.x,dy=(o.y-40)-(f.y-40),d=Math.hypot(dx,dy)||1;if(d<190)hit(o,10,dx/d,dy/d-.4,820,f,{tag:'MEND!'})}
       G.fx.push({k:'ring',x:f.x,y:f.y-45,r:20,max:190,life:.35,ml:.35,col:'#7dff6b'});for(let i=0;i<24;i++){const a=Math.random()*6.28;part(f.x+Math.cos(a)*30,f.y-50+Math.sin(a)*40,0,-80-Math.random()*80,.8,i%2?'#7dff6b':'#fff',5,-100)}sfx('pick');break;
     case'beam':beam(f,{len:1300,dmg:18,kb:520,col:'#ff4d8d',w:6,pierceWalls:false});sfx('laser');break;
@@ -2552,7 +2556,7 @@ function cell(grid,{label,on,locked,price,tryIt,thumb,icon,onTap,swatch,cw,ch,co
   if(label){const n=document.createElement('span');n.className='nm'+(locked==='c'?' pr '+(SAVE.coins>=price?'can':'cant'):'');if(locked==='c')n.innerHTML=COIN_I+label;else n.textContent=label;b.appendChild(n)}
   if(locked&&locked!=='c'){const p=document.createElement('span');p.className='badge'+(tryIt?' try':'')+(swatch?' lock':'')+(SAVE.coins>=price?' can':'');if(tryIt)p.textContent='TRY';else if(swatch)p.innerHTML=LOCK_I;else p.innerHTML=COIN_I+price;b.appendChild(p)}
   b.onclick=()=>onTap(b);grid.appendChild(b);return b}
-const SHORT={rocket:'Rocket',grenadeL:'Grenades',plasma:'Plasma',flamer:'Flamer',harpoon:'Harpoon',laser:'Laser',heal:'Heal Staff',glass:'Glass Cannon',chaos:'Chaos Wand',meteor:'Meteor',tele:'Warp Wand',executioner:'Executioner',bolt:'Storm Staff'};
+const SHORT={tele:'Magic Wand',rocket:'Rocket',grenadeL:'Grenades',plasma:'Plasma',flamer:'Flamer',harpoon:'Harpoon',laser:'Laser',heal:'Heal Staff',glass:'Glass Cannon',chaos:'Chaos Wand',meteor:'Meteor',tele:'Warp Wand',executioner:'Executioner',bolt:'Storm Staff'};
 const shortName=k=>SHORT[k]||WEAP[k].name;
 function diceThumb(cv){const c=cv.getContext('2d'),w=cv.width,h=cv.height,sz=Math.min(w,h)*.62,x=w/2-sz/2,y=h/2-sz/2;c.clearRect(0,0,w,h);c.save();c.translate(w/2,h/2);c.rotate(-.18);c.translate(-w/2,-h/2);
   c.fillStyle='#fff';c.strokeStyle='#1d1640';c.lineWidth=Math.max(2,sz*.07);c.beginPath();c.roundRect?c.roundRect(x,y,sz,sz,sz*.2):c.rect(x,y,sz,sz);c.fill();c.stroke();

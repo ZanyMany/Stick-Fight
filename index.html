@@ -572,7 +572,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.69 · Nov 24';
+const APP_VERSION='v1.70 · Nov 24';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -650,7 +650,7 @@ const WEAP={
 };
 const WKEYS=Object.keys(WEAP).filter(k=>!WEAP[k].special);
 const MODES=[['free','Free Play'],['rounds','Rounds'],['stock','Stock (3 lives)']];
-const MODE_HINT={free:'Your map, your weapon. Endless respawns. Pause to swap weapons or add CPUs.',rounds:'Random map + random weapons each round. Die and you\'re out until the next round. First to 3 wins.',stock:'3 lives each. Last one standing wins.'};
+const MODE_HINT={free:'Your map, your weapon. Endless respawns. Pause to swap weapons or add CPUs.',rounds:'Random weapons each round (and a new map each round if the map is Random). Die and you\'re out until the next round. First to 3 wins.',stock:'3 lives each. Last one standing wins.'};
 const CPUS=[['easy','Easy'],['normal','Normal'],['hard','Hard']];
 const DIFF={easy:{react:.8,err:.38,speed:.75,smart:0,jumpy:.35,aggro:.5,turn:2.2,look:.55,hold:.2},normal:{react:.45,err:.22,speed:.95,smart:1,jumpy:.6,aggro:.8,turn:3.6,look:.35,hold:.35},hard:{react:.22,err:.12,speed:1,smart:1,jumpy:.9,aggro:1,turn:5.5,look:.2,hold:.55}};
 const THEMES=[
@@ -2742,7 +2742,6 @@ function buildLobby(){
   seg($('optMode'),MODES.map(([v,l])=>[v,l.replace(' (3 lives)','')]),()=>setup.mode,v=>{setup.mode=v;svSetup();setTimeout(buildLobby,0)});
   if(!T)$('lHint').textContent=MODE_HINT[setup.mode]||$('lHint').textContent;
   const db=$('optDrops');db.style.display=T?'none':'';db.classList.toggle('on',setup.drops==='on');db.innerHTML='<svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="13" rx="2" fill="#c98b4a" stroke="#1d1640" stroke-width="2.2"/><path d="M4 8l8 6 8-6M12 14v7" fill="none" stroke="#1d1640" stroke-width="1.8"/></svg>'+(setup.drops==='on'?'Drops ON':'Drops OFF');
-  if(!T&&setup.mode==='rounds')$('mapCard').querySelector('.mname').textContent='Random map';
 }
 $('mapCard').onclick=()=>openPicker('map');
 $('optDrops').onclick=()=>{setup.drops=setup.drops==='on'?'off':'on';svSetup();buildLobby();tone(setup.drops==='on'?600:400,setup.drops==='on'?900:300,.08,'triangle',.05);if(setup.drops==='on')$('lHint').textContent='Weapon crates parachute in. Walk over one to grab a random weapon.'};
@@ -2842,7 +2841,7 @@ document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=
 }));
 let RND=null;
 function startRound(){
-  const prev=RND.map;let map;do{map=Math.floor(Math.random()*MAPS.length)}while(MAPS.length>1&&map===prev);RND.map=map;
+  const prev=RND.map;let map;if(RND.fixed!==undefined)map=RND.fixed;else do{map=Math.floor(Math.random()*MAPS.length)}while(MAPS.length>1&&map===prev);RND.map=map;
   startMatch({mode:'rounds',map,pids:RND.ids,slots:RND.ids.map(slotOf),wchoice:RND.ids.map(()=>'random'),drops:setup.drops==='on'});
   G.fighters.forEach(f=>{f.kos=RND.kos[f.pid]||0;f.falls=RND.falls[f.pid]||0;f.wins=RND.wins[f.pid]||0;f.dealt=RND.dealt[f.pid]||0;f.best=RND.best[f.pid]||0});
   G.earned=RND.earned;announce('ROUND '+RND.n,1.2);G.ready=1.5;G.time=75;
@@ -2853,7 +2852,7 @@ function finishRound(){
   RND.n++;startRound();
 }
 function startReal(){initAudio();try{document.activeElement&&document.activeElement.blur()}catch(e){}KOFX=null;setTimeout(sizeSticks,0);state='play';paused=false;
-  if(flow.type!=='test'&&setup.mode==='rounds'){RND={ids:activePids(),n:1,wins:{},kos:{},falls:{},dealt:{},best:{},earned:0,target:3,map:-1};startRound();TS=.72;show(null);syncTestBar();return}
+  if(flow.type!=='test'&&setup.mode==='rounds'){RND={fixed:setup.map==='random'||!MAPS[setup.map]?undefined:setup.map,ids:activePids(),n:1,wins:{},kos:{},falls:{},dealt:{},best:{},earned:0,target:3,map:-1};startRound();TS=.72;show(null);syncTestBar();return}
   RND=null;
   const T=flow.type==='test',map=setup.map==='random'?Math.floor(Math.random()*MAPS.length):setup.map;
   const ids=T?[0,1]:activePids();startMatch({test:T,mode:T?'free':setup.mode,map,pids:ids,slots:ids.map(slotOf),wchoice:ids.map(i=>setup.w[i]||'random'),drops:!T&&setup.drops==='on'});

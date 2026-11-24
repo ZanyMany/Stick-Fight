@@ -14,9 +14,10 @@ A 1v1 ragdoll stickman duel game for phones, in one HTML file. Physics-based fig
 - **Let go** = use your weapon's ability (cooldown shown on your card). Melee weapons also hurt just by hitting.
 - **Hold up** = jump (works mid-air when the cooldown is ready). **Push down** = drop through platforms.
 - 2 players on one phone: left half is P1, right half is P2.
-- Keyboard: WASD / arrow keys.
+- Keyboard: WASD / arrow keys. **Space** (P1) / **Enter** (P2) uses your ability without letting go.
+- Catch a ledge with your weapon and your jump comes back, so you can climb out.
 
 ## Modes
 Play (one fight-setup screen: P1 & P3 on the left, P2 & P4 on the right (add/remove P2-P4), set each to Player or CPU Easy/Normal/Hard, customize each on its own half of the screen, pick mode and map), Testing Grounds (training dummy, try any weapon, no-cooldown and slow-mo toggles) and the Locker (spend coins on weapons, colors, hats and trails).
 
-35 weapons, 14 maps (incl. breakable rope bridges, a highway with cars, crumbling ruins the enclosed Kaboom Box arena, a spinning wheel, floating rafts and a laser lab), ledge grabs, parries, 100 HP health, coins from KOs and wins.
+33 weapons, 18 maps (incl. breakable rope bridges, a highway with cars, crumbling ruins, the enclosed Kaboom Box arena with bomb rain, a spinning wheel, floating rafts, laser maps and Mushroom Grove's bounce pads), optional weapon-crate drops, parries, 100 HP health, end-of-match damage/combo stats, coins from KOs and wins.

@@ -398,6 +398,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 #onRoom.many .onmany{display:flex;gap:2.5%;justify-content:center;align-items:center;min-height:0;width:100%}
 .onmany .pcard{flex:0 1 auto;width:22.5%;height:auto;max-height:100%}
 .onmany .pcard.empty .mtag{visibility:visible;opacity:.55}
+.onrelay{font:600 11px Fredoka,sans-serif;color:#6d6a8a;min-height:13px}.onrelay.ok{color:#178a35}.onrelay.bad{color:#c0392b}
 .onmid{display:flex;flex-direction:column;align-items:center;gap:9px;max-width:230px;text-align:center}
 .onmid .onstat{max-width:240px;font-size:15px;line-height:1.25}
 .onmid .big{padding:10px 22px!important;font-size:19px!important}
@@ -551,7 +552,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
       <div class="onmid">
         <div class="onlbl">Room code</div>
         <div class="oncode" id="onCode">----</div>
-        <div class="onstat" id="onStatus2"></div>
+        <div class="onstat" id="onStatus2"></div><div class="onrelay" id="onRelay"></div>
         <div class="onedit"><button class="big pur" id="onLook">Edit look</button><button class="big" id="onWeap">Weapon</button></div>
         <button class="big green" id="onGo">Set up fight</button>
       </div>
@@ -578,7 +579,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.75 · Nov 25';
+const APP_VERSION='v1.76 · Nov 25';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -2680,7 +2681,12 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
   rinFor(seat){const g=this.guestBySeat(seat);return g?g.rin:{mx:0,my:0,rel:false,t:0}},
   get guestCos(){const g=this.gs[0];return g?g.cos:null},
   // ---------- room view ----------
-  room(on){$('online').classList.toggle('inroom',!!on);if(!on){this.roster=[];this.drawRoom()}},
+  // quick check that the mobile-data relay answers, shown under the room code
+  relayCheck(){const e=$('onRelay');if(!e||this._rc)return;this._rc=1;e.textContent='Checking mobile data relay...';e.className='onrelay';
+    let done=false;const fin=(ok)=>{if(done)return;done=true;e.textContent=ok?'Mobile data play: ready':'Mobile data relay not reachable right now (same Wi-Fi still works)';e.className='onrelay '+(ok?'ok':'bad');try{pc.close()}catch(_){}setTimeout(()=>{this._rc=0},30000)};
+    let pc;try{pc=new RTCPeerConnection({iceServers:[this.TURN],iceTransportPolicy:'relay'});pc.createDataChannel('t');pc.onicecandidate=ev=>{if(ev.candidate&&/ relay /.test(ev.candidate.candidate))fin(true)};
+      pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(()=>fin(false));setTimeout(()=>fin(false),7000)}catch(_){fin(false)}},
+  room(on){$('online').classList.toggle('inroom',!!on);if(on)this.relayCheck();if(!on){this.roster=[];this.drawRoom()}},
   drawRoom(arriveSeat){const list=this.uniq(this.role==='host'?this.makeRoster():this.roster),me=this.role==='host'?0:this.mySeat,n=list.length;
     const many=n>=3;$('onRoom').classList.toggle('many',many);
     if(!many){const mine=list.find(p=>p.seat===me),other=list.find(p=>p.seat!==me);
@@ -2704,8 +2710,9 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
   makeCode(){const A='ABCDEFGHJKMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c},
   usesBC(){return location.hash.includes('bc')},
   // ICE servers: STUN finds each phone's public address; TURN relays the game when two networks will not connect directly
-  ICE:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'},
-    {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}],
+  TURN:{urls:['turn:free.expressturn.com:3478?transport=udp','turn:free.expressturn.com:3478?transport=tcp'],username:'000000002111039322',credential:'drNnpN6ORgHNVCoFp1faGU6oq+A='},
+  get ICE(){return[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'},this.TURN,
+    {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}]},
   popts(){if(location.hash.includes('lp'))return{host:'127.0.0.1',port:9000,path:'/sf',debug:0}; // #lp = local test server
     return{debug:0,config:{iceServers:this.ICE}}},
   loadPeer(){return new Promise((res,rej)=>{if(window.Peer)return res();const sc=document.createElement('script');sc.src=location.hash.includes('lp')?'peerjs.min.js':'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';sc.onload=()=>res();sc.onerror=()=>rej(new Error('load'));document.head.appendChild(sc)})},
@@ -2723,7 +2730,7 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     this.peer=new Peer(undefined,this.popts());
     this.peer.on('error',e=>{this.room(false);this.role=null;this.setStatus(e.type==='peer-unavailable'?'No room with code '+code+'. Check the code and try again.':'Connection problem: '+e.type)});
     this.peer.on('open',()=>{const c=this.peer.connect('stickfight-zm-'+code,{reliable:true});this.conn=c;
-      clearTimeout(this.joinTO);this.joinTO=setTimeout(()=>{if(this.role==='guest'&&!this.live){this.close();this.room(false);this.setStatus('Found the room but could not link up. This happens on some different Wi-Fi or mobile networks. Try both on the same Wi-Fi, or one of you on mobile data.')}},15000);
+      clearTimeout(this.joinTO);this.joinTO=setTimeout(()=>{if(this.role==='guest'&&!this.live){this.close();this.room(false);this.setStatus('Found the room but could not link up. Check both of you have signal and try again. If it keeps failing, try the same Wi-Fi.')}},15000);
       c.on('open',()=>{this.live=true;this.send({t:'hello',cos:cos[0],w:setup.w[0]||'random',v:APP_VERSION});$('onWaitTxt').textContent='Saying hi to the host...'});c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost())});},
   close(){try{if(this.conn)this.conn.close()}catch(e){}for(const g of this.gs){try{g.conn&&g.conn.close()}catch(e){}}try{if(this.peer)this.peer.destroy()}catch(e){}try{if(this.bc)this.bc.close()}catch(e){}
     this.conn=this.peer=this.bc=null;this.gs=[];this.live=false;this.role=null;this.snaps=[];this.mySeat=-1;resetInput();

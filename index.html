@@ -578,7 +578,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.74 · Nov 25';
+const APP_VERSION='v1.75 · Nov 25';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -1738,6 +1738,9 @@ function koFX(v,killer,ringOut,style){
   G.fx=G.fx.filter(e=>e.k!=='word'&&e.k!=='num'&&e.k!=='combo');
   KOFX={x,y,t:0,col,killer,victim:v,ringOut:!!ringOut,ix:CW/2,iy:CH/2,style,weapon:killer?WEAP[killer.weapon].name:''};
   if(style==='replay')KOFX.frames=G.rec.slice();
+  {const lk=G.lastKiller||(G.lastKiller={});KOFX.revenge=!!(killer&&lk[killer.idx]===v.idx);if(killer)lk[v.idx]=killer.idx;
+   const W2=ringOut?['THROWN OUT','ELIMINATED','GONE']:['ELIMINATED','DESTROYED','WRECKED','OBLITERATED','EXECUTED','DELETED'];KOFX.word=KOFX.revenge?'REVENGE':W2[Math.floor(Math.random()*W2.length)];
+   KOFX.seed=Math.random()*999}
   if(style==='slowmo'){if(v.dying)v.deathT=99;hitStop=Math.max(hitStop,.08);shake=Math.max(shake,10)}
   else{G.slowmo=Math.max(G.slowmo||0,.5);hitStop=Math.max(hitStop,.06);shake=Math.max(shake,8)}
 }
@@ -1791,14 +1794,46 @@ function koSpeed(){return KOFX&&KOFX.style==='slowmo'&&KOFX.t<KO_SLOW-.15?.1:1}
 function koFlush(K){if(K.flushed)return;K.flushed=true;const v=K.victim;if(v&&v.dying&&v.alive){if(!v.shattered)shatter(v);v.deathT=0;ko(v)}
   if(G&&G.roundOver>0&&RND&&state==='play'){G.roundOver=0;G.pendingRound=false;finishRound()}}
 function sunburst(cx,cy,R,col,a,rot){ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.globalAlpha*=a;ctx.fillStyle=col;for(let i=0;i<18;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,i*Math.PI/9,i*Math.PI/9+Math.PI/18);ctx.closePath();ctx.fill()}ctx.restore()}
-function koTitle(x,y,size,txt,rot){ctx.save();ctx.translate(x,y);ctx.rotate(rot||0);ctx.font=`400 ${size}px 'Lilita One',Fredoka,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
-  ctx.lineWidth=size/4.5;ctx.strokeStyle=INK;ctx.fillStyle=INK;ctx.fillText(txt,size*.04,size*.1);ctx.strokeText(txt,0,0);const g=ctx.createLinearGradient(0,-size/2,0,size/2);g.addColorStop(0,'#fff6b0');g.addColorStop(.5,'#ffd23f');g.addColorStop(1,'#ff8a1f');ctx.fillStyle=g;ctx.fillText(txt,0,0);ctx.restore()}
-function koPlayers(K,cy,S,al){const k=K.killer,v=K.victim;ctx.save();ctx.globalAlpha=al;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
-  const one=(f,x,dead)=>{const R2=24*S;ctx.fillStyle='#fff';ctx.strokeStyle=INK;ctx.lineWidth=4*S;ctx.beginPath();ctx.arc(x,cy,R2,0,7);ctx.fill();ctx.stroke();drawPortrait(ctx,f,x,cy+3*S,R2*.7,dead);
-    ctx.font=`400 ${17*S}px 'Lilita One',Fredoka,sans-serif`;ctx.lineWidth=5*S;ctx.strokeText(fname(f),x,cy+R2+14*S);ctx.fillStyle=dead?'#c9c6dc':COLORS[f.cos.color];ctx.fillText(fname(f),x,cy+R2+14*S)};
-  if(k){one(k,CW/2-70*S,false);one(v,CW/2+70*S,true);ctx.strokeStyle=INK;ctx.lineWidth=9*S;ctx.lineCap='round';line(ctx,CW/2-16*S,cy+12*S,CW/2+16*S,cy-12*S);ctx.strokeStyle='#ff5a4e';ctx.lineWidth=5*S;line(ctx,CW/2-16*S,cy+12*S,CW/2+16*S,cy-12*S)}
-  else one(v,CW/2,true);
-  const sub=k?(K.weapon?'with '+K.weapon.toUpperCase():''):(K.ringOut?'OUT OF THE ARENA':'KNOCKED OUT');if(sub){ctx.font=`700 ${12*S}px Fredoka,Rubik,sans-serif`;ctx.lineWidth=4*S;ctx.strokeStyle=INK;ctx.strokeText(sub,CW/2,cy+48*S);ctx.fillStyle='#fff';ctx.fillText(sub,CW/2,cy+48*S)}ctx.restore()}
+function koTitle(x,y,size,txt,rot){if(txt==='K.O.!'&&KOFX&&KOFX.word)txt=KOFX.word;
+  const L=txt.length;if(L>7)size*=Math.max(.5,7/L*1.05);
+  ctx.save();ctx.translate(x+(Math.random()<.08?(Math.random()-.5)*10:0),y);ctx.rotate(rot||0);ctx.font=`400 ${size}px 'Lilita One',Fredoka,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
+  // heavy shadow + glitch copies
+  ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(txt,size*.05,size*.12);
+  ctx.globalAlpha*=.85;ctx.fillStyle='#ff1030';ctx.fillText(txt,-size*.045,0);ctx.fillStyle='#16e6ff';ctx.globalAlpha*=.55;ctx.fillText(txt,size*.045,0);ctx.globalAlpha/=.85*.55;
+  ctx.lineWidth=size/5;ctx.strokeStyle='#0b0612';ctx.strokeText(txt,0,0);
+  const g=ctx.createLinearGradient(0,-size/2,0,size/2);g.addColorStop(0,'#ffffff');g.addColorStop(.48,'#ffd9de');g.addColorStop(.52,'#ff3045');g.addColorStop(1,'#7a0014');ctx.fillStyle=g;ctx.fillText(txt,0,0);
+  // scratches across the letters
+  const w=ctx.measureText(txt).width;ctx.save();ctx.beginPath();ctx.rect(-w/2,-size/2,w,size);ctx.clip();ctx.strokeStyle='rgba(20,0,8,.75)';ctx.lineWidth=Math.max(1.5,size*.035);
+  let sd=(KOFX&&KOFX.seed)||7;const rnd=()=>{sd=(sd*9301+49297)%233280;return sd/233280};for(let k=0;k<5;k++){const x0=-w/2+rnd()*w,y0=-size/2+rnd()*size*.3;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0+(rnd()-.5)*size*.6,y0+size*(.5+rnd()*.4));ctx.stroke()}
+  ctx.restore();ctx.restore()}
+function koPlayers(K,cy,S,al){const k=K.killer,v=K.victim,bh=70*S,sk=18*S;if(al<=0)return;ctx.save();ctx.globalAlpha=al;ctx.textBaseline='middle';ctx.lineJoin='round';
+  const slide=(1-Math.min(1,al))*CW*.25;ctx.translate(-slide,0);
+  // skewed blood-red band
+  ctx.fillStyle='rgba(8,2,10,.88)';ctx.beginPath();ctx.moveTo(-20,cy-bh/2);ctx.lineTo(CW+20,cy-bh/2-sk);ctx.lineTo(CW+20,cy+bh/2-sk);ctx.lineTo(-20,cy+bh/2);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#d8102a';ctx.beginPath();ctx.moveTo(-20,cy-bh/2-4*S);ctx.lineTo(CW+20,cy-bh/2-sk-4*S);ctx.lineTo(CW+20,cy-bh/2-sk+2*S);ctx.lineTo(-20,cy-bh/2+2*S);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(-20,cy+bh/2-2*S);ctx.lineTo(CW+20,cy+bh/2-sk-2*S);ctx.lineTo(CW+20,cy+bh/2-sk+4*S);ctx.lineTo(-20,cy+bh/2+4*S);ctx.closePath();ctx.fill();
+  const yAt=x=>cy-sk*(x/CW),R=26*S;
+  const face=(f,x,dead)=>{const y=yAt(x);ctx.save();ctx.fillStyle=dead?'#2a2530':COLORS[f.cos.color];ctx.strokeStyle=dead?'#555':'#fff';ctx.lineWidth=3*S;ctx.beginPath();ctx.arc(x,y,R+3*S,0,7);ctx.fill();ctx.stroke();
+    if(dead)ctx.globalAlpha*=.55;drawPortrait(ctx,f,x,y+2*S,R*.78,dead);ctx.globalAlpha=al;
+    if(dead){ctx.strokeStyle='#ff1030';ctx.lineWidth=6*S;ctx.lineCap='round';line(ctx,x-R*.85,y-R*.85,x+R*.85,y+R*.85);line(ctx,x+R*.85,y-R*.85,x-R*.85,y+R*.85)}ctx.restore()};
+  const nm=(t,x,col,size,strike,align)=>{const y=yAt(x);ctx.font=`400 ${size}px 'Lilita One',Fredoka,sans-serif`;ctx.textAlign=align;ctx.lineWidth=5*S;ctx.strokeStyle='#000';ctx.strokeText(t,x,y);ctx.fillStyle=col;ctx.fillText(t,x,y);
+    if(strike){const w=ctx.measureText(t).width,x0=align==='right'?x-w:x;ctx.strokeStyle='#ff1030';ctx.lineWidth=3.5*S;line(ctx,x0-3,y+2,x0+w+3,y-2)}};
+  if(k){const kx=CW*.2,vx=CW*.8;face(k,kx,false);face(v,vx,true);
+    nm(fname(k),kx+R+14*S,COLORS[k.cos.color],26*S,false,'left');nm(fname(v),vx-R-14*S,'#8d879c',22*S,true,'right');
+    const mid=CW/2,my=yAt(mid);ctx.font=`700 ${11*S}px Fredoka,Rubik,sans-serif`;ctx.textAlign='center';ctx.fillStyle='#ff4d5e';ctx.fillText(K.revenge?'PAID BACK':(K.ringOut?'THREW OUT':'KILLED'),mid,my-9*S);
+    if(K.weapon){ctx.fillStyle='#bdb6cf';ctx.fillText('with '+K.weapon.toUpperCase(),mid,my+9*S)}}
+  else{const vx=CW/2-60*S;face(v,vx,true);nm(fname(v),vx+R+14*S,'#8d879c',24*S,true,'left');ctx.font=`700 ${11*S}px Fredoka,Rubik,sans-serif`;ctx.textAlign='left';ctx.fillStyle='#ff4d5e';ctx.fillText(K.ringOut?'FELL INTO THE VOID':'SELF-DESTRUCTED',vx+R+14*S,yAt(vx)+18*S)}
+  ctx.restore()}
+// colour grade used by the KO screens: drain the colour, crush the blacks, bleed in red
+function koGrade(a){if(a<=0)return;ctx.save();ctx.globalCompositeOperation='saturation';ctx.globalAlpha=Math.min(1,a);ctx.fillStyle='#000';ctx.fillRect(0,0,CW,CH);
+  ctx.globalCompositeOperation='multiply';ctx.globalAlpha=Math.min(1,a)*.55;ctx.fillStyle='#ff5a6a';ctx.fillRect(0,0,CW,CH);ctx.globalCompositeOperation='source-over';
+  const R=Math.hypot(CW,CH)/2,g=ctx.createRadialGradient(CW/2,CH/2,R*.35,CW/2,CH/2,R);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(40,0,8,${.75*Math.min(1,a)})`);ctx.globalAlpha=1;ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);ctx.restore()}
+// jagged cracks bursting out of a point
+function koCracks(K,cx,cy,R,p){let sd=(K.seed||3)+11;const rnd=()=>{sd=(sd*9301+49297)%233280;return sd/233280};ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+  for(const [w,c] of [[6,'rgba(0,0,0,.85)'],[2.2,'rgba(255,60,80,.95)']]){sd=(K.seed||3)+11;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
+    for(let i=0;i<11;i++){let a=i/11*6.283+rnd()*.4,x=cx,y=cy,len=R*(.5+rnd()*.5)*p;ctx.moveTo(x,y);const n=6;for(let k=0;k<n;k++){a+=(rnd()-.5)*.6;x+=Math.cos(a)*len/n;y+=Math.sin(a)*len/n;ctx.lineTo(x,y)}}ctx.stroke()}
+  ctx.restore()}
+
 // slow-mo finish: the world crawls, letterbox bars, camera locks on the victim, K.O. slams in
 function drawKOSlow(K,dt){const t=K.t,S=Math.min(CW/760,CH/360),e=Math.min(1,t/.25),out=t>KO_SLOW-.35?Math.max(0,(KO_SLOW-t)/.35):1,bar=CH*.13*e*out;
   const sx=CW/2+(K.victim.x-cam.x)*view.s,sy=CH/2+(K.victim.y-50-cam.y)*view.s;
@@ -1812,13 +1847,13 @@ function drawKOSlow(K,dt){const t=K.t,S=Math.min(CW/760,CH/360),e=Math.min(1,t/.
 function drawKOComic(K,dt){const t=K.t,S=Math.min(CW/760,CH/360);
   if(!K.shot){try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim&&!K.victim.shattered&&!K.ringOut)shatter(K.victim);sfx('clang');tone(300,1500,.25,'square',.05)}
   const u=t-KO_SNAP,end=KO_COMIC-KO_SNAP,leave=Math.max(0,(u-(end-.35))/.35),pop=Math.min(1,u/.22),ease=1-Math.pow(1-pop,3);
-  ctx.save();ctx.globalAlpha=1-leave;ctx.fillStyle='#1d1640';ctx.fillRect(0,0,CW,CH);sunburst(CW/2,CH/2,Math.hypot(CW,CH),K.col,.55,u*.25);ctx.restore();
+  ctx.save();ctx.globalAlpha=1-leave;ctx.fillStyle='#0a0308';ctx.fillRect(0,0,CW,CH);sunburst(CW/2,CH/2,Math.hypot(CW,CH),'#7a0014',.6,u*.25);ctx.restore();
   const pw=CW*(1-.36*ease),ph=CH*(1-.36*ease),rot=-.05*ease;ctx.save();ctx.translate(CW/2+leave*CW*1.1,CH*.45-leave*CH*.4);ctx.rotate(rot+leave*.4);
   ctx.fillStyle=INK;ctx.fillRect(-pw/2-8+8,-ph/2-8+10,pw+16,ph+16);ctx.fillStyle='#fff';ctx.fillRect(-pw/2-8,-ph/2-8,pw+16,ph+16);ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.strokeRect(-pw/2-8,-ph/2-8,pw+16,ph+16);
-  ctx.save();ctx.beginPath();ctx.rect(-pw/2,-ph/2,pw,ph);ctx.clip();if(K.shot){const z=1+.25*ease;ctx.drawImage(K.shot,-CW/2*z-(K.ix-CW/2)*(z-1)*.0,-CH/2*z,CW*z,CH*z)}
+  ctx.save();ctx.beginPath();ctx.rect(-pw/2,-ph/2,pw,ph);ctx.clip();if(K.shot){const z=1+.25*ease;ctx.drawImage(K.shot,-CW/2*z-(K.ix-CW/2)*(z-1)*.0,-CH/2*z,CW*z,CH*z);ctx.globalCompositeOperation='saturation';ctx.globalAlpha=ease*.85;ctx.fillStyle='#000';ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.globalCompositeOperation='multiply';ctx.globalAlpha=ease*.5;ctx.fillStyle='#ff6070';ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1}
   ctx.fillStyle='rgba(29,22,64,.18)';for(let y=-ph/2;y<ph/2;y+=9)for(let x=-pw/2+(y/9%2)*4.5;x<pw/2;x+=9){ctx.beginPath();ctx.arc(x,y,1.3,0,7);ctx.fill()}ctx.restore();ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.strokeRect(-pw/2,-ph/2,pw,ph);
   if(u>.12){const b=Math.min(1,(u-.12)/.15),bs=(b<1?.3+b*.9:1.1-.05*Math.sin(u*10))*S;ctx.save();ctx.translate(pw*.3,-ph*.38);ctx.scale(bs,bs);ctx.rotate(.12);
-    ctx.fillStyle='#ffd23f';ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();for(let i=0;i<22;i++){const r=i%2?62:96,a=i/22*6.283;ctx.lineTo(Math.cos(a)*r*1.25,Math.sin(a)*r*.8)}ctx.closePath();ctx.fill();ctx.stroke();koTitle(0,0,58,'K.O.!',0);ctx.restore()}
+    ctx.fillStyle='#1a0508';ctx.strokeStyle='#ff1030';ctx.lineWidth=6;ctx.beginPath();for(let i=0;i<22;i++){const r=i%2?62:96,a=i/22*6.283;ctx.lineTo(Math.cos(a)*r*1.25,Math.sin(a)*r*.8)}ctx.closePath();ctx.fill();ctx.stroke();koTitle(0,0,58,'K.O.!',0);ctx.restore()}
   ctx.restore();
   if(u>.25&&leave<1)koPlayers(K,CH*.86,S*.85,Math.min(1,(u-.25)/.2)*(1-leave));
   if(u<.06){ctx.fillStyle=`rgba(255,255,255,${1-u/.06})`;ctx.fillRect(0,0,CW,CH)}
@@ -1861,7 +1896,7 @@ function drawRecFrame(K,fr,zoom){const F=G.fighters,saved=F.map(f=>{const r={};f
   try{F.forEach((f,i)=>{const d=fr.fs[i];if(!d)return;for(const k in d.r){const q=f.rig[k];if(q){q.x=d.r[k][0];q.y=d.r[k][1]}}f.x=d.x;f.y=d.y;f.facing=d.fc;f.alive=d.al;f.shattered=false;f.squash=0;f.invuln=0;f.hitstun=0;f.frozen=0});
     const v=K.victim,k=K.killer,dv=v&&fr.fs[v.idx],dk=k&&fr.fs[k.idx];let fx=fr.cam.x,fy=fr.cam.y;
     if(dv){const tx=dk&&dk.al&&Math.hypot(dk.x-dv.x,dk.y-dv.y)<700?(dv.x+dk.x)/2:dv.x,ty=(dk&&dk.al?(dv.y+dk.y)/2:dv.y)-55;fx+=(tx-fx)*.7;fy+=(ty-fy)*.7}
-    cam.x=fx;cam.y=fy;view.s=fr.cam.s*zoom;shake=0;
+    cam.x=fx;cam.y=fy;view.s=fr.cam.s*zoom;shake=0;if(dv)K.vs=[CW/2+(dv.x-cam.x)*view.s,CH/2+(dv.y-55-cam.y)*view.s];
     drawBG();worldT();drawStage();drawDynamic();drawItems();for(const f of F)if(f.alive)drawFighter(ctx,f,false);
     if(fr.pr){const keep=G.proj;try{G.proj=fr.pr.map(o=>Object.assign({},o,{owner:o.ow>=0?F[o.ow]:null}));drawProj()}finally{G.proj=keep}}}
   finally{F.forEach((f,i)=>{const d=saved[i];for(const k in d.r){const q=f.rig[k];if(q){q.x=d.r[k][0];q.y=d.r[k][1]}}f.x=d.x;f.y=d.y;f.facing=d.fc;f.alive=d.al;f.shattered=d.sh;f.squash=d.sq;f.invuln=d.inv;f.hitstun=d.hs;f.frozen=d.fz});
@@ -1876,13 +1911,15 @@ function drawKOReplay(K,dt){const u=K.t-KO_SNAP,END=KO_REPLAY-KO_SNAP,S=Math.min
     grain(.25);ctx.font=`400 ${30*S}px 'Lilita One',sans-serif`;ctx.textAlign='left';ctx.lineJoin='round';ctx.lineWidth=7*S;ctx.strokeStyle=INK;ctx.fillStyle='#fff';const tx=SAFE.l+26*S,ty=SAFE.t+48*S;ctx.strokeText('◀◀ REWIND',tx,ty);ctx.fillText('◀◀ REWIND',tx,ty)}
   else if(u<RW+PB){const p=(u-RW)/PB,q=Math.sin(p*Math.PI/2),i=Math.min(n-1,Math.floor(q*(n-1)));drawRecFrame(K,fr[i],1.1+.45*p*p);
     if(!K.pb){K.pb=1;tone(220,180,.6,'sine',.03)}
-    ctx.fillStyle='rgba(255,236,200,.08)';ctx.fillRect(0,0,CW,CH);const R=Math.hypot(CW,CH)/2,g=ctx.createRadialGradient(CW/2,CH/2,R*.45,CW/2,CH/2,R);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(10,5,25,.55)');ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);grain(.12);
+    koGrade(.35+.6*p);grain(.14);
+    if(K.vs){const [vx,vy]=K.vs,r=(70-30*p)*S,sp=u*3;ctx.save();ctx.strokeStyle='#ff1030';ctx.lineWidth=3;ctx.shadowColor='#ff1030';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(vx,vy,r,0,7);ctx.stroke();
+      for(let k=0;k<4;k++){const a=k*1.5708+sp;line(ctx,vx+Math.cos(a)*r*.6,vy+Math.sin(a)*r*.6,vx+Math.cos(a)*r*1.35,vy+Math.sin(a)*r*1.35)}ctx.fillStyle='#ff1030';ctx.beginPath();ctx.arc(vx,vy,3,0,7);ctx.fill();ctx.restore()}
     ctx.fillStyle=INK;ctx.fillRect(0,0,CW,bar);ctx.fillRect(0,CH-bar,CW,bar);
     ctx.font=`400 ${20*S}px 'Lilita One',sans-serif`;ctx.textAlign='left';ctx.fillStyle='#fff';const tx=SAFE.l+22*S,ty=bar*.66;if(Math.floor(u*2.5)%2===0){ctx.fillStyle='#ff3b30';ctx.beginPath();ctx.arc(tx+8*S,ty-7*S,7*S,0,7);ctx.fill()}
-    ctx.fillStyle='#fff';ctx.fillText('REPLAY',tx+22*S,ty);ctx.textAlign='right';ctx.font=`700 ${13*S}px Fredoka,sans-serif`;ctx.fillText((p<.6?'0.5x':p<.85?'0.25x':'0.1x')+'  SLOW-MO',CW-SAFE.r-22*S,ty)}
+    ctx.fillStyle='#fff';ctx.fillText(K.revenge?'REVENGE CAM':'KILL CAM',tx+22*S,ty);ctx.textAlign='right';ctx.font=`700 ${13*S}px Fredoka,sans-serif`;ctx.fillText((p<.6?'0.5x':p<.85?'0.25x':'0.1x')+'  SLOW-MO',CW-SAFE.r-22*S,ty)}
   else{const w=u-RW-PB;drawRecFrame(K,last,1.55+.04*w);if(!K.hitfx){K.hitfx=1;shake=0;sfx('boom');tone(140,40,.5,'square',.06)}
     if(w<.08){ctx.fillStyle=`rgba(255,255,255,${1-w/.08})`;ctx.fillRect(0,0,CW,CH)}
-    const a=Math.min(1,w/.15),out=u>END-.3?Math.max(0,(END-u)/.3):1;ctx.fillStyle=`rgba(15,8,35,${.5*a*out})`;ctx.fillRect(0,0,CW,CH);
+    const a=Math.min(1,w/.15),out=u>END-.3?Math.max(0,(END-u)/.3):1;koGrade(out);if(K.vs)koCracks(K,K.vs[0],K.vs[1],Math.hypot(CW,CH)*.55,Math.min(1,w/.12)*out);ctx.fillStyle=`rgba(10,0,6,${.35*a*out})`;ctx.fillRect(0,0,CW,CH);
     const sc2=a<1?2.2-1.2*a:1+.02*Math.sin(u*14);ctx.save();ctx.globalAlpha=out;ctx.translate(CW/2,CH*.33);ctx.scale(sc2,sc2);koTitle(0,0,70*S,'K.O.!',-.05);ctx.restore();koPlayers(K,CH*.66,S*1.05,a*out)}
   if(u>END-.3)koFlush(K);if(K.t>=KO_REPLAY)KOFX=null}
 // EXPLOSION: the frozen frame blows up from the KO point: fireball, shockwave, flying debris, smoke, then the K.O. card in the smoke
@@ -1893,18 +1930,18 @@ function drawKOBoom(K,dt){koShot(K);const u=K.t-KO_SNAP,END=KO_BOOM-KO_SNAP,S=Ma
   const clear=u>END-.55?Math.min(1,(u-(END-.55))/.55):0,jit=Math.max(0,1-u/.9)*18;
   ctx.save();ctx.translate((Math.random()-.5)*jit,(Math.random()-.5)*jit);if(K.shot)ctx.drawImage(K.shot,0,0,CW,CH);ctx.restore();
   // orange heat over everything
-  ctx.fillStyle=`rgba(255,110,20,${Math.min(.35,u*1.2)*(1-clear)})`;ctx.fillRect(0,0,CW,CH);
+  koGrade(Math.min(1,u*2)*(1-clear));
   // fireball
   const fb=Math.min(1,u/.45),fe=1-Math.pow(1-fb,3),fr=R*.55*fe,fa=(u<.9?1:Math.max(0,1-(u-.9)/.5))*(1-clear);
   if(fa>0){const lump=(a,r)=>r*(.86+.1*Math.sin(a*6+u*9)+.06*Math.sin(a*13-u*7));
-    for(const [k,col] of [[1,'#5a1a10'],[.85,'#ff3b1f'],[.66,'#ff8a1f'],[.45,'#ffd23f'],[.24,'#fff6d0']]){ctx.save();ctx.globalAlpha=fa;ctx.fillStyle=col;ctx.beginPath();for(let i=0;i<=48;i++){const a=i/48*6.283,r=lump(a,fr*k);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.restore()}}
+    for(const [k,col] of [[1,'#1a0508'],[.86,'#7a0a14'],[.7,'#e0182c'],[.5,'#ff6a1f'],[.28,'#ffe0a0']]){ctx.save();ctx.globalAlpha=fa;ctx.fillStyle=col;ctx.beginPath();for(let i=0;i<=48;i++){const a=i/48*6.283,r=lump(a,fr*k);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.restore()}}
   // shockwave rings
   for(const [d,c] of [[0,'#fff'],[.12,'#ffd23f']]){const k=(u-d)/.6;if(k>0&&k<1){ctx.save();ctx.globalAlpha=(1-k)*(1-clear);ctx.strokeStyle=c;ctx.lineWidth=18*(1-k)+2;ctx.beginPath();ctx.arc(cx,cy,R*1.1*k,0,7);ctx.stroke();ctx.restore()}}
   // debris flying at the camera
   const dtt=Math.min(.05,dt);for(const d of K.deb){d.x+=d.vx*dtt;d.y+=d.vy*dtt;d.vy+=500*dtt;d.a+=d.va*dtt;d.z+=d.dz*dtt;if(clear>.3)continue;const sz=9*d.z*S;ctx.save();ctx.globalAlpha=1-clear;ctx.translate(d.x,d.y);ctx.rotate(d.a);ctx.fillStyle=d.c;ctx.strokeStyle=INK;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-sz,-sz*.6);ctx.lineTo(sz*.9,-sz*.8);ctx.lineTo(sz*.6,sz*.7);ctx.lineTo(-sz*.7,sz*.5);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
   // smoke rolls in and hangs, then clears
-  for(const m of K.smoke){const k=Math.min(1,Math.max(0,(u-m.d)/.5));if(k<=0)continue;const r=m.r*(.4+.9*k),x=m.x+m.dx*u,y=m.y+m.dy*u;ctx.save();ctx.globalAlpha=.88*k*(1-clear);ctx.fillStyle='#2b2540';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha*=.5;ctx.fillStyle='#4a4266';ctx.beginPath();ctx.arc(x-r*.25,y-r*.3,r*.6,0,7);ctx.fill();ctx.restore()}
-  if(u>.7){const k=Math.min(1,(u-.7)/.5);ctx.fillStyle=`rgba(25,18,45,${.6*k*(1-clear)})`;ctx.fillRect(0,0,CW,CH)}
+  for(const m of K.smoke){const k=Math.min(1,Math.max(0,(u-m.d)/.5));if(k<=0)continue;const r=m.r*(.4+.9*k),x=m.x+m.dx*u,y=m.y+m.dy*u;ctx.save();ctx.globalAlpha=.88*k*(1-clear);ctx.fillStyle='#120a12';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha*=.5;ctx.fillStyle='#3a1018';ctx.beginPath();ctx.arc(x-r*.25,y-r*.3,r*.6,0,7);ctx.fill();ctx.restore()}
+  if(u>.7){const k=Math.min(1,(u-.7)/.5);ctx.fillStyle=`rgba(12,2,6,${.7*k*(1-clear)})`;ctx.fillRect(0,0,CW,CH)}
   // embers
   if(u>.6&&clear<1){ctx.save();ctx.globalAlpha=1-clear;for(let i=0;i<14;i++){const ex=(i*97+u*40*(i%3+1))%CW,ey=CH-((u*(60+i*9)+i*53)%CH);ctx.fillStyle=i%2?'#ffd23f':'#ff8a1f';ctx.beginPath();ctx.arc(ex,ey,2+i%3,0,7);ctx.fill()}ctx.restore()}
   if(u>.85){const a=Math.min(1,(u-.85)/.18)*(1-clear),sc=a<1?2.4-1.4*a:1+.02*Math.sin(u*12);ctx.save();ctx.globalAlpha=a;ctx.translate(CW/2,CH*.34);ctx.scale(sc,sc);koTitle(0,0,72*S,'K.O.!',.04);ctx.restore();koPlayers(K,CH*.66,S*1.05,a);if(!K.thud&&a>=1){K.thud=1;sfx('pick')}}
@@ -1916,20 +1953,25 @@ function drawKOPhoto(K,dt){koShot(K);const u=K.t-KO_SNAP,END=KO_PHOTO-KO_SNAP,S=
   const leave=u>END-.45?Math.min(1,(u-(END-.45))/.45):0;
   // dark desk under the photo
   const bgA=Math.min(1,Math.max(0,(u-.2)/.3))*(1-leave);if(K.shot&&u<.6)ctx.drawImage(K.shot,0,0,CW,CH);
-  ctx.save();ctx.globalAlpha=bgA;const g=ctx.createRadialGradient(CW/2,CH*.45,30,CW/2,CH*.45,Math.hypot(CW,CH)*.6);g.addColorStop(0,'#4a3f6b');g.addColorStop(1,'#151026');ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);ctx.restore();
+  ctx.save();ctx.globalAlpha=bgA;const g=ctx.createRadialGradient(CW/2,CH*.45,30,CW/2,CH*.45,Math.hypot(CW,CH)*.6);g.addColorStop(0,'#3a1a22');g.addColorStop(1,'#07030a');ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);ctx.restore();
   // the photo shrinking into a polaroid
   const k=Math.min(1,Math.max(0,(u-.22)/.45)),e=1-Math.pow(1-k,3),pw=CW*(1-.42*e),ph=CH*(1-.42*e),bor=14*e*S,bot=58*e*S,rot=K.rot*e+leave*.5;
   ctx.save();ctx.translate(CW/2+leave*CW*.15,CH*.47+leave*CH*1.1);ctx.rotate(rot);
   if(e>0){ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(-pw/2-bor+10,-ph/2-bor+12,pw+bor*2,ph+bor+bot);ctx.fillStyle='#fbf8ef';ctx.fillRect(-pw/2-bor,-ph/2-bor,pw+bor*2,ph+bor+bot)}
   if(K.shot){ctx.drawImage(K.shot,-pw/2,-ph/2,pw,ph);
     // develops: starts dark and washed out, comes up to full colour
-    const dev=Math.min(1,Math.max(0,(u-.35)/1.1));ctx.fillStyle=`rgba(40,30,25,${.85*(1-dev)})`;ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.fillStyle=`rgba(255,220,170,${.18*(1-dev)})`;ctx.fillRect(-pw/2,-ph/2,pw,ph)}
+    ctx.save();ctx.beginPath();ctx.rect(-pw/2,-ph/2,pw,ph);ctx.clip();ctx.globalCompositeOperation='saturation';ctx.fillStyle='#000';ctx.globalAlpha=Math.min(1,e*1.4);ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+    const dev=Math.min(1,Math.max(0,(u-.35)/1.1));ctx.fillStyle=`rgba(10,6,8,${.9*(1-dev)})`;ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.restore();
+    // red marker: circle the victim, then a big X through them
+    const vx=-pw/2+K.ix/CW*pw,vy=-ph/2+K.iy/CH*ph,mk=(t0,t1)=>Math.min(1,Math.max(0,(u-t0)/(t1-t0))),rr=Math.min(pw,ph)*.2;
+    ctx.save();ctx.strokeStyle='rgba(225,18,40,.92)';ctx.lineCap='round';ctx.lineWidth=7*S;const c1=mk(.75,1.05);if(c1>0){ctx.beginPath();ctx.ellipse(vx,vy,rr*1.15,rr*.9,-.2,-.5,-.5+6.6*c1);ctx.stroke()}
+    const x1=mk(1.1,1.25),x2=mk(1.28,1.43);if(x1>0)line(ctx,vx-rr,vy-rr*.8,vx-rr+2*rr*x1,vy-rr*.8+1.6*rr*x1);if(x2>0)line(ctx,vx+rr,vy-rr*.8,vx+rr-2*rr*x2,vy-rr*.8+1.6*rr*x2);ctx.restore()}
   if(e>.6){const a=(e-.6)/.4;ctx.globalAlpha=a;ctx.fillStyle='#2a2440';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`400 ${22*S}px 'Lilita One',sans-serif`;
-    const cap=K.killer?fname(K.killer)+' got '+fname(K.victim)+'!':fname(K.victim)+' is out!';ctx.fillText(cap,0,ph/2+bot*.55);ctx.globalAlpha=1}
+    const cap=K.revenge?'payback, '+fname(K.victim)+'.':K.killer?fname(K.victim)+' was taken out by '+fname(K.killer):fname(K.victim)+' is gone.';ctx.fillText(cap,0,ph/2+bot*.55);ctx.globalAlpha=1}
   // K.O. stamp slapped on the photo
-  if(u>.95){const s2=Math.min(1,(u-.95)/.12),sc=s2<1?2.6-1.6*s2:1;if(!K.stamp&&s2>=1){K.stamp=1;shake=Math.max(shake,6);sfx('boom')}
+  if(u>1.5){const s2=Math.min(1,(u-1.5)/.12),sc=s2<1?2.6-1.6*s2:1;if(!K.stamp&&s2>=1){K.stamp=1;shake=Math.max(shake,6);sfx('boom')}
     ctx.save();ctx.translate(pw*.18,-ph*.12);ctx.rotate(-.22);ctx.scale(sc,sc);ctx.globalAlpha=Math.min(1,s2*1.5);ctx.strokeStyle='#e8262d';ctx.lineWidth=7*S;ctx.strokeRect(-110*S,-46*S,220*S,92*S);ctx.lineWidth=2.5*S;ctx.strokeRect(-100*S,-37*S,200*S,74*S);
-    ctx.fillStyle='#e8262d';ctx.font=`400 ${60*S}px 'Lilita One',sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('K.O.!',0,4*S);ctx.restore()}
+    ctx.fillStyle='#e8262d';const sw=K.word||'K.O.!',fs=Math.min(60,60*6/Math.max(4,sw.length))*S;ctx.font=`400 ${fs}px 'Lilita One',sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(sw,0,4*S);ctx.restore()}
   ctx.restore();
   // flash + shutter blades
   if(u<.07){ctx.fillStyle=`rgba(255,255,255,${1-u/.07})`;ctx.fillRect(0,0,CW,CH)}
@@ -1986,7 +2028,7 @@ function drawKOFX(dt){
   KOFX=null;
 }
 function drawKOCaption(K){const S=Math.min(CW/760,CH/360),u=K.t;
-  ctx.save();sunburst(CW/2,CH/2,Math.hypot(CW,CH),K.col,.28,u*.2);ctx.restore();
+  ctx.save();const R=Math.hypot(CW,CH)/2,g=ctx.createRadialGradient(CW/2,CH*.4,10,CW/2,CH*.4,R);g.addColorStop(0,`rgba(150,0,20,${.55+.1*Math.sin(u*6)})`);g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha*=1;ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);ctx.restore();
   koTitle(CW/2,CH*.3,70*S,'K.O.!',-.04);koPlayers(K,CH*.6,S*1.15,1)}
 function die(f){
   // out of health: go limp, then count as a KO

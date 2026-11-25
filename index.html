@@ -398,6 +398,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 #onRoom.many .onmany{display:flex;gap:2.5%;justify-content:center;align-items:center;min-height:0;width:100%}
 .onmany .pcard{flex:0 1 auto;width:22.5%;height:auto;max-height:100%}
 .onmany .pcard.empty .mtag{visibility:visible;opacity:.55}
+.pauseby{font:400 18px 'Lilita One',Fredoka,sans-serif;color:#fff;-webkit-text-stroke:5px var(--ink);paint-order:stroke fill;margin:-4px 0 6px;min-height:4px}
 .onrelay{font:600 11px Fredoka,sans-serif;color:#6d6a8a;min-height:13px}.onrelay.ok{color:#178a35}.onrelay.bad{color:#c0392b}
 .onmid{display:flex;flex-direction:column;align-items:center;gap:9px;max-width:230px;text-align:center}
 .onmid .onstat{max-width:240px;font-size:15px;line-height:1.25}
@@ -508,6 +509,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 
 <div class="screen" id="pause">
   <h2>PAUSED</h2>
+  <div class="pauseby" id="pauseBy"></div>
   <div class="ver pv" id="verText2"></div>
   <div class="btns">
     <button class="big green" id="resumeBtn">RESUME</button>
@@ -579,7 +581,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.76 · Nov 25';
+const APP_VERSION='v1.77 · Nov 25';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -2682,8 +2684,8 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
   get guestCos(){const g=this.gs[0];return g?g.cos:null},
   // ---------- room view ----------
   // quick check that the mobile-data relay answers, shown under the room code
-  relayCheck(){const e=$('onRelay');if(!e||this._rc)return;this._rc=1;e.textContent='Checking mobile data relay...';e.className='onrelay';
-    let done=false;const fin=(ok)=>{if(done)return;done=true;e.textContent=ok?'Mobile data play: ready':'Mobile data relay not reachable right now (same Wi-Fi still works)';e.className='onrelay '+(ok?'ok':'bad');try{pc.close()}catch(_){}setTimeout(()=>{this._rc=0},30000)};
+  relayCheck(){const e=$('onRelay');if(!e||this._rc)return;this._rc=1;e.textContent='Checking long-distance link...';e.className='onrelay';
+    let done=false;const fin=(ok)=>{if(done)return;done=true;e.textContent=ok?'Long-distance play: ready':'Long-distance link not reachable right now (same Wi-Fi still works)';e.className='onrelay '+(ok?'ok':'bad');try{pc.close()}catch(_){}setTimeout(()=>{this._rc=0},30000)};
     let pc;try{pc=new RTCPeerConnection({iceServers:[this.TURN],iceTransportPolicy:'relay'});pc.createDataChannel('t');pc.onicecandidate=ev=>{if(ev.candidate&&/ relay /.test(ev.candidate.candidate))fin(true)};
       pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(()=>fin(false));setTimeout(()=>fin(false),7000)}catch(_){fin(false)}},
   room(on){$('online').classList.toggle('inroom',!!on);if(on)this.relayCheck();if(!on){this.roster=[];this.drawRoom()}},
@@ -2749,6 +2751,7 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     else if(!g)return;
     else if(m.t==='in'){const r=g.rin;r.mx=m.mx;r.my=m.my;r.t=performance.now();if(m.rel)r.rel=true}
     else if(m.t==='me'){if(m.cos&&typeof m.cos==='object')g.cos=m.cos;g.w=WEAP[m.w]&&!WEAP[m.w].special?m.w:'random';this.sendRoster();this.drawRoom();if(state==='lobby')buildLobby()}
+    else if(m.t==='pause'){if(state==='play'&&G&&!G.over)setPause(!!m.on,g.seat)}
     else if(m.t==='bye')this.guestLeft(gid)},
   replyTo(gid,conn,m){if(this.bc)this.send(m,gid);else if(conn){const go=()=>{try{conn.send(m)}catch(e){}setTimeout(()=>{try{conn.close()}catch(e){}},400)};if(conn.open)go();else conn.on('open',go)}},
   sendRoster(){this.send({t:'roster',ps:this.makeRoster()})},
@@ -2765,7 +2768,8 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     else if(m.t==='roster'){const had=this.roster.map(p=>p.seat);this.roster=m.ps;const nw=m.ps.find(p=>!had.includes(p.seat)&&p.seat!==this.mySeat);this.drawRoom(nw?nw.seat:undefined)}
     else if(m.t==='ver'){try{this.conn&&this.conn.close()}catch(e){}this.close();this.room(false);this.setStatus('The host has '+m.v+' and you have '+APP_VERSION+'. Close the game and reopen it on both phones to update.')}
     else if(m.t==='full'||m.t==='busy'){const t=m.t==='full'?'That room is full (4 players max).':'That room is in a fight right now. Try again when it ends.';try{this.conn&&this.conn.close()}catch(e){}this.role='guest';this.close();this.room(false);this.setStatus(t)}
-    else if(m.t==='start')guestStart(m);
+    else if(m.t==='pz'){this.rPause=!!m.on;if(state==='play')showPause(this.rPause,m.by)}
+    else if(m.t==='start'){this.rPause=false;guestStart(m)}
     else if(m.t==='s'){const now=performance.now(),last=this.snaps.length?this.snaps[this.snaps.length-1].at:now;if(now-last>350){this.snaps=[];cam.init=false;if(G){G.parts.length=0;for(const f of G.fighters)f.trail=[]}}this.lastRx=now;this.snaps.push({at:now,d:m});if(this.snaps.length>4)this.snaps.shift();guestEvents(m)}
     else if(m.t==='over'){if(G&&G.netGuest){applySnap(this.snaps.length?this.snaps[this.snaps.length-1].d:null,null,1);showOver()}}
     else if(m.t==='lobby'){if(state!=='online'){state='online';show('online')}this.room(true);this.drawRoom();this.setStatus('Waiting for the host to start the next fight...',true)}
@@ -3208,8 +3212,14 @@ function startReal(){initAudio();try{document.activeElement&&document.activeElem
   G.earned=0;TS=.72;show(null);syncTestBar()}
 $('startBtn').onclick=startReal;
 function togglePause(){if(state!=='play'||G.over)return;
-  if(NET.role==='guest'){const on=!$('pause').classList.contains('show');show(on?'pause':null);['restartBtn','pFree'].forEach(id=>$(id).style.display=on?'none':'');return}
-  paused=!paused;show(paused?'pause':null);if(paused)syncPauseFree();['restartBtn'].forEach(id=>$(id).style.display='')}
+  if(NET.role==='guest'){NET.send({t:'pause',on:!NET.rPause});return} // the host decides; everyone sees the same pause
+  setPause(!paused,0)}
+// one pause for everyone in an online match: who paused it is shown on every screen, anyone can resume
+function pauseName(seat){if(!NET.role)return'';const c=NET.cosForSeat(seat);return(c&&c.name)||(seat===0?'Host':'P'+(seat+1))}
+function setPause(on,by){paused=on;if(NET.role==='host'&&NET.live)NET.send({t:'pz',on:on?1:0,by});showPause(on,by)}
+function showPause(on,by){const pb=$('pauseBy');if(pb)pb.textContent=on&&NET.role?'Paused by '+(by===(NET.role==='host'?0:NET.mySeat)?'you':pauseName(by)):'';
+  const guest=NET.role==='guest';['restartBtn','pFree'].forEach(id=>$(id).style.display=guest?'none':'');
+  if(on){show('pause');if(!guest)syncPauseFree()}else if($('pause').classList.contains('show')||$('wswap').classList.contains('show'))show(null)}
 function syncPauseFree(){const fr=G&&G.mode==='free'&&!G.test;$('pFree').style.display=fr?'flex':'none';if(!fr)return;
   const live=G.fighters.filter(f=>!f.removed);$('pAddCpu').disabled=live.length>=4;$('pRemCpu').disabled=!live.some(f=>f.cpu&&!f.dummy)||live.length<=1;
   $('pSwapW').style.display=humanFs().length?'':'none'}
@@ -3232,7 +3242,7 @@ function wsEquip(){const k=wsSel,f=wsWho,key='w:'+k;
   if(!owns(key)){const pr=priceOf(key);if(SAVE.coins<pr)return;SAVE.coins-=pr;SAVE.own[key]=1;saveProg();tone(520,1040,.14,'triangle',.07);document.querySelectorAll('.coinv').forEach(e=>e.textContent=SAVE.coins)}
   f.fixedW=k;f.wchoice=k;f.weapon=k;f.cd=.3;f.cdMax=WEAP[k].cd;f.thrown=false;f.burst=0;f.sprayT=0;f.flameT=0;
   for(let i=G.proj.length-1;i>=0;i--)if(G.proj[i].type==='axe'&&G.proj[i].owner===f)G.proj.splice(i,1);
-  floatText(f.x,f.y-110,WEAP[k].name.toUpperCase(),'#ffd23f');sfx('pick');paused=false;show(null)}
+  floatText(f.x,f.y-110,WEAP[k].name.toUpperCase(),'#ffd23f');sfx('pick');setPause(false,0)}
 function openWSwap(){const hs=humanFs();if(!hs.length)return;if(!hs.includes(wsWho))wsWho=hs[0];wsSel=wsWho.weapon;
   document.querySelectorAll('.coinv').forEach(e=>e.textContent=SAVE.coins);
   $('wsTabs').innerHTML='';if(hs.length>1)hs.forEach(f=>{const b=document.createElement('button');b.textContent=fname(f);b.classList.toggle('on',f===wsWho);b.onclick=()=>{wsWho=f;openWSwap()};$('wsTabs').appendChild(b)});
@@ -3250,13 +3260,13 @@ $('pAddCpu').onclick=()=>{const live=G.fighters.filter(f=>!f.removed);if(live.le
   f=newFighter(idx,true,'normal');f.lvl=(setup.slots.find(s2=>s2&&s2.t==='cpu')||{lvl:'normal'}).lvl||'normal';f.slot='cpu';f.pid=pid;f.cos=cos[pid]||cos[idx];
   G.fighters[idx]=f;f.facing=f.aimX=idx%2?-1:1;f.wchoice='random';f.weapon=chooseWeapon(f);f.cd=.5;f.cdMax=WEAP[f.weapon].cd;
   {const sp=spawnPoint(idx);buildBody(f,sp.x,G.map.arena?sp.y:170)}f.invuln=2;
-  syncPauseFree();paused=false;show(null);announce('CPU JOINS!',.8)};
+  syncPauseFree();setPause(false,0);announce('CPU JOINS!',.8)};
 $('pRemCpu').onclick=()=>{const c=[...G.fighters].reverse().find(f=>f.cpu&&!f.dummy&&!f.removed);if(!c)return;
   c.removed=true;c.alive=false;c.dying=false;c.respawnT=Infinity;
   for(let i=0;i<24;i++){const a=Math.random()*6.28;part(c.x,c.y-45,Math.cos(a)*300,Math.sin(a)*300,.5,'#fff',6,0)}
   syncPauseFree()};
 $('pauseBtn').onclick=togglePause;
-$('resumeBtn').onclick=()=>{if(NET.role!=='guest')paused=false;show(null)};
+$('resumeBtn').onclick=()=>{if(NET.role==='guest'){NET.send({t:'pause',on:false});return}setPause(false,0)};
 addEventListener('keydown',e=>{if(e.key==='Escape'&&state==='play'&&paused&&document.getElementById('wswap').classList.contains('show')){show('pause')}});
 $('restartBtn').onclick=startReal;$('rematchBtn').onclick=startReal;
 function toMenu(){if(NET.role&&NET.live)NET.send({t:'bye'});if(NET.role)NET.close();KOFX=null;state='menu';paused=false;TS=.72;startDemo();show('menu')}

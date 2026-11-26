@@ -585,7 +585,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.83 · Nov 26';
+const APP_VERSION='v1.84 · Nov 26';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -2469,7 +2469,7 @@ function drawSkin(c,f,layer,col){const sk=SKINS[f.cos.skin|0];if(!sk||sk==='none
     const taper=(a,b,w0,w1,bulge,bs)=>{const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,m={x:a.x+dx*(bs||.42),y:a.y+dy*(bs||.42)},wm=(w0+w1)/2+(bulge||0);
       const g=c.createLinearGradient(m.x+nx*wm,m.y+ny*wm,m.x-nx*wm,m.y-ny*wm);g.addColorStop(0,SK2);g.addColorStop(.3,SK1);g.addColorStop(.62,SK0);g.addColorStop(1,SK1);
       c.fillStyle=g;c.strokeStyle=LINE;c.lineWidth=1.6;c.beginPath();c.moveTo(a.x+nx*w0,a.y+ny*w0);c.quadraticCurveTo(m.x+nx*wm*1.12,m.y+ny*wm*1.12,b.x+nx*w1,b.y+ny*w1);
-      c.arc(b.x,b.y,w1,Math.atan2(ny,nx),Math.atan2(-ny,-nx),false);c.quadraticCurveTo(m.x-nx*wm*1.05,m.y-ny*wm*1.05,a.x-nx*w0,a.y-ny*w0);c.arc(a.x,a.y,w0,Math.atan2(-ny,-nx),Math.atan2(ny,nx),false);c.closePath();c.fill();c.stroke()};
+      c.arc(b.x,b.y,w1,Math.atan2(ny,nx),Math.atan2(-ny,-nx),true);c.quadraticCurveTo(m.x-nx*wm*1.05,m.y-ny*wm*1.05,a.x-nx*w0,a.y-ny*w0);c.arc(a.x,a.y,w0,Math.atan2(-ny,-nx),Math.atan2(ny,nx),true);c.closePath();c.fill();c.stroke()};
     // tattoo sleeve marks following a segment
     const sleeve=(a,b,w,n,seed)=>{const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L;c.save();c.strokeStyle=INKT;c.fillStyle=INKT;c.lineCap='round';let sd=seed*7+3;const rnd=()=>{sd=(sd*9301+49297)%233280;return sd/233280};
       for(let i=0;i<n;i++){const t=.12+.76*i/n,q={x:a.x+dx*t,y:a.y+dy*t},ww=w*(.55+rnd()*.35),kind=i%3;c.lineWidth=1.3;

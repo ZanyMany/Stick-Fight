@@ -585,7 +585,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.84 · Nov 26';
+const APP_VERSION='v1.85 · Nov 26';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -1738,7 +1738,7 @@ function koFX(v,killer,ringOut,style){
     else if(window.__sc&&window.__sc.forceKO)style=window.__sc.forceKO;
     else{const pool=['replay','replay','shatter','shatter','boom','boom','photo','photo','comic','tv','splat'];style=pool[Math.floor(Math.random()*pool.length)]}}
   if(style==='replay'&&!(G.rec&&G.rec.length>20))style='shatter';
-  if(NET.role==='host'&&NET.live)NET.ev.push(['ko',v.idx,killer?killer.idx:-1,ringOut?1:0,style]);
+  if(NET.role==='host'&&NET.live)NET.send({t:'kev',e:['ko',v.idx,killer?killer.idx:-1,ringOut?1:0,style]});
   (G.feed||(G.feed=[])).push({k:killer?killer.idx:-1,v:v.idx,ring:!!ringOut,life:4});if(G.feed.length>4)G.feed.shift();
   const col=killer?COLORS[killer.cos.color]:'#cfd3e6',x=Math.max(-60,Math.min(W+60,v.x)),y=Math.max(-60,Math.min(H+40,v.y-50));
   if(style==='mini'){ // mid-match KO with others still fighting: never stop the game
@@ -2838,7 +2838,9 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     try{await this.loadPeer()}catch(e){this.setStatus('Could not load online play. Check your internet connection.');return}
     this.peer=new Peer('stickfight-zm-'+this.code,this.popts());
     this.peer.on('error',e=>{if(e.type==='unavailable-id'){this.host()}else this.setStatus('Connection problem: '+e.type)});
-    this.peer.on('connection',c=>{c.on('data',m=>this.onGuestMsg(c.peer,m,c));c.on('close',()=>this.guestLeft(c.peer))});},
+    this.peer.on('connection',c=>{
+      if(c.label==='fast'){c.on('open',()=>{const g=this.gs.find(x=>x.gid===c.peer);if(g)g.fast=c;else(this.pendFast||(this.pendFast={}))[c.peer]=c});c.on('data',m=>this.onGuestMsg(c.peer,m,null));c.on('close',()=>{const g=this.gs.find(x=>x.gid===c.peer);if(g&&g.fast===c)g.fast=null});return}
+      c.on('data',m=>this.onGuestMsg(c.peer,m,c));c.on('close',()=>this.guestLeft(c.peer))});},
   async join(code){this.close();this.role='guest';this.code=code;this.gid='g'+Math.random().toString(36).slice(2,9);this.mySeat=-1;this.roster=[];$('onCode').textContent=code;this.room(true);
     $('onWaitTxt').textContent='Connecting to the host...';$('onGo').style.display='none';this.drawRoom();this.setStatus('');
     if(this.usesBC()){this.bc=new BroadcastChannel('sf-'+code);this.bc.onmessage=e=>{const d=e.data;if(d.from==='host'&&(!d.to||d.to===this.gid))this.onMsg(d.m)};this.live=true;this.send({t:'hello',cos:cos[0],w:setup.w[0]||'random',v:APP_VERSION});return}
@@ -2847,9 +2849,11 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     this.peer.on('error',e=>{this.room(false);this.role=null;this.setStatus(e.type==='peer-unavailable'?'No room with code '+code+'. Check the code and try again.':'Connection problem: '+e.type)});
     this.peer.on('open',()=>{const c=this.peer.connect('stickfight-zm-'+code,{reliable:true});this.conn=c;
       clearTimeout(this.joinTO);this.joinTO=setTimeout(()=>{if(this.role==='guest'&&!this.live){this.close();this.room(false);this.setStatus('Found the room but could not link up. Check both of you have signal and try again. If it keeps failing, try the same Wi-Fi.')}},15000);
-      c.on('open',()=>{this.live=true;this.send({t:'hello',cos:cos[0],w:setup.w[0]||'random',v:APP_VERSION});$('onWaitTxt').textContent='Saying hi to the host...'});c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost())});},
+      c.on('open',()=>{this.live=true;this.send({t:'hello',cos:cos[0],w:setup.w[0]||'random',v:APP_VERSION});$('onWaitTxt').textContent='Saying hi to the host...';
+        try{const fc=this.peer.connect('stickfight-zm-'+code,{reliable:false,serialization:'json',label:'fast'});fc.on('open',()=>{this.fast=fc});fc.on('data',m=>this.onMsg(m));fc.on('close',()=>{if(this.fast===fc)this.fast=null})}catch(_){} });
+      c.on('data',m=>this.onMsg(m));c.on('close',()=>this.lost())});},
   close(){try{if(this.conn)this.conn.close()}catch(e){}for(const g of this.gs){try{g.conn&&g.conn.close()}catch(e){}}try{if(this.peer)this.peer.destroy()}catch(e){}try{if(this.bc)this.bc.close()}catch(e){}
-    this.conn=this.peer=this.bc=null;this.gs=[];this.live=false;this.role=null;this.snaps=[];this.mySeat=-1;resetInput();
+    this.conn=this.peer=this.bc=this.fast=null;this.pendFast={};this.lq=0;this.sq=0;this.rn=0;this.idelay=80;this.mi=33;this.jit=8;this.gs=[];this.live=false;this.role=null;this.snaps=[];this.mySeat=-1;resetInput();
     let ch=false;setup.slots.forEach((sl,i)=>{if(sl&&sl.t==='remote'){setup.slots[i]={t:'cpu',lvl:'normal'};ch=true}});if(ch)svSetup()},
   lost(){if(!this.role)return;const was=this.role;this.close();KOFX=null;paused=false;startDemo();state='online';show('online');this.room(false);this.setStatus(was==='host'?'Your friend left the room.':'The host closed the room.')},
   // ---------- host side ----------
@@ -2858,12 +2862,12 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
       if(m.v!==APP_VERSION){const old=m.v||'an older version';this.replyTo(gid,conn,{t:'ver',v:APP_VERSION});this.setStatus('Your friend has '+old+' and you have '+APP_VERSION+'. You both need the same version: close the game and reopen it on both phones.');return}
       if(this.inMatch()){this.replyTo(gid,conn,{t:'busy'});return}
       const seat=[1,2,3].find(i=>!this.guestBySeat(i));if(seat===undefined||this.gs.length>=this.MAXP-1){this.replyTo(gid,conn,{t:'full'});return}
-      g={gid,conn,cos:m.cos,w:m.w,seat,rin:{mx:0,my:0,rel:false,t:0}};this.gs.push(g);
+      g={gid,conn,fast:(this.pendFast&&this.pendFast[gid])||null,cos:m.cos,w:m.w,seat,rin:{mx:0,my:0,rel:false,t:0}};this.gs.push(g);
       this.send({t:'hi',seat},gid);this.sendRoster();this.drawRoom(seat);
       const n=this.gs.length;this.setStatus(n===1?'Your friend is here!':n+' friends are here!',true);
       sfx('go');setTimeout(()=>sfx('pick'),180);try{navigator.vibrate&&navigator.vibrate([60,40,60])}catch(_){}}
     else if(!g)return;
-    else if(m.t==='in'){const r=g.rin;r.mx=m.mx;r.my=m.my;r.t=performance.now();if(m.rel)r.rel=true}
+    else if(m.t==='in'){const r=g.rin;r.mx=m.mx;r.my=m.my;r.t=performance.now();if((m.rn||0)>(r.rn||0)){r.rel=true;r.rn=m.rn}else if(m.rel)r.rel=true}
     else if(m.t==='me'){if(m.cos&&typeof m.cos==='object')g.cos=m.cos;g.w=WEAP[m.w]&&!WEAP[m.w].special?m.w:'random';this.sendRoster();this.drawRoom();if(state==='lobby')buildLobby()}
     else if(m.t==='pause'){if(state==='play'&&G&&!G.over)setPause(!!m.on,g.seat)}
     else if(m.t==='bye')this.guestLeft(gid)},
@@ -2884,16 +2888,21 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
     else if(m.t==='full'||m.t==='busy'){const t=m.t==='full'?'That room is full (4 players max).':'That room is in a fight right now. Try again when it ends.';try{this.conn&&this.conn.close()}catch(e){}this.role='guest';this.close();this.room(false);this.setStatus(t)}
     else if(m.t==='pz'){this.rPause=!!m.on;if(state==='play')showPause(this.rPause,m.by)}
     else if(m.t==='start'){this.rPause=false;guestStart(m)}
-    else if(m.t==='s'){const now=performance.now(),last=this.snaps.length?this.snaps[this.snaps.length-1].at:now;if(now-last>350){this.snaps=[];cam.init=false;if(G){G.parts.length=0;for(const f of G.fighters)f.trail=[]}}this.lastRx=now;this.snaps.push({at:now,d:m});if(this.snaps.length>4)this.snaps.shift();guestEvents(m)}
+    else if(m.t==='kev'){guestEvents({ev:[m.e]})}
+    else if(m.t==='s'){if(m.q&&m.q<=(this.lq||0)&&this.snaps.length)return;this.lq=m.q||0;const now=performance.now(),last=this.snaps.length?this.snaps[this.snaps.length-1].at:now;
+      {const dt=now-last;if(dt>0&&dt<400){this.mi=(this.mi||33)*.9+dt*.1;this.jit=(this.jit||8)*.9+Math.abs(dt-this.mi)*.1;this.idelay=Math.max(55,Math.min(220,this.mi*1.6+this.jit*2.5))}}if(now-last>350){this.snaps=[];cam.init=false;if(G){G.parts.length=0;for(const f of G.fighters)f.trail=[]}}this.lastRx=now;this.snaps.push({at:now,d:m});if(this.snaps.length>12)this.snaps.shift();guestEvents(m)}
     else if(m.t==='over'){if(G&&G.netGuest){applySnap(this.snaps.length?this.snaps[this.snaps.length-1].d:null,null,1);showOver()}}
     else if(m.t==='lobby'){if(state!=='online'){state='online';show('online')}this.room(true);this.drawRoom();this.setStatus('Waiting for the host to start the next fight...',true)}
     else if(m.t==='bye')this.lost()},
   sendStart(opts){const F=G.fighters;this.send({t:'start',opts:{map:opts.map,mode:G.mode,pids:opts.pids,slots:opts.slots,wchoice:opts.wchoice},cos:F.map(f=>f.cos),weapons:F.map(f=>f.weapon),rnd:RND?{n:RND.n}:null});this.lastSnap=0},
   // 1v1 gets ~30 updates a second; bigger rooms ~22 so the host phone keeps up
   tick(now){if(now-this.lastSnap<(this.gs.length<=1?32:45))return;this.lastSnap=now;this.flush()},
-  flush(){if(!G)return;this.send(makeSnap())},
+  sendFast(m){if(this.bc){this.send(m);return}
+    if(this.role==='host'){for(const g of this.gs){const ch=g.fast&&g.fast.open?g.fast:g.conn;try{if(ch&&ch.open)ch.send(m)}catch(e){}}}
+    else{const ch=this.fast&&this.fast.open?this.fast:this.conn;try{if(ch&&ch.open)ch.send(m)}catch(e){}}},
+  flush(){if(!G)return;const sn=makeSnap();sn.q=(this.sq=(this.sq||0)+1);this.sendFast(sn)},
   sendInput(){const i=this.myIdx,s=sticks[i];if(i<0||!s)return;const k=kbVec(0);let mx=s.id!==null?s.vx:k.x,my=s.id!==null?s.vy:k.y;const fk=FIRE[0]||FIRE[1];FIRE[0]=FIRE[1]=0;const rel=s.rel||(this._kp&&!k.x&&!k.y&&s.id===null)||!!fk;this._kp=(k.x||k.y)?1:0;if(s.rel)s.rel=false;
-    const key=mx.toFixed(2)+','+my.toFixed(2);const t=performance.now();if(key===this.lastIn&&!rel&&t-this.inT<150)return;this.lastIn=key;this.inT=t;this.send({t:'in',mx,my,rel:rel?1:0})}
+    const key=mx.toFixed(2)+','+my.toFixed(2);const t=performance.now();if(key===this.lastIn&&!rel&&t-this.inT<150)return;this.lastIn=key;this.inT=t;if(rel)this.rn=(this.rn||0)+1;this.sendFast({t:'in',mx,my,rn:this.rn||0})}
 };
 let gtoastT=0;function alertMsg(t){const e=$('gtoast');if(e){e.textContent=t;e.classList.add('show');clearTimeout(gtoastT);gtoastT=setTimeout(()=>e.classList.remove('show'),2800)}}
 const r1=v=>Math.round(v*10)/10;
@@ -2965,7 +2974,7 @@ function guestFrame(dt){
   for(let i=G.fx.length-1;i>=0;i--){const e=G.fx[i];e.life-=dt;if(e.k==='ring')e.r+=(e.max-e.r)*Math.min(1,dt*14);if(e.life<=0)G.fx.splice(i,1)}
   updateShards(dt);updateDebris(dt);
   // show the world ~80ms in the past, blended between the two snapshots around that moment
-  const sn=NET.snaps;if(!sn.length)return;const rt=performance.now()-80;let A=null,B=null;
+  const sn=NET.snaps;if(!sn.length)return;const rt=performance.now()-(NET.idelay||80);let A=null,B=null;
   for(let i=sn.length-1;i>=0;i--){if(sn[i].at<=rt){A=sn[i];B=sn[i+1]||null;break}}
   if(!A){applySnap(null,sn[0].d,1);return}
   if(!B){applySnap(null,A.d,1);return}

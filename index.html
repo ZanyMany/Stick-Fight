@@ -383,7 +383,8 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .oncols{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;min-height:0}
 .oncard{background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-height:0}
 .onh{font:400 26px 'Lilita One',sans-serif;color:var(--ink)}
-#onPick .oncard{justify-content:center;gap:12px}
+#onPick .oncard{justify-content:center;gap:12px;align-self:center;max-height:min(100%,330px)}
+#onPick{align-items:center}
 .oncard p{font:600 13px Fredoka,sans-serif;color:#4a4670;margin:0}
 .oncard .big{padding:10px!important;font-size:19px!important}
 @keyframes onpop{0%{transform:scale(.3)}100%{transform:scale(1)}}
@@ -508,7 +509,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
     <p><b>Let go</b> of the stick to use your weapon's ability. Each has a cooldown, shown on your card.</p>
     <p><b>Hold up</b> to jump. You get <b>one jump</b>, from the ground or in the air; it comes back when you land, or when you catch a ledge with your weapon (hang on it, then jump to climb up). <b>Push down</b> to drop through the dashed see-through platforms. All other ground is solid.</p>
     <p><b>SUPER:</b> your meter (bottom of your card) fills as you deal damage, and a little as you take it. When it says <b>SUPER READY</b>, your next ability goes off as a SUPER: bigger shots, bigger blasts, harder hits for a couple of seconds. Melee weapons also throw an energy wave.</p>
-    <p><b>Wall jumps:</b> in the air, push into a wall to slide down it slowly, then press up to kick off. Bounce between two walls to climb. Aim a Shotgun down and fire to blast yourself upward, and Rockets launch you too.</p>
+    <p><b>Wall jumps:</b> in the air, push into a wall to slide down it slowly, then press up to kick off. Bounce between two walls to climb (you can't kick off the same wall twice in a row). Movement abilities like the Rocket Hammer dash, Pogo bounce, Jet Thruster and Warp Kunai boost you once per jump: land to recharge them. Aim a Shotgun down and fire to blast yourself upward, and Rockets launch you too.</p>
     <p><b>Health:</b> everyone has 100 HP. Hit 0 or fall off the map and you're KO'd.</p>
     <p><b>Coins</b> come from KOs and wins. Spend them in the Locker (or when picking your fighter) to unlock weapons, colors, hats and trails. Testing Grounds lets you try any weapon for free.</p>
     <p><b>Your name:</b> tap <b>Edit look</b> (or Look) and then <b>✎ Name</b> to set a name. It shows above your fighter, on your card and to your friends online.</p>
@@ -594,10 +595,10 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.87 · Nov 27';
+const APP_VERSION='v1.88 · Nov 27';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
-let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
+let CW=1,CH=1,DPR=1,ROT=false,UZ=1;const SAFE={l:0,r:0,t:0,b:0};
 // The game is always landscape. Ask the system to lock it where that's allowed (Android / installed app);
 // on iPhone, if the page turns portrait we counter-rotate so the game stays put in the same physical position.
 let ROTDIR=1; // 1: game's top faces the phone's left edge (held with home bar on the right), -1: the other way
@@ -612,11 +613,14 @@ function layout(){
   if(ROT&&standalone&&screen.height>ih){ih=Math.max(screen.width,screen.height);iw=Math.min(screen.width,screen.height)}
   document.documentElement.style.height=document.body.style.height=ih+'px';
   if(!ROT)lastLandscape();
-  if(ROT){CW=ih;CH=iw;app.style.transform=ROTDIR>0?`translate(0px,${ih}px) rotate(-90deg)`:`translate(${iw}px,0px) rotate(90deg)`}else{CW=iw;CH=ih;app.style.transform='none'}
+  // big screens (iPad, desktop): lay the whole app out at a phone-like size and scale it up, so buttons, text and the HUD grow with the screen
+  {const pw=ROT?ih:iw,ph=ROT?iw:ih;UZ=Math.max(1,Math.min(1.7,pw/920,ph/430));DPR=Math.min(window.devicePixelRatio||1,2)*UZ}
+  const sc=UZ>1?` scale(${UZ})`:'';
+  if(ROT){CW=ih/UZ;CH=iw/UZ;app.style.transform=(ROTDIR>0?`translate(0px,${ih}px) rotate(-90deg)`:`translate(${iw}px,0px) rotate(90deg)`)+sc}else{CW=iw/UZ;CH=ih/UZ;app.style.transform=sc||'none'}
   app.style.width=CW+'px';app.style.height=CH+'px';cv.width=Math.round(CW*DPR);cv.height=Math.round(CH*DPR);
   // notch / home-bar insets, mapped into the (possibly rotated) landscape layout
   const ps=getComputedStyle(document.getElementById('safeProbe')),t=parseFloat(ps.paddingTop)||0,r=parseFloat(ps.paddingRight)||0,b=parseFloat(ps.paddingBottom)||0,l=parseFloat(ps.paddingLeft)||0;
-  if(ROT){if(ROTDIR>0){SAFE.l=b;SAFE.r=t;SAFE.t=l;SAFE.b=r}else{SAFE.l=t;SAFE.r=b;SAFE.t=r;SAFE.b=l}}else{SAFE.l=l;SAFE.r=r;SAFE.t=t;SAFE.b=b;}
+  if(ROT){if(ROTDIR>0){SAFE.l=b;SAFE.r=t;SAFE.t=l;SAFE.b=r}else{SAFE.l=t;SAFE.r=b;SAFE.t=r;SAFE.b=l}}else{SAFE.l=l;SAFE.r=r;SAFE.t=t;SAFE.b=b;}for(const k in SAFE)SAFE[k]/=UZ;
   for(const k of['l','r','t','b'])app.style.setProperty('--s'+k,SAFE[k]+'px');
   // tablets: scale the main-menu group up so it isn't a tiny cluster at the bottom of a big screen
   app.style.setProperty('--mz',Math.max(1,Math.min(2,(CW-SAFE.l-SAFE.r)/880,(CH-SAFE.t-SAFE.b)/420)).toFixed(3));
@@ -625,7 +629,7 @@ lastLandscape();
 addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,120));
 if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',()=>setTimeout(layout,60));
 addEventListener('pointerdown',lockLandscape,{once:true});lockLandscape();layout();
-function toLocal(e){if(!ROT)return{x:e.clientX,y:e.clientY};return ROTDIR>0?{x:CW-e.clientY,y:e.clientX}:{x:e.clientY,y:CH-e.clientX}}
+function toLocal(e){const X=e.clientX/UZ,Y=e.clientY/UZ;if(!ROT)return{x:X,y:Y};return ROTDIR>0?{x:CW-Y,y:X}:{x:Y,y:CH-X}}
 
 // ---------- constants ----------
 const W=2400,H=1100,SPEED=330,JUMP=980,JUMPCD=.28,STEP=1/120;let TS=.72,GRAV=1250;
@@ -682,7 +686,6 @@ const WEAP={
 const WKEYS=Object.keys(WEAP).filter(k=>!WEAP[k].special);
 const MODES=[['free','Free Play'],['rounds','Rounds'],['stock','Stock (3 lives)']];
 const MODE_HINT={free:'Your map, your weapon. Endless respawns. Pause to swap weapons or add CPUs.',rounds:'Random weapons each round (and a new map each round if the map is Random). Die and you\'re out until the next round. First to 3 wins.',stock:'3 lives each. Last one standing wins.'};
-const CPUS=[['easy','Easy'],['normal','Normal'],['hard','Hard']];
 const DIFF={easy:{react:.8,err:.38,speed:.75,smart:0,jumpy:.35,aggro:.5,turn:2.2,look:.55,hold:.2},normal:{react:.45,err:.22,speed:.95,smart:1,jumpy:.6,aggro:.8,turn:3.6,look:.35,hold:.35},hard:{react:.22,err:.12,speed:1,smart:1,jumpy:.9,aggro:1,turn:5.5,look:.2,hold:.55}};
 const THEMES=[
   {sky:['#5ccaff','#9fe2ff','#d8f5ff'],hill:'#5fd36a',hill2:'#8fe39a',stage:'#a9693a',top:'#59d15a',thin:'#ffffff',sun:1,clouds:1},
@@ -769,8 +772,11 @@ muteBtn.addEventListener('click',()=>{muted=!muted;save('sc_mute',muted);setMute
 function initAudio(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
 let SIM_QUIET=false;
 function tone(f1,f2,dur,type,vol){if(!AC||muted||SIM_QUIET)return;try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(Math.max(30,f2),t+dur);g.gain.setValueAtTime(vol||.08,t);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02)}catch(e){}}
-function noise(dur,vol,freq){if(!AC||muted||SIM_QUIET)return;try{const t=AC.currentTime,n=Math.floor(AC.sampleRate*dur),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=freq||1200;const g=AC.createGain();g.gain.value=vol||.2;s.connect(f).connect(g).connect(AC.destination);s.start(t)}catch(e){}}
-function sfx(n,k){if(SIM_QUIET)return;if(NET.role==='host'&&NET.live)NET.snd.push(n);switch(n){
+const NBUF={};
+function noise(dur,vol,freq){if(!AC||muted||SIM_QUIET)return;try{const t=AC.currentTime,key=Math.round(dur*100);let b=NBUF[key];if(!b){const n=Math.floor(AC.sampleRate*dur);b=NBUF[key]=AC.createBuffer(1,n,AC.sampleRate);const d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n)}const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=freq||1200;const g=AC.createGain();g.gain.value=vol||.2;s.connect(f).connect(g).connect(AC.destination);s.start(t)}catch(e){}}
+// the same sound can't stack up faster than this (flamethrower / minigun / many hits at once)
+const SFX_GAP={fire:.12,shot:.055,hit:.035,laser:.06,swing:.05,boom:.07,clang:.08,dash:.08,pick:.06,jump:.05,zap:.08,rocket:.1,void:.15},SFX_LAST={};
+function sfx(n,k){if(SIM_QUIET)return;{const now=AC?AC.currentTime:performance.now()/1000,gap=SFX_GAP[n]||.04;if(now-(SFX_LAST[n]||-9)<gap)return;SFX_LAST[n]=now}if(NET.role==='host'&&NET.live)NET.snd.push(n);switch(n){
   case'jump':tone(260,520,.14,'triangle',.05);break;
   case'swing':noise(.1,.1,2200);break;
   case'clang':tone(1800,1200,.18,'square',.05);tone(2600,1900,.15,'triangle',.04);break;
@@ -807,7 +813,7 @@ function startMatch(opts){resetInput();
   for(const p of plats)if(p.orbit){const a=p.orbit.ph;p.x=p.orbit.cx+Math.cos(a)*p.orbit.r-p.w/2;p.y=p.orbit.cy+Math.sin(a)*p.orbit.r}
   for(const p of plats)if(p.main||p.wall&&p.h>500)p.h=Math.max(p.h,H+1400-p.y);
   G={demo:!!opts.demo,opts,map,theme:THEMES[map.theme],plats,mode:opts.mode,pool:WKEYS,noItems:!(opts.drops&&!opts.test&&!opts.demo&&!map.bombMode),
-     fighters:(opts.slots||[0,1]).map((_,i)=>{const sl=(opts.slots||[])[i]||{t:i?'cpu':'human',lvl:'normal'};const f=newFighter(i,!!opts.demo||(sl.t!=='human'&&sl.t!=='remote'),'normal');f.netRemote=sl.t==='remote';f.lvl=sl.lvl||'normal';f.slot=sl.t;f.pid=opts.pids?opts.pids[i]:i;f.cos=cos[f.pid]||cos[i];return f}),
+     fighters:(opts.slots||[0,1]).map((_,i)=>{const sl=(opts.slots||[])[i]||{t:i?'cpu':'human',lvl:'normal'};const f=newFighter(i,!!opts.demo||(sl.t!=='human'&&sl.t!=='remote'),'normal');f.netRemote=sl.t==='remote';f.lvl=sl.lvl||'normal';f.slot=sl.t;f.pid=opts.pids?opts.pids[i]:i;f.cos=cos[f.pid]||cos[i]||cos[i%cos.length];return f}),
      proj:[],items:[],parts:[],texts:[],bolts:[],fx:[],slowmo:0,flash:0,itemT:8,time:120,ready:opts.demo?0:1.3,over:false,overT:0,ann:null,elapsed:0};
   G.mph=opts.demo?0:(Math.random()<.5?0:Math.PI); // moving platforms start drifting toward a random side, so neither spawn is favoured
   G.bridges=[];G.cars=[];G.carT=2.5;G.carWarn=null;G.debris=[];G.shards=[];
@@ -829,7 +835,6 @@ function startMatch(opts){resetInput();
   sticks.forEach(s=>{s.id=null;s.vx=s.vy=0;s.rel=false});
   if(NET.role==='host'&&NET.live&&!opts.demo)NET.sendStart(opts);
 }
-const opp=f=>nearestEnemy(f)||G.fighters[(f.idx+1)%G.fighters.length];
 const enemies=f=>G.fighters.filter(o=>o!==f&&o.alive);
 function nearestEnemy(f){let b=null,bd=1e9;for(const o of G.fighters){if(o===f||!o.alive)continue;const d=Math.hypot(o.x-f.x,o.y-f.y);if(d<bd){bd=d;b=o}}return b}
 function spawnPoint(i){
@@ -930,9 +935,9 @@ function aiInput(f,dt){
   // stuck check 1: dangling under a ledge by the weapon. CPUs can't climb that, so after a moment they let go
   a.hangT=(!f.onGround&&Math.abs(f.vy)<110&&Math.abs(f.vx)<110&&f.hitstun<=0&&!f.dying)?(a.hangT||0)+dt:0;
   // hanging from a ledge by the weapon: climb (jump or wall-jump) after a moment, otherwise let go
-  a.hookT=(f.hook&&!f.onGround&&f.hitstun<=0)?(a.hookT||0)+dt:0;if(a.hookT>.5){a.hookT=0;if(f.jumps>0||f.wall)a.hangT=.31;else{a.hangT=1.41}}
+  a.hookT=(f.hook&&!f.onGround&&f.hitstun<=0)?(a.hookT||0)+dt:0;if(a.hookT>.5){a.hookT=0;if(f.jumps>0||(f.wall&&f.lastWall!==f.wall))a.hangT=.31;else{a.hangT=1.41}}
   // hanging: climb out with the jump if we have it, toward the top of whatever we are under
-  if(a.hangT>.3&&f.jumps>0&&f.jumpCd<=0){a.hangT=0;const sp=safeSpot(f);a.cDir=sp?(Math.sign(sp.x-f.x)||f.facing):f.facing;a.climb=.3}
+  if(a.hangT>.3&&(f.jumps>0||f.wall&&f.lastWall!==f.wall)&&f.jumpCd<=0){a.hangT=0;const sp=safeSpot(f);a.cDir=sp?(Math.sign(sp.x-f.x)||f.facing):f.facing;a.climb=.3}
   if(a.climb>0){a.climb-=dt;f.aimX=a.cDir*.5;f.aimY=-.86;return{mx:a.cDir,my:-1,release:false}}
   if(a.hangT>1.4){a.hangT=0;let best=null,bd=1e9;for(const q of G.plats){if(q.gone||!q.solid&&!q.thin)continue;const cx=Math.max(q.x,Math.min(q.x+q.w,f.x)),d=Math.hypot(cx-f.x,q.y-f.y);if(d<bd){bd=d;best=q}}
     a.uDir=best?(f.x<best.x+best.w/2?-1:1):(Math.random()<.5?1:-1);a.unstuck=1}
@@ -940,7 +945,10 @@ function aiInput(f,dt){
   // stuck check 2: standing around far from everyone (path looks blocked): go for it anyway
   {const tg=nearestEnemy(f);const far=tg&&tg!==f&&Math.hypot(tg.x-f.x,tg.y-f.y)>320;a.idleT=(f.onGround&&Math.abs(f.vx)<40&&far)?(a.idleT||0)+dt:Math.max(0,(a.idleT||0)-dt*2);
     if(a.idleT>3.5){a.idleT=0;a.charge=1.2}
-    if(a.charge>0&&tg&&tg!==f){a.charge-=dt;const d=Math.sign(tg.x-f.x)||1;f.aimX=d;f.aimY=-.3;return{mx:d,my:(tg.y<f.y-60||Math.random()<.02)?-1:0,release:false}}}
+    if(a.charge>0&&tg&&tg!==f){a.charge-=dt;const d=Math.sign(tg.x-f.x)||1;
+      // only charge where there is ground (or a jumpable gap) ahead, never straight off a cliff
+      if(f.onGround&&!groundUnder(f.x+d*70,f.y)){const ga=gapAhead(f,d);if(!ga||ga.d>(ga.p.move||ga.p.orbit||ga.p.raft?260:340))a.charge=0}
+      if(a.charge>0){f.aimX=d;f.aimY=-.3;return{mx:d,my:(tg.y<f.y-60||Math.random()<.02)?-1:0,release:false}}}}
   // falling with nothing below: steer for the nearest ground (not the map centre, which can be a pit) and save the jump for when it is needed
   const offstage=(!f.onGround&&!groundUnder(f.x,f.y,1600))||(!groundUnder(f.x,f.y)&&(f.x<G.L+10||f.x>G.R-10||f.y>G.floor+30));
   if(offstage){const sp=safeSpot(f);const tx2=sp?sp.x:(G.L+G.R)/2,ty2=sp?sp.y:G.floor;
@@ -968,12 +976,21 @@ function aiInput(f,dt){
   }else{const ideal={jet:150,grapple:450,chaos:450,glass:650,sniper:600,bolt:420,shotgun:220,minigun:380,void:380,wind:180,tele:260,flamer:200,harpoon:450,rail:650,laser:550}[f.weapon]||440;
     if(Math.abs(dx)>ideal+90)want=Math.sign(dx);else if(Math.abs(dx)<ideal-140)want=-Math.sign(dx);
     else want=a.mode==='in'?Math.sign(dx)*.5:a.mode==='out'?-Math.sign(dx)*.6:a.sdir*.7;}
+  // a wall in the way (fort, crate, step up): hop over it
+  if(want&&f.onGround&&f.jumpCd<=0&&Math.abs(f.vx)<60){const d=Math.sign(want);for(const p of G.plats){if(!p.solid||p.gone||p.wall&&p.h>500||p.raft||p.move||p.orbit||p.crumble||p.press||p.car)continue;const side=d>0?p.x-f.x:f.x-(p.x+p.w),rise=f.y-p.y;if(side>-4&&side<45&&rise>50&&rise<300&&p.y+p.h>f.y-20){inp.my=-1;break}}}
   // occasional hop to stay hard to hit (only from the ground, keeps the air jump for recovery)
   if(f.onGround&&Math.abs(dx)<500&&Math.random()<D.jumpy*.006)inp.my=-1;
-  if(want&&f.onGround&&!groundUnder(f.x+Math.sign(want)*70,f.y)){
+  // waiting at an edge: hop onto a moving / spinning platform when it swings within reach
+  if(want&&f.onGround&&!groundUnder(f.x+Math.sign(want)*70,f.y)&&f.jumpCd<=0&&D.smart){const dir=Math.sign(want);for(const p of G.plats){if(!(p.move||p.orbit)||p.gone||!(p.solid||p.thin))continue;
+      const near=dir>0?p.x-f.x:f.x-(p.x+p.w),dyp=p.y-f.y;if(near>-40&&near<230&&dyp>-150&&dyp<60&&(p.dx||0)*dir>=-2){a.forceJ=.25;inp.mx=dir*D.speed;inp.my=-1;break}}}
+  if(a.forceJ>0){a.forceJ-=dt;inp.mx=Math.sign(want||inp.mx||f.facing)*D.speed;f.aimX=Math.sign(inp.mx)||f.facing;f.aimY=-.2}
+  if(want&&f.onGround&&!groundUnder(f.x+Math.sign(want)*70,f.y)&&!(a.forceJ>0)){
     const across=Math.sign(dx)===Math.sign(want)&&Math.abs(dx)>150&&groundUnder(tx,ty+5),ga=across&&gapAhead(f,Math.sign(want));
     // only leap when the far side is close enough to land on (a moving platform counts when it is near)
-    if(ga&&!roofAhead(f,Math.sign(want))&&ga.d<=(ga.p.move||ga.p.orbit||ga.p.raft?260:340)&&f.jumpCd<=0&&D.smart)inp.my=-1;else want=0;
+    if(ga&&!roofAhead(f,Math.sign(want))&&ga.d<=(ga.p.move||ga.p.orbit||ga.p.raft?260:340)&&f.jumpCd<=0&&D.smart)inp.my=-1;
+    // a pit with a portal at the bottom is a shortcut, not a death: just drop in
+    else if(across&&G.map.portals&&G.map.portals.some(q=>q.pit&&Math.abs(f.x+Math.sign(want)*120-q.x)<q.rx)){}
+    else want=0;
   }
   inp.mx=want*D.speed;
   if(dy<-110&&Math.abs(dx)<320&&a.jt<=0){
@@ -1028,7 +1045,7 @@ function aiInput(f,dt){
     f.aimX=vx/m+(Math.random()-.5)*D.err*.5;f.aimY=vy/m;inp.release=true;a.t=D.react*(.4+Math.random()*.6);return inp}
   if(go){if(w.kind!=='melee'){a.ang+=(Math.random()-.5)*D.err;f.aimX=Math.cos(a.ang);f.aimY=Math.sin(a.ang)}inp.release=true;a.t=D.react*(.6+Math.random()*.9)}
   // never jump straight into a ceiling: the bonk drops you short and usually into a gap
-  if(inp.my<0&&f.onGround&&D.smart){for(const p of G.plats){if(p.gone||!p.solid)continue;const b=p.y+p.h;if(b>f.y-240&&b<f.y-40&&f.x+40+Math.max(0,inp.mx)*120>p.x&&f.x-40+Math.min(0,inp.mx)*120<p.x+p.w){inp.my=0;break}}}
+  if(inp.my<0&&f.onGround&&D.smart&&!(a.forceJ>0)){for(const p of G.plats){if(p.gone||!p.solid)continue;const b=p.y+p.h;if(b>f.y-240&&b<f.y-40&&f.x+40+Math.max(0,inp.mx)*120>p.x&&f.x-40+Math.min(0,inp.mx)*120<p.x+p.w){inp.my=0;break}}}
   return inp;
 }
 
@@ -1065,10 +1082,10 @@ function collideP(p,plats,drop,hipY){
       if(ty>=pl.y+pl.h-2)continue; // punched clean through here: a hole
       if(p.y+p.r>ty&&p.y-p.r<pl.y+pl.h){
         const oty=pl.craters?topAt(pl,p.ox):pl.y;
-        if(p.oy+p.r<=Math.max(ty,oty)+3){p.y=ty-p.r;p.hitP=pl}
+        if(p.oy+p.r<=Math.max(ty,oty)+3){const ny=ty-p.r;if(pl.dy<-4&&ny<p.y)p.oy+=(ny-p.y)*.85;p.y=ny;p.hitP=pl}
         else if(p.oy-p.r>=pl.y+pl.h-3)p.y=pl.y+pl.h+p.r;
         else if(pl.craters&&p.x>pl.x+2&&p.x<pl.x+pl.w-2){p.y=ty-p.r;p.hitP=pl} // inside a dent: step out onto the slope
-        else p.x=p.ox<pl.x+pl.w/2?pl.x-p.r:pl.x+pl.w+p.r;
+        else{const nx=p.ox<pl.x+pl.w/2?pl.x-p.r:pl.x+pl.w+p.r;if(Math.abs(pl.dx||0)>4||Math.abs(pl.dy||0)>4)p.ox+=(nx-p.x)*.85;p.x=nx} // a moving block (press, car, lift) shoves you aside without flinging you
       }}
   }
 }
@@ -1117,7 +1134,7 @@ function physics(f,inp,dt,plats){
   if(f.slam){ax=dir*.25;ay=.97}
   spring(P.ha,P.nk.x+ax*reach,P.nk.y+ay*reach,kA*mus+8,30*mus+1,P.nk,P.nk);
   spring(P.ea,P.nk.x+ax*13-dir*2,P.nk.y+ay*13+7,220*mus+5,14*mus,P.nk,P.nk);
-  if(!f.thrown){REACTMUL=f.hook?1.25:f.onGround?(w.mass>2?.75:1):(w.mass>2?.3:.55);if(!f.thrown){const hk=f.hook?.12+.88*Math.pow(GRIP[f.weapon]??.5,2):1;spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,(kW*mus+6)*hk,(Math.sqrt(kW)*1.1*mus+1)*Math.sqrt(hk),P.ha,P.ha)}REACTMUL=1}
+  if(!f.thrown){REACTMUL=f.hook?1.25:f.onGround?(w.mass>2?.75:1):(w.mass>3?.18:w.mass>2?.3:.55);if(!f.thrown){const hk=f.hook?.12+.88*Math.pow(GRIP[f.weapon]??.5,2):1;spring(P.tp,P.ha.x+ax*w.len,P.ha.y+ay*w.len,(kW*mus+6)*hk,(Math.sqrt(kW)*1.1*mus+1)*Math.sqrt(hk),P.ha,P.ha)}REACTMUL=1}
   // off arm (loose)
   let ohx,ohy;if(near&&fc){const sw=Math.sin(f.walkT)*Math.min(1,Math.abs(P.hp.vx)/SPEED);ohx=P.nk.x-dir*4+sw*16*dir;ohy=P.nk.y+29}else{ohx=P.nk.x-dir*18;ohy=P.nk.y-10}
   spring(P.hb,ohx,ohy,70*mus,4,P.nk,P.nk);spring(P.eb,(P.nk.x+ohx)/2-dir*6,(P.nk.y+ohy)/2,40*mus,3,P.nk,P.nk);
@@ -1575,7 +1592,7 @@ function release(f){
         if(Math.hypot(o.x-f.x,o.y-f.y)<110){hit(o,10,f.facing,-.2,440,f,{tag:'BACKSTAB!',x:o.P.nk.x,y:o.P.nk.y+10});f.hitCd=.25}}
       else teleport(f,ax*200,ay*200);break}
     case'rev':f.revT=2;sfx('dash');break;
-    case'lunge':{const ex=f.weapon==='executioner';startSwing(f,ex?.36:.3);f.dashT=ex?.24:.18;addVel(f,ax*(ex?760:620)-f.vx*.4,ay*420-80,0)}sfx('dash');break;
+    case'lunge':{const ex=f.weapon==='executioner';startSwing(f,ex?.36:.3);f.dashT=ex?.24:.18;addVel(f,ax*(ex?760:620)-f.vx*.4,ay*(ex?240:420)-80,0)}sfx('dash');break;
     case'gust':gust(f);break;
     case'meteor':{let tx=f.x+ax*380;{let best=null,bs=-1;for(const o of enemies(f)){const dx=o.x-f.x,dy=(o.y-50)-(f.y-60),d=Math.hypot(dx,dy)||1,al=(dx*ax+dy*ay)/d;if(d<1100&&al>.55&&al>bs){bs=al;best=o}}if(best)tx=best.x+best.vx*.5}
       tx=Math.max(G.L-150,Math.min(G.R+150,tx));const top=Math.min(f.y-700,cam.y-CH/view.s/2-80);
@@ -1801,7 +1818,6 @@ function drawShards(){if(!G.shards)return;const c=ctx;for(const p of G.shards){c
   else if(p.k==='head'){c.rotate(-p.ang);drawPortrait(c,p.f,0,0,14.5,true)}
   else{c.fillStyle=p.col;c.strokeStyle=INK;c.lineWidth=2;c.beginPath();c.moveTo(...p.pts[0]);c.lineTo(...p.pts[1]);c.lineTo(...p.pts[2]);c.closePath();c.fill();c.stroke()}
   c.restore()}}
-function drawKOWorld(){}
 // KO cinematic: slow-mo zoom, then your phone screen cracks and falls away in shards, black behind,
 // then fades back into the game (or straight into the next round)
 const KO_SNAP=.3,KO_CRACK=.55,KO_FALL=1.45,KO_BLACK=.35,KO_FADE=.55;
@@ -1855,9 +1871,9 @@ function koPlayers(K,cy,S,al){const k=K.killer,v=K.victim,bh=70*S,sk=18*S;if(al<
     if(strike){const w=ctx.measureText(t).width,x0=align==='right'?x-w:x;ctx.strokeStyle='#ff1030';ctx.lineWidth=3.5*S;line(ctx,x0-3,y+2,x0+w+3,y-2)}};
   if(k){const kx=CW*.2,vx=CW*.8;face(k,kx,false);face(v,vx,true);
     nm(fname(k),kx+R+14*S,COLORS[k.cos.color],26*S,false,'left');nm(fname(v),vx-R-14*S,'#8d879c',22*S,true,'right');
-    const mid=CW/2,my=yAt(mid);ctx.font=`700 ${11*S}px Fredoka,Rubik,sans-serif`;ctx.textAlign='center';ctx.fillStyle='#ff4d5e';ctx.fillText(K.revenge?'PAID BACK':(K.ringOut?'THREW OUT':'KILLED'),mid,my-9*S);
+    const mid=CW/2,my=yAt(mid);ctx.font=`700 ${Math.max(11,13*S)}px Fredoka,Rubik,sans-serif`;ctx.textAlign='center';ctx.fillStyle='#ff4d5e';ctx.fillText(K.revenge?'PAID BACK':(K.ringOut?'THREW OUT':'KILLED'),mid,my-9*S);
     if(K.weapon){ctx.fillStyle='#bdb6cf';ctx.fillText('with '+K.weapon.toUpperCase(),mid,my+9*S)}}
-  else{const vx=CW/2-60*S;face(v,vx,true);nm(fname(v),vx+R+14*S,'#8d879c',24*S,true,'left');ctx.font=`700 ${11*S}px Fredoka,Rubik,sans-serif`;ctx.textAlign='left';ctx.fillStyle='#ff4d5e';ctx.fillText(K.ringOut?'FELL INTO THE VOID':'SELF-DESTRUCTED',vx+R+14*S,yAt(vx)+18*S)}
+  else{const vx=CW/2-60*S;face(v,vx,true);nm(fname(v),vx+R+14*S,'#8d879c',24*S,true,'left');ctx.font=`700 ${Math.max(11,13*S)}px Fredoka,Rubik,sans-serif`;ctx.textAlign='left';ctx.fillStyle='#ff4d5e';ctx.fillText(K.ringOut?'FELL INTO THE VOID':'SELF-DESTRUCTED',vx+R+14*S,yAt(vx)+18*S)}
   ctx.restore()}
 // colour grade used by the KO screens: drain the colour, crush the blacks, bleed in red
 function koGrade(a){if(a<=0)return;ctx.save();ctx.globalCompositeOperation='saturation';ctx.globalAlpha=Math.min(1,a);ctx.fillStyle='#000';ctx.fillRect(0,0,CW,CH);
@@ -1887,7 +1903,7 @@ function drawKOComic(K,dt){const t=K.t,S=Math.min(CW/760,CH/360);
   ctx.fillStyle=INK;ctx.fillRect(-pw/2-8+8,-ph/2-8+10,pw+16,ph+16);ctx.fillStyle='#fff';ctx.fillRect(-pw/2-8,-ph/2-8,pw+16,ph+16);ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.strokeRect(-pw/2-8,-ph/2-8,pw+16,ph+16);
   ctx.save();ctx.beginPath();ctx.rect(-pw/2,-ph/2,pw,ph);ctx.clip();if(K.shot){const z=1+.25*ease;ctx.drawImage(K.shot,-CW/2*z-(K.ix-CW/2)*(z-1)*.0,-CH/2*z,CW*z,CH*z);ctx.globalCompositeOperation='saturation';ctx.globalAlpha=ease*.85;ctx.fillStyle='#000';ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.globalCompositeOperation='multiply';ctx.globalAlpha=ease*.5;ctx.fillStyle='#ff6070';ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1}
   ctx.fillStyle='rgba(29,22,64,.18)';for(let y=-ph/2;y<ph/2;y+=9)for(let x=-pw/2+(y/9%2)*4.5;x<pw/2;x+=9){ctx.beginPath();ctx.arc(x,y,1.3,0,7);ctx.fill()}ctx.restore();ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.strokeRect(-pw/2,-ph/2,pw,ph);
-  if(u>.12){const b=Math.min(1,(u-.12)/.15),bs=(b<1?.3+b*.9:1.1-.05*Math.sin(u*10))*S;ctx.save();ctx.translate(pw*.3,-ph*.38);ctx.scale(bs,bs);ctx.rotate(.12);
+  if(u>.12){const b=Math.min(1,(u-.12)/.15),bs=(b<1?.3+b*.9:1.1-.05*Math.sin(u*10))*S;ctx.save();ctx.translate(pw*.3,-ph*.28);ctx.scale(bs,bs);ctx.rotate(.12);
     ctx.fillStyle='#1a0508';ctx.strokeStyle='#ff1030';ctx.lineWidth=6;ctx.beginPath();for(let i=0;i<22;i++){const r=i%2?62:96,a=i/22*6.283;ctx.lineTo(Math.cos(a)*r*1.25,Math.sin(a)*r*.8)}ctx.closePath();ctx.fill();ctx.stroke();koTitle(0,0,58,'K.O.!',0);ctx.restore()}
   ctx.restore();
   if(u>.25&&leave<1)koPlayers(K,CH*.86,S*.85,Math.min(1,(u-.25)/.2)*(1-leave));
@@ -2122,6 +2138,8 @@ function updateFighter(f,inp,dt){
   if(f.sprayT>0){f.sprayT-=dt;f.sprayAcc+=dt;while(f.sprayAcc>=1/13){f.sprayAcc-=1/13;shoot(f,{type:'bullet',speed:1100,dmg:3.6,kb:80,spread:.16,life:1.2,light:1});recoil(f,28);sfx('shot')}}
   const wasG=f.onGround,vyBefore=f.vy,pvx=f.P.hp.vx,pvy=f.P.hp.vy;
   physics(f,inp,dt,G.plats);
+  // safety net: a broken (NaN) body is put back on its spawn instead of poisoning the match
+  if(!isFinite(f.x)||!isFinite(f.y)){const sp=spawnPoint(f.idx);buildBody(f,sp.x,sp.y);f.hitstun=0;f.invuln=Math.max(f.invuln,1)}
   // grapple rope: keeps you within rope length of the anchor (swinging), reels in, stick pumps the swing
   if(f.rope){const R=f.rope;R.t-=dt;R.len=Math.max(70,R.len-320*dt);if(R.t<=0||f.hitstun>.3||f.dying){f.rope=null}else{const P=f.P,dx=P.hp.x-R.x,dy=P.hp.y-R.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;
     if(d>R.len){const ex=d-R.len;for(const k in P){const q=P[k];q.x-=ux*ex;q.y-=uy*ex;const vr=q.vx*ux+q.vy*uy;if(vr>0){q.vx-=ux*vr;q.vy-=uy*vr}}}
@@ -2270,7 +2288,6 @@ function step(dt){
 
 // ---------- render ----------
 function lerpColor(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=(pa>>16)+((pb>>16)-(pa>>16))*t,g=((pa>>8)&255)+(((pb>>8)&255)-((pa>>8)&255))*t,bl=(pa&255)+((pb&255)-(pa&255))*t;return`rgb(${r|0},${g|0},${bl|0})`}
-function dmgColor(d){return d<60?lerpColor('#ffffff','#ffd23f',d/60):d<140?lerpColor('#ffd23f','#ff3b30',(d-60)/80):lerpColor('#ff3b30','#8b0000',Math.min(1,(d-140)/100))}
 let stars=null;
 const INK='#1d1640';
 function drawBG(){
@@ -2822,7 +2839,9 @@ function updateCam(dt){
   const fast=KOFX&&!KOFX.ringOut&&(KOFX.t<.7||KOFX.style==='slowmo'),kp=Math.min(1,dt*(fast?16:5)),kz=Math.min(1,dt*(fast?16:(s<view.s?6:2.5)));
   cam.x+=(tx-cam.x)*kp;cam.y+=(ty-cam.y)*kp;view.s+=(s-view.s)*kz;
 }
+let pbVis='';
 function render(dt){
+  {const v=KOFX&&!G.demo?'hidden':'';if(v!==pbVis){pbVis=v;$('pauseBtn').style.visibility=v}} // the pause button would sit on top of the KO screen
   if(!G)return;
   updateCam(dt);
   if(!paused)for(const f of G.fighters){if(f.alive){f.trail.push([f.x,f.y]);if(f.trail.length>14)f.trail.shift()}}
@@ -2930,7 +2949,8 @@ const NET={role:null,live:false,code:'',conn:null,peer:null,bc:null,gs:[],gid:''
   guestLeft(gid){const i=this.gs.findIndex(x=>x.gid===gid);if(i<0||this.role!=='host')return;const g=this.gs[i];this.gs.splice(i,1);
     if(setup.slots[g.seat]&&setup.slots[g.seat].t==='remote'){setup.slots[g.seat]={t:'cpu',lvl:'normal'};svSetup()}
     if(this.inMatch()){
-      if(!this.gs.length){KOFX=null;paused=false;startDemo();state='online';show('online');this.room(true);this.drawRoom();this.setStatus('Your friend left the room.');return}
+      // a real 1v1 (nobody else left to fight) goes back to the room; with CPUs still in, a CPU takes over and the match goes on
+      if(!this.gs.length&&G.fighters.filter(o=>!o.removed&&o.pid!==g.seat).length<2){KOFX=null;paused=false;startDemo();state='online';show('online');this.room(true);this.drawRoom();this.setStatus('Your friend left the room.');return}
       const f=G.fighters.find(o=>o.pid===g.seat);if(f&&f.netRemote){f.netRemote=false;f.cpu=true;f.lvl='normal';f.slot='cpu'}alertMsg('P'+(g.seat+1)+' left. A CPU took over.')}
     this.sendRoster();if(state==='lobby')buildLobby();this.drawRoom();if(state==='online')this.setStatus(this.gs.length?'A friend left the room.':'Your friend left the room.')},
   // ---------- guest side ----------
@@ -3004,7 +3024,7 @@ function applySnap(A,B,u){
   G.elapsed=S.e;G.ready=S.ready;if(S.pu)G.punch=Math.max(G.punch||0,S.pu);G.ann=S.ann;G.time=S.time;G.roundOver=S.ro;shake=Math.max(shake,S.sh*.5);G.flash=Math.max(G.flash||0,S.fl);G.slowmo=S.sm;
   G.carWarn=S.cw?{dir:S.cw.dir,t:S.cw.t}:null;
   S.f.forEach((a,i)=>{const f=G.fighters[i];if(!f)return;const b=A&&A.f[i];
-    f.alive=!!a[0];f.dying=!!a[1];f.dmg=a[2];if(f.weapon!==a[3]){f.weapon=a[3]}f.cd=a[4];f.cdMax=a[5];f.facing=a[6];f.aimX=a[7];f.aimY=a[8];f.hitstun=a[9];f.invuln=a[10];f.frozen=a[11];f.thrown=!!a[12];f.swingT=a[13];f.swingDur=a[14];
+    f.alive=!!a[0];f.dying=!!a[1];f.dmg=a[2];if(f.weapon!==a[3]&&WEAP[a[3]]){f.weapon=a[3]}f.cd=a[4];f.cdMax=a[5];f.facing=a[6];f.aimX=a[7];f.aimY=a[8];f.hitstun=a[9];f.invuln=a[10];f.frozen=a[11];f.thrown=!!a[12];f.swingT=a[13];f.swingDur=a[14];
     f.shattered=!!a[15];f.removed=!!a[16];f.kos=a[17];f.falls=a[18];f.stocks=a[19];f.wins=a[20];f.respawnT=a[21]<0?Infinity:a[21];f.onGround=!!a[22];f.squash=a[23];f.dealt=a[48]||0;f.best=a[49]||0;f.sup=a[50]||0;f.supT=a[51]||0;f.rope=a[53]?{x:a[53][0],y:a[53][1],len:0,t:1}:null;f.charge=a[52]?{t:.3,ab:a[52],ax:f.aimX,ay:f.aimY,len:a[52]==='rail'?1800:1300,col:a[52]==='rail'?'#7fd8ff':'#ff4d8d'}:null;
     const jump=b&&Math.hypot(a[24+4]-b[24+4],a[24+5]-b[24+5])>220;
     PKEYS.forEach((k,j)=>{const q=f.P[k],x=a[24+j*2],y=a[25+j*2];let nx=x,ny=y;if(b&&!jump&&u<1){nx=b[24+j*2]+(x-b[24+j*2])*u;ny=b[25+j*2]+(y-b[25+j*2])*u}q.vx=(nx-q.x)*60;q.vy=(ny-q.y)*60;q.x=nx;q.y=ny});

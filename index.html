@@ -157,7 +157,14 @@ button{font-family:inherit;cursor:pointer;border:0;color:#fff;-webkit-tap-highli
 .mdesc{font-size:12px;font-weight:700;color:var(--ink);line-height:1.25}
 .mtags{display:flex;gap:4px;flex-wrap:wrap}.mtags span{font-size:10px;font-weight:800;background:#ffd23f;color:var(--ink);border:2px solid var(--ink);border-radius:20px;padding:1px 7px}
 .mpick{padding:9px 10px!important;font-size:17px!important;background:#ffd23f!important;color:var(--ink)!important;font-family:'Lilita One',sans-serif!important;letter-spacing:.5px}
-.mlist{flex:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:7px;min-width:0;min-height:0}
+.mlist{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;--cols:4;gap:8px;min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:2px 3px 10px}
+.mlist .mcard{flex:0 0 calc((100% - (var(--cols) - 1) * 8px) / var(--cols));aspect-ratio:16/12;min-height:auto}
+.mlist::-webkit-scrollbar,.grid.scroll::-webkit-scrollbar,.wsGrid::-webkit-scrollbar{display:none}
+.grid.scroll{display:flex;flex-wrap:wrap;gap:6px;overflow-y:auto;overscroll-behavior:contain;align-content:flex-start;scrollbar-width:none;padding:2px 2px 8px}
+.grid.scroll .cell{flex:0 0 calc((100% - (var(--cols) - 1) * 6px) / var(--cols));aspect-ratio:var(--ar,1.15);min-height:auto}
+.half .grid.scroll{gap:4px}.half .grid.scroll .cell{flex-basis:calc((100% - (var(--cols) - 1) * 4px) / var(--cols))}
+.scrollwrap{position:relative;flex:1;display:flex;min-height:0;min-width:0}
+.scrollwrap::after{content:'';position:absolute;left:0;right:0;bottom:0;height:22px;pointer-events:none;background:linear-gradient(rgba(255,255,255,0),rgba(29,22,64,.18));border-radius:0 0 10px 10px}
 .mcard{position:relative;padding:0;border:2.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;box-shadow:0 3px 0 var(--ink);min-height:0;display:flex;flex-direction:column;transition:transform .08s}
 .mcard canvas{width:100%;flex:1;min-height:0;display:block}
 .mcard span{flex:0 0 auto;border-top:2px solid var(--ink);font-size:10px;font-weight:800;color:var(--ink);background:rgba(255,255,255,.88);padding:2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
@@ -332,7 +339,8 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .wsGo{padding:8px!important;font-size:17px!important;font-family:'Lilita One',sans-serif!important;background:#ffd23f!important;color:var(--ink)!important}
 .wsGo:disabled{background:#d7d4e6!important;color:#7d7a96!important}
 .wsNote{font:700 10px Fredoka,Rubik,sans-serif;color:#6d6a8a;text-align:center;min-height:12px}
-.wsGrid{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:6px;min-width:0;min-height:0}
+.wsGrid{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;--cols:6;gap:7px;min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:2px 3px 10px}
+.wsGrid button{flex:0 0 calc((100% - 5 * 7px) / 6);aspect-ratio:1.2;min-height:auto}
 .wsGrid button{position:relative;background:#fff;border:2.5px solid var(--ink);border-radius:10px;padding:0;min-height:0;box-shadow:0 3px 0 var(--ink);overflow:hidden}
 .wsGrid button canvas{position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px)}
 .wsGrid button.sel{box-shadow:0 0 0 3px #ff8a1f,0 3px 0 var(--ink);transform:translateY(-1px)}
@@ -586,7 +594,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.86 · Nov 27';
+const APP_VERSION='v1.87 · Nov 27';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false;const SAFE={l:0,r:0,t:0,b:0};
@@ -3096,6 +3104,13 @@ function dragScroll(el,axis){
   el.addEventListener('click',e=>{if(el._sup&&Date.now()-el._sup<350){e.stopPropagation();e.preventDefault()}},true);
 }
 document.querySelectorAll('.vs').forEach(e=>dragScroll(e,'y'));
+{let ds=null;
+  addEventListener('pointerdown',e=>{const el=e.target&&e.target.closest&&e.target.closest('.dscroll');if(!el)return;const p=toLocal(e);ds={el,x:p.x,y:p.y,st:el.scrollTop,moved:false,id:e.pointerId,vy:0,ly:p.y,lt:performance.now()}},true);
+  addEventListener('pointermove',e=>{if(!ds||e.pointerId!==ds.id)return;const p=toLocal(e),dy=p.y-ds.y;if(!ds.moved&&Math.abs(dy)>8)ds.moved=true;
+    if(ds.moved){ds.el.scrollTop=ds.st-dy;const t=performance.now();ds.vy=(p.y-ds.ly)/Math.max(1,t-ds.lt);ds.ly=p.y;ds.lt=t}},true);
+  const end=e=>{if(!ds||e.pointerId!==ds.id)return;const d=ds;ds=null;if(d.moved){d.el._sup=Date.now();let v=d.vy*16;const fl=()=>{if(Math.abs(v)<.5)return;d.el.scrollTop-=v;v*=.92;requestAnimationFrame(fl)};requestAnimationFrame(fl)}};
+  addEventListener('pointerup',end,true);addEventListener('pointercancel',end,true);
+  addEventListener('click',e=>{const el=e.target&&e.target.closest&&e.target.closest('.dscroll');if(el&&el._sup&&Date.now()-el._sup<350){e.stopPropagation();e.preventDefault()}},true)}
 
 // ---------- UI ----------
 const screens=['online','wswap','menu','picker','lobby','help','pause','over'];
@@ -3178,6 +3193,7 @@ function diceThumb(cv){const c=cv.getContext('2d'),w=cv.width,h=cv.height,sz=Mat
   c.fillStyle='#fff';c.strokeStyle='#1d1640';c.lineWidth=Math.max(2,sz*.07);c.beginPath();c.roundRect?c.roundRect(x,y,sz,sz,sz*.2):c.rect(x,y,sz,sz);c.fill();c.stroke();
   c.fillStyle='#1d1640';for(const [px,py] of [[.25,.25],[.75,.25],[.5,.5],[.25,.75],[.75,.75]]){c.beginPath();c.arc(x+sz*px,y+sz*py,sz*.085,0,7);c.fill()}c.fillStyle='#ff4d4d';c.beginPath();c.arc(x+sz*.5,y+sz*.5,sz*.085,0,7);c.fill();c.restore()}
 let LK_TAB='hat',HK_TAB={};
+function mkScroll(cols,ar){const g=document.createElement('div');g.className='grid scroll dscroll';g.style.setProperty('--cols',cols);g.style.setProperty('--ar',ar||1.15);return g}
 function mkGrid(cols,rows,cls){const g=document.createElement('div');g.className='grid '+(cls||'');g.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;g.style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;return g}
 function label(t){const d=document.createElement('div');d.className='rowlbl';d.textContent=t;return d}
 // ---- picker screen (map / weapon / look), everything fits on one screen, no scrolling
@@ -3197,13 +3213,14 @@ function buildPicker(){
     const pv=document.createElement('div');pv.className='mprev';
     pv.innerHTML='<div class="mpic"><canvas width="640" height="340" style="position:absolute;inset:0"></canvas><div class="mname"></div></div><div class="mdesc"></div><div class="mtags"></div><button class="big go mpick">PICK THIS MAP</button>';
     wrap.appendChild(pv);
-    const g=document.createElement('div');g.className='mlist';wrap.appendChild(g);
+    const g=document.createElement('div');g.className='mlist dscroll';wrap.appendChild(g);
     const fit=cv=>{const w=cv.offsetWidth||cv.parentNode.offsetWidth,h=cv.offsetHeight||cv.parentNode.offsetHeight;if(w&&h){cv.width=Math.round(w*2);cv.height=Math.round(h*2)}};
     const show=()=>{const m=sel==='random'?null:MAPS[sel];const pc=pv.querySelector('canvas');fit(pc);mapThumb(pc,m);
       pv.querySelector('.mname').textContent=m?m.name:'Random';
       pv.querySelector('.mdesc').textContent=m?MAP_INFO[sel]:'A surprise map every match.';
       pv.querySelector('.mtags').innerHTML=(m?MAP_TAGS[sel]:['Surprise']).map(t=>'<span>'+t+'</span>').join('');
       g.querySelectorAll('.mcard').forEach(c=>c.classList.toggle('on',c.dataset.k===String(sel)))};
+    requestAnimationFrame(()=>{const on=g.querySelector('.mcard.on');if(on&&(on.offsetTop+on.offsetHeight>g.scrollTop+g.clientHeight||on.offsetTop<g.scrollTop))g.scrollTop=on.offsetTop-8});
     const pick=()=>{setup.map=sel;svSetup();openLobby()};
     pv.querySelector('.mpick').onclick=pick;pv.querySelector('.mpic').onclick=pick;
     [['random','Random'],...MAPS.map((m,i)=>[i,m.name])].forEach(([k,nm])=>{const b=document.createElement('button');b.className='mcard';b.dataset.k=String(k);
@@ -3213,7 +3230,7 @@ function buildPicker(){
     requestAnimationFrame(show);return}
   if(pkMode==='weapon'){
     $('pkTitle').textContent=L?'LOCKER':who+' WEAPON';
-    const testing=flow.type==='test',ch=setup.w[fp]||'random',g=mkGrid(9,4);body.appendChild(g);
+    const testing=flow.type==='test',ch=setup.w[fp]||'random',g=mkScroll(7,1.25);body.appendChild(g);
     const info=k=>{if(k==='random'){$('pkInfo').innerHTML=`<b>Random</b>: a new random weapon from ${testing||sl.t==='cpu'?'all':'your unlocked'} weapons each life.`;return}const w=WEAP[k];$('pkInfo').innerHTML=`<b>${w.name}</b> · ${w.kind==='wand'?'magic':w.kind} · ability: <b>${w.abName}</b> (${w.cd}s)${w.contact?' · hits on contact':''}`};
     const pick=k=>{setup.w[fp]=k;svSetup();if(L){buildPicker();if(flow.type==='online')NET.pushMe()}else openLobby()};
     cell(g,{label:'Random',icon:'dice',on:ch==='random',onTap:()=>pick('random')});
@@ -3325,7 +3342,7 @@ function buildHalf(ps){
   ps.el.querySelector('.htitle').textContent='P'+(i+1)+(sl.t==='cpu'?' CPU':'');ps.el.querySelector('.htitle').style.color=COLORS[cos[i].color];
   ps.el.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.t===ps.mode);b.style.display=(b.dataset.t==='weapon'&&(sl.t==='dummy'||sl.t==='none'))?'none':''});
   if(ps.mode==='weapon'){
-    const testing=flow.type==='test',ch=setup.w[i]||'random',g=mkGrid(9,4);body.appendChild(g);
+    const testing=flow.type==='test',ch=setup.w[i]||'random',g=mkScroll(5,.95);body.appendChild(g);
     const sh=k=>{if(k==='random'){info.innerHTML=`<b>Random</b>: new random weapon each life`;return}const w=WEAP[k];info.innerHTML=`<b>${w.name}</b> · ${w.abName} (${w.cd}s)${w.contact?' · contact dmg':''}`};
     const pick=k=>{setup.w[i]=k;svSetup();buildHalf(ps);buildLobby()};
     cell(g,{label:'Random',icon:'dice',on:ch==='random',onTap:()=>{sh('random');pick('random')}});
@@ -3453,7 +3470,7 @@ function wsEquip(){const k=wsSel,f=wsWho,key='w:'+k;
 function openWSwap(){const hs=humanFs();if(!hs.length)return;if(!hs.includes(wsWho))wsWho=hs[0];wsSel=wsWho.weapon;
   document.querySelectorAll('.coinv').forEach(e=>e.textContent=SAVE.coins);
   $('wsTabs').innerHTML='';if(hs.length>1)hs.forEach(f=>{const b=document.createElement('button');b.textContent=fname(f);b.classList.toggle('on',f===wsWho);b.onclick=()=>{wsWho=f;openWSwap()};$('wsTabs').appendChild(b)});
-  const g=$('wsGrid');g.innerHTML='';
+  const g=$('wsGrid');g.innerHTML='';g.classList.add('dscroll');
   WKEYS.forEach(k=>{const key='w:'+k,lk=!owns(key),pr=priceOf(key);const b=document.createElement('button');b.dataset.k=k;if(lk)b.classList.add('lk');
     b.innerHTML='<canvas width="120" height="80"></canvas>'+(lk?`<div class="pr ${SAVE.coins>=pr?'can':''}">${COIN_I}${pr}</div>`:'')+(wsWho.weapon===k?'<div class="ck">✓</div>':'');
     g.appendChild(b);requestAnimationFrame(()=>{const c=b.querySelector('canvas');c.width=Math.round(c.offsetWidth*2)||120;c.height=Math.round(c.offsetHeight*2)||80;weapThumb(c,k)});

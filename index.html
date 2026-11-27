@@ -595,7 +595,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.88 · Nov 27';
+const APP_VERSION='v1.89 · Nov 27';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false,UZ=1;const SAFE={l:0,r:0,t:0,b:0};
@@ -1224,7 +1224,7 @@ function hit(o,dmg,dx,dy,kb,att,opt){
     for(let i=0;i<24;i++){const sd=i%2?1:-1;part(o.x,Math.max(P.fa.y,P.fb.y),sd*(150+Math.random()*450),-Math.random()*220,.5,i%3?'#d9c7a7':'#fff',6+Math.random()*6,700)}}
   if(att&&att!==o){o.lastHitBy=att;o.lastHitT=G.elapsed}
   const hx=opt.x!==undefined?opt.x:P.nk.x,hy=opt.y!==undefined?opt.y:P.nk.y+10;
-  impactFX(hx,hy,dmg,k,tag,dx,dy);
+  impactFX(hx,hy,dmg,k,tag,dx,dy,opt.boom);
   arcadeHit(o,att,dmg,k);
   sfx('hit',k);
   if(o.dmg>=100){die(o);G.slowmo=Math.max(G.slowmo||0,.45);G.flash=Math.max(G.flash||0,.12)}
@@ -1239,25 +1239,30 @@ function arcadeHit(o,att,dmg,k){if(G.demo&&state!=='play')return;
     if(att.combo>=3){G.fx=G.fx.filter(e=>!(e.k==='combo'&&e.who===att));G.fx.push({k:'combo',who:att,wi:att.idx,n:att.combo,x:att.P.hd.x,y:att.P.hd.y-70,col:COLORS[att.cos.color],life:1.1,ml:1.1});if(att.combo===3||att.combo%5===0)sfx('pick')}}
   if(dmg>=18||k>900){G.punch=Math.max(G.punch||0,Math.min(.12,.04+k/12000));G.fx.push({k:'ring',x:o.x,y:o.y-45,r:12,max:120+k*.06,life:.3,ml:.3,col:'#fff'})}}
 const WORDS=['POW!','BAM!','WHAM!','SMACK!','THWACK!','BONK!'];
-function impactFX(x,y,dmg,k,tag,dx,dy){
+function impactFX(x,y,dmg,k,tag,dx,dy,boom){
   const big=dmg>=14||(!!tag&&dmg>=7),huge=dmg>=22;
   for(let i=0;i<8+k/70;i++){const a=Math.random()*6.28,s2=150+Math.random()*(350+k*.3);part(x,y,Math.cos(a)*s2,Math.sin(a)*s2,.35,i%2?'#fff':'#ffd23f',4+Math.random()*4,0)}
   // directional streaks along the hit
   for(let i=0;i<5+dmg/3;i++){const a=Math.atan2(dy,dx)+(Math.random()-.5)*.7,s2=500+Math.random()*700;part(x,y,Math.cos(a)*s2,Math.sin(a)*s2,.22,'#fff',3,0)}
-  G.fx.push({k:'burst',x,y,r:18+dmg*2.2,life:.18+dmg/120,ml:.18+dmg/120,rot:Math.random()*6.28,col:huge?'#ff5a4e':big?'#ffd23f':'#fff'});
+  if(!boom)G.fx.push({k:'burst',x,y,r:18+dmg*2.2,life:.18+dmg/120,ml:.18+dmg/120,rot:Math.random()*6.28,col:huge?'#ff5a4e':big?'#ffd23f':'#fff'});
   if(big)G.fx.push({k:'word',x:x+(Math.random()-.5)*40,y:y-95,t:tag||WORDS[Math.floor(Math.random()*WORDS.length)],life:.75,ml:.75,rot:(Math.random()-.5)*.4,size:26+Math.min(26,dmg)});
   shake=Math.max(shake,Math.min(26,3+k/60));hitStop=Math.max(hitStop,Math.min(.14,.02+k/12000+(huge?.04:0)));
   if(huge){G.slowmo=Math.max(G.slowmo||0,.25);G.flash=Math.max(G.flash||0,.08)}
 }
+// cartoon explosion: white flash, a cluster of round fireball puffs (ink outline, hot core) that billow then shrink, a shockwave ring, rising smoke
+const BOOM_COLS={'#b15cff':['#f3e3ff','#c77dff','#7a2bd6'],'#7dff6b':['#f2ffe9','#7dff6b','#2ea84a'],'#ff3fa4':['#fff0f8','#ff7ad9','#d81f86'],'#ff7a2f':['#fff6b0','#ffd23f','#ff6a1f']};
+function boomFX(x,y,R,pal){const c=BOOM_COLS[pal&&pal[0]]||BOOM_COLS[pal&&pal[1]]||['#fff6b0','#ffd23f','#ff6a1f'],pf=[],sm=[];
+  pf.push([0,0,R*.55,0]);for(let i=0;i<7;i++){const a=i/7*6.283+Math.random()*.5,d=R*(.28+Math.random()*.2);pf.push([Math.round(Math.cos(a)*d),Math.round(Math.sin(a)*d*.85),Math.round(R*(.3+Math.random()*.16)),+(.02+Math.random()*.07).toFixed(2)])}
+  sm.push([0,0,Math.round(R*.34),0]);for(let i=0;i<6;i++){const a=-Math.PI/2+(Math.random()-.5)*2.8,d=R*(.15+Math.random()*.3);sm.push([Math.round(Math.cos(a)*d),Math.round(Math.sin(a)*d*.8),Math.round(R*(.2+Math.random()*.12)),0])}
+  const L=.55+R/500;G.fx.push({k:'boom',x,y,R,life:L,ml:L,c,pf,sm})}
 function explode(x,y,p){
   damagePlanks(x,y,p.explode+30,3);cutDeco(x,y,p.explode*.8);
   if(p.explode>=110)makeCrater(x,y,p.explode*.22,p.explode*.05);
   for(const o of G.fighters){if(!o.alive)continue;const cx=o.P.nk.x,cy=o.P.nk.y+14,d=Math.hypot(cx-x,cy-y),R2=p.explode+22;
-    if(d<R2){const fall=1-(d/R2)*.55,self=o===p.owner,sf=p.selfFull?1:p.type==='rocket'?.18:.3;hit(o,p.dmg*fall*(self?sf:1),d<1?0:(cx-x)/d,d<1?-1:(cy-y)/d,p.kb*1.25*fall*(self?(p.type==='rocket'?1.05:.6):1),self?o.lastHitBy:p.owner,{tag:p.word||'',sup:p.sup&&!self})}}
+    if(d<R2){const fall=1-(d/R2)*.55,self=o===p.owner,sf=p.selfFull?1:p.type==='rocket'?.18:.3;hit(o,p.dmg*fall*(self?sf:1),d<1?0:(cx-x)/d,d<1?-1:(cy-y)/d,p.kb*1.25*fall*(self?(p.type==='rocket'?1.05:.6):1),self?o.lastHitBy:p.owner,{boom:1,tag:p.word||'',sup:p.sup&&!self})}}
   const pal=p.pal||['#ffd23f','#ff7a2f','#ff3b3b','#fff'];
-  for(let i=0;i<34;i++){const a=Math.random()*6.28,s=Math.random()*560;part(x,y,Math.cos(a)*s,Math.sin(a)*s,.5+Math.random()*.4,pal[i%pal.length],6+Math.random()*10,-300)}
-  for(let i=0;i<10;i++){const a=Math.random()*6.28;part(x,y,Math.cos(a)*110,Math.sin(a)*110-60,1.1,'rgba(80,80,90,.6)',18+Math.random()*12,-200)}
-  G.parts.push({ring:1,x,y,r:10,max:p.explode,life:.3,ml:.3});G.fx.push({k:'burst',x,y,r:p.explode*.8,life:.25,ml:.25,rot:Math.random()*6,col:'#ffd23f'});shake=Math.max(shake,16+p.explode/20);G.flash=Math.max(G.flash||0,p.explode>150?.12:.05);if(p.explode>150)G.slowmo=Math.max(G.slowmo||0,.3);sfx('boom');
+  for(let i=0;i<20;i++){const a=Math.random()*6.28,s=250+Math.random()*450;part(x,y,Math.cos(a)*s,Math.sin(a)*s-120,.45+Math.random()*.3,pal[i%pal.length],4+Math.random()*5,900)}
+  boomFX(x,y,p.explode,pal);shake=Math.max(shake,16+p.explode/20);G.flash=Math.max(G.flash||0,p.explode>150?.12:.05);if(p.explode>150)G.slowmo=Math.max(G.slowmo||0,.3);sfx('boom');
 }
 function shockwave(f){
   damagePlanks(f.x,f.y,220,2);
@@ -2656,7 +2661,19 @@ function drawParts(){
 }
 function drawFX(){if(G.demo&&state!=='play'){G.fx=G.fx.filter(e=>e.k!=='word');G.texts.length=0}
   for(const e of G.fx){const a=Math.max(0,e.life/e.ml);ctx.save();
-    if(e.k==='burst'){const r=e.r*(1.2-a*.5);ctx.translate(e.x,e.y);ctx.rotate(e.rot);ctx.globalAlpha=Math.min(1,a*2);ctx.beginPath();for(let i=0;i<20;i++){const rr4=i%2?r*.45:r,an=i*Math.PI/10;ctx.lineTo(Math.cos(an)*rr4,Math.sin(an)*rr4)}ctx.closePath();ctx.fillStyle=e.col;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=INK;ctx.stroke();
+    if(e.k==='boom'){const t=1-a,R=e.R,c=e.c||['#fff6b0','#ffd23f','#ff6a1f'];
+      // smoke: one solid cartoon cloud (ink outline, two greys) that rises and fades
+      const sk=Math.max(0,Math.min(1,(t-.15)/.85));if(sk>0&&e.sm){const al=Math.min(1,sk*4)*(1-sk),up=sk*R*.6;ctx.globalAlpha=al;
+        for(const [col,add,mul,oy] of [[INK,4,1,0],['#8d879c',0,1,0],['#b4afc0',0,.62,-.18]]){ctx.fillStyle=col;ctx.beginPath();for(const q of e.sm){const r=q[2]*(.7+.6*sk)*mul+add;const x=e.x+q[0],y=e.y+q[1]-up+q[2]*oy;ctx.moveTo(x+r,y);ctx.arc(x,y,r,0,7)}ctx.fill()}}
+      // fireball: puffs billow out, hold, then fade while the hot core cools and shrinks
+      const g=Math.min(1,t/.16),grow=1-Math.pow(1-g,3),fade=t<.32?1:Math.max(0,1-(t-.32)/.33),cool=Math.min(1,Math.max(0,(t-.18)/.3));
+      if(fade>0){ctx.globalAlpha=fade;const sz=grow*(1+.12*Math.min(1,t/.5));
+        for(const [col,add,mul,one] of [[INK,5,1],[c[2],0,1],[c[1],0,.74-.16*cool],[c[0],0,(.62-.5*cool)*1.25,1]]){if(mul<=.05)continue;ctx.fillStyle=col;ctx.beginPath();
+          for(const q of one?(e.pf||[]).slice(0,1):e.pf||[]){const k=Math.min(1,Math.max(0,(t-q[3])/.1));if(k<=0)continue;const r=q[2]*sz*k*(1+.05*Math.sin(t*26+q[0]))*mul+add;ctx.moveTo(e.x+q[0]+r,e.y+q[1]);ctx.arc(e.x+q[0],e.y+q[1],r,0,7)}ctx.fill()}}
+      ctx.globalAlpha=1;
+      if(t<.12){ctx.globalAlpha=1-t/.12;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(e.x,e.y,R*.6*(.4+t/.12*.6),0,7);ctx.fill()}
+      if(t<.38){const k=t/.38;ctx.globalAlpha=(1-k)*.9;ctx.strokeStyle='#fff';ctx.lineWidth=7*(1-k)+1.5;ctx.beginPath();ctx.arc(e.x,e.y,R*(.45+1.05*k),0,7);ctx.stroke()}}
+    else if(e.k==='burst'){const r=e.r*(1.2-a*.5);ctx.translate(e.x,e.y);ctx.rotate(e.rot);ctx.globalAlpha=Math.min(1,a*2);ctx.beginPath();for(let i=0;i<20;i++){const rr4=i%2?r*.45:r,an=i*Math.PI/10;ctx.lineTo(Math.cos(an)*rr4,Math.sin(an)*rr4)}ctx.closePath();ctx.fillStyle=e.col;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=INK;ctx.stroke();
       ctx.beginPath();for(let i=0;i<20;i++){const rr4=i%2?r*.22:r*.5,an=i*Math.PI/10+.1;ctx.lineTo(Math.cos(an)*rr4,Math.sin(an)*rr4)}ctx.closePath();ctx.fillStyle='#fff';ctx.fill()}
     else if(e.k==='word'){const t=1-a,sc2=t<.12?.4+t/.12*.8:1.2-Math.min(.2,(t-.12)*.5);ctx.translate(e.x,e.y-t*30);ctx.rotate(e.rot);ctx.scale(sc2,sc2);ctx.globalAlpha=Math.min(1,a*3);
       ctx.font=`400 ${e.size}px 'Lilita One',Fredoka,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=e.size/4;ctx.strokeStyle=INK;ctx.fillStyle=INK;ctx.fillText(e.t,0,e.size*.12);ctx.strokeText(e.t,0,0);
@@ -3527,7 +3544,7 @@ requestAnimationFrame(frame);
   const chk=()=>fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{const m=t.match(/const APP_VERSION='([^']+)'/);
     if(m&&m[1]!==APP_VERSION&&state!=='play'&&!NET.role){const k='sfReload';if(sessionStorage.getItem(k)===m[1])return;sessionStorage.setItem(k,m[1]);location.replace(location.pathname+'?v='+encodeURIComponent(m[1]))}}).catch(()=>{});
   chk();document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
-window.__sc={makeSnap:()=>makeSnap(),WEAP,drawWeapon:(c,k)=>drawWeapon(c,k),MAPS_N:MAPS.length,setup,setState:v=>{state=v},hit:(...a)=>hit(...a),get state(){return state},NET,sticks,get KOFX(){return KOFX},get WKEYS(){return WKEYS},koFX:(v,k,r)=>koFX(v,k,r),finishRound:()=>finishRound(),get RND(){return RND},topAt:(p,x)=>topAt(p,x),makeCrater:(x,y,r,d)=>makeCrater(x,y,r,d),get G(){return G},step,sticks,startMatch};
+window.__sc={makeSnap:()=>makeSnap(),boomFX:(x,y,R,pal)=>boomFX(x,y,R,pal),WEAP,drawWeapon:(c,k)=>drawWeapon(c,k),MAPS_N:MAPS.length,setup,setState:v=>{state=v},hit:(...a)=>hit(...a),get state(){return state},NET,sticks,get KOFX(){return KOFX},get WKEYS(){return WKEYS},koFX:(v,k,r)=>koFX(v,k,r),finishRound:()=>finishRound(),get RND(){return RND},topAt:(p,x)=>topAt(p,x),makeCrater:(x,y,r,d)=>makeCrater(x,y,r,d),get G(){return G},step,sticks,startMatch};
 })();
 </script>
 </body>

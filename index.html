@@ -383,8 +383,8 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 .oncols{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;min-height:0}
 .oncard{background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-height:0}
 .onh{font:400 26px 'Lilita One',sans-serif;color:var(--ink)}
-#onPick .oncard{justify-content:center;gap:12px;align-self:center;max-height:min(100%,330px)}
-#onPick{align-items:center}
+#onPick .oncard{justify-content:center;gap:12px;max-height:330px}
+#onPick{align-items:stretch;align-content:center;grid-template-rows:minmax(0,auto)}
 .oncard p{font:600 13px Fredoka,sans-serif;color:#4a4670;margin:0}
 .oncard .big{padding:10px!important;font-size:19px!important}
 @keyframes onpop{0%{transform:scale(.3)}100%{transform:scale(1)}}
@@ -549,7 +549,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 </div>
 <div class="screen" id="online">
   <div class="onwrap">
-    <div class="onhead"><button class="iconbtn" id="onBack">‹</button><div class="ftitle">Play online</div><button class="mhelp" id="onLeave">Leave room</button></div>
+    <div class="onhead"><button class="iconbtn" id="onBack">‹</button><div class="ftitle">PLAY ONLINE</div><button class="mhelp" id="onLeave">Leave room</button></div>
     <div class="oncols" id="onPick">
       <div class="oncard">
         <div class="onh">Host a room</div>
@@ -595,7 +595,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.91 · Nov 28';
+const APP_VERSION='v1.92 · Nov 28';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false,UZ=1;const SAFE={l:0,r:0,t:0,b:0};
@@ -627,6 +627,11 @@ function layout(){
 }
 lastLandscape();
 addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,120));
+// labels never get cut off with "...": any one-line label that doesn't fit shrinks its font until it does
+let FIT_W=0;function fitLabels(){if(state==='play')return;const vw=innerWidth+'x'+innerHeight;const again=FIT_W!==vw;FIT_W=vw;
+  for(const el of document.querySelectorAll('.stype,.sbtn,.cell .nm,.mcard span')){const t=el.textContent;if(!again&&el._ft===t)continue;el._ft=t;el.style.fontSize='';
+    if(!el.clientWidth)continue;let fs=parseFloat(getComputedStyle(el).fontSize),n=0;while(el.scrollWidth>el.clientWidth+.5&&fs>6.5&&n++<24){fs-=.5;el.style.fontSize=fs+'px'}}}
+setInterval(()=>{try{fitLabels()}catch(e){}},300);
 if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',()=>setTimeout(layout,60));
 addEventListener('pointerdown',lockLandscape,{once:true});lockLandscape();layout();
 function toLocal(e){const X=e.clientX/UZ,Y=e.clientY/UZ;if(!ROT)return{x:X,y:Y};return ROTDIR>0?{x:CW-Y,y:X}:{x:Y,y:CH-X}}
@@ -1794,7 +1799,7 @@ function koFX(v,killer,ringOut,style){
     G.fx.push({k:'word',x,y:y-15,t:'K.O.!',life:1,ml:1,rot:(Math.random()-.5)*.3,size:46});G.fx.push({k:'ring',x,y,r:12,max:200,life:.4,ml:.4,col});return}
   G.fx=G.fx.filter(e=>e.k!=='word'&&e.k!=='num'&&e.k!=='combo');
   KOFX={x,y,t:0,col,killer,victim:v,ringOut:!!ringOut,ix:CW/2,iy:CH/2,style,weapon:killer?WEAP[killer.weapon].name:''};
-  if(style==='replay')KOFX.frames=G.rec.slice();
+  if(G.rec&&G.rec.length>2)KOFX.frames=G.rec.slice();
   {const lk=G.lastKiller||(G.lastKiller={});KOFX.revenge=!!(killer&&lk[killer.idx]===v.idx);if(killer)lk[v.idx]=killer.idx;
    const W2=ringOut?['THROWN OUT','ELIMINATED','GONE']:['ELIMINATED','DESTROYED','WRECKED','OBLITERATED','EXECUTED','DELETED'];KOFX.word=KOFX.revenge?'REVENGE':W2[Math.floor(Math.random()*W2.length)];
    KOFX.seed=Math.random()*999}
@@ -1828,17 +1833,16 @@ function drawShards(){if(!G.shards)return;const c=ctx;for(const p of G.shards){c
 const KO_SNAP=.3,KO_CRACK=.55,KO_FALL=1.45,KO_BLACK=.35,KO_FADE=.55;
 function koShatterScreen(K){
   try{const shot=document.createElement('canvas');shot.width=cv.width;shot.height=cv.height;shot.getContext('2d').drawImage(cv,0,0);K.shot=shot}catch(e){K.shot=null}
-  const ix=K.ix,iy=K.iy,cols=7,rows=5,P=[];
-  for(let j=0;j<=rows;j++){P.push([]);for(let i=0;i<=cols;i++){let x=CW*i/cols,y=CH*j/rows;if(i>0&&i<cols)x+=(Math.random()-.5)*CW/cols*.7;if(j>0&&j<rows)y+=(Math.random()-.5)*CH/rows*.7;P[j].push([x,y])}}
-  // pull nearby grid points toward the impact so the break radiates from it
-  for(const row of P)for(const q of row){const dx=q[0]-ix,dy=q[1]-iy,d=Math.hypot(dx,dy),pull=Math.max(0,1-d/(Math.max(CW,CH)*.45))*.35;if(q[0]>0&&q[0]<CW&&q[1]>0&&q[1]<CH){q[0]-=dx*pull;q[1]-=dy*pull}}
-  const maxD=Math.hypot(CW,CH);K.shards=[];
-  for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){const a=P[j][i],b=P[j][i+1],c=P[j+1][i+1],d=P[j+1][i];
-    const tris=Math.random()<.5?[[a,b,c],[a,c,d]]:[[a,b,d],[b,c,d]];
-    for(const t of tris){const cx=(t[0][0]+t[1][0]+t[2][0])/3,cy=(t[0][1]+t[1][1]+t[2][1])/3,dist=Math.hypot(cx-ix,cy-iy);
-      K.shards.push({pts:t.map(q=>[q[0],q[1]]),cx,cy,ox:0,oy:0,ang:0,delay:dist/maxD*.7+Math.random()*.12,vx:(cx-ix)/maxD*260+(Math.random()-.5)*90,vy:-40-Math.random()*120,va:(Math.random()-.5)*3.2,dist})}}
-  // the crack edges, revealed outward from the impact
-  K.edges=[];for(const sh of K.shards)for(let k=0;k<3;k++){const p1=sh.pts[k],p2=sh.pts[(k+1)%3];const mx=(p1[0]+p2[0])/2,my=(p1[1]+p2[1])/2;if(mx<=1||mx>=CW-1&&p1[0]>=CW-1||my<=1||my>=CH-1)continue;K.edges.push([p1,p2,Math.hypot(mx-ix,my-iy)])}
+  // a spider-web break: crooked spokes out of the impact, joined by rings that get further apart
+  const ix=K.ix,iy=K.iy,maxD=Math.hypot(CW,CH),N=11,RS=[0,.06,.14,.27,.46,.75,1.3],ang=Array.from({length:N},(_,i)=>i/N*6.283+(Math.random()-.5)*.35);
+  const P=RS.map((r,k)=>ang.map(a=>{if(!k)return[ix,iy];const aa=a+(Math.random()-.5)*.18,rr=r*maxD*(.85+Math.random()*.3);return[ix+Math.cos(aa)*rr,iy+Math.sin(aa)*rr]}));
+  K.shards=[];const add=t=>{const cx=(t[0][0]+t[1][0]+t[2][0])/3,cy=(t[0][1]+t[1][1]+t[2][1])/3;if(cx<-CW*.3||cx>CW*1.3||cy<-CH*.3||cy>CH*1.3)return;const dist=Math.hypot(cx-ix,cy-iy),u=dist||1;
+    K.shards.push({pts:t.map(q=>[q[0],q[1]]),cx,cy,ox:0,oy:0,ang:0,delay:dist/maxD*.7+Math.random()*.12,vx:(cx-ix)/maxD*260+(Math.random()-.5)*90,vy:-40-Math.random()*120,va:(Math.random()-.5)*3.2,dist,
+      nx:(cx-ix)/u*Math.min(4,dist*.012),ny:(cy-iy)/u*Math.min(4,dist*.012),tint:Math.random()*.14})};
+  for(let k=0;k<RS.length-1;k++)for(let i=0;i<N;i++){const j=(i+1)%N,a1=P[k][i],b1=P[k][j],c1=P[k+1][j],d1=P[k+1][i];if(!k)add([a1,c1,d1]);else if(Math.random()<.5){add([a1,b1,c1]);add([a1,c1,d1])}else{add([a1,b1,d1]);add([b1,c1,d1])}}
+  // crack lines: spokes (bold) and rings (finer), revealed outward from the impact
+  K.edges=[];for(let k=0;k<RS.length-1;k++)for(let i=0;i<N;i++){const p=P[k][i],q=P[k+1][i];K.edges.push([p,q,Math.hypot((p[0]+q[0])/2-ix,(p[1]+q[1])/2-iy),1]);
+    if(k){const r=P[k][(i+1)%N];K.edges.push([p,r,Math.hypot((p[0]+r[0])/2-ix,(p[1]+r[1])/2-iy),0])}}
   // a few extra hairline cracks right at the impact
   K.hair=[];for(let i=0;i<14;i++){let a2=i/14*6.283+Math.random()*.3,x=ix,y=iy;const q=[[x,y]];for(let k=0;k<6;k++){a2+=(Math.random()-.5)*.7;x+=Math.cos(a2)*22;y+=Math.sin(a2)*22;q.push([x,y])}K.hair.push(q)}
   sfx('clang');tone(1900,300,.35,'square',.04);
@@ -1905,7 +1909,7 @@ function drawKOSlow(K,dt){const t=K.t,S=Math.min(CW/760,CH/360),e=Math.min(1,t/.
   if(t>=KO_SLOW-.15)koFlush(K);if(t>=KO_SLOW)KOFX=null}
 // comic panel: freeze-frame slapped into a tilted comic panel over a sunburst
 function drawKOComic(K,dt){const t=K.t,S=Math.min(CW/760,CH/360);
-  if(!K.shot){try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim)K.victim.shattered=true;sfx('clang');tone(300,1500,.25,'square',.05)}
+  if(K.shot===undefined){koShot(K,true);sfx('clang');tone(300,1500,.25,'square',.05)}
   const u=t-KO_SNAP,end=KO_COMIC-KO_SNAP,leave=Math.max(0,(u-(end-.35))/.35),pop=Math.min(1,u/.22),ease=1-Math.pow(1-pop,3);
   ctx.save();ctx.globalAlpha=1-leave;ctx.fillStyle='#0a0308';ctx.fillRect(0,0,CW,CH);sunburst(CW/2,CH/2,Math.hypot(CW,CH),'#7a0014',.6,u*.25);ctx.restore();
   const pw=CW*(1-.36*ease),ph=CH*(1-.36*ease),rot=-.05*ease;ctx.save();ctx.translate(CW/2+leave*CW*1.1,CH*.45-leave*CH*.4);ctx.rotate(rot+leave*.4);
@@ -1918,7 +1922,12 @@ function drawKOComic(K,dt){const t=K.t,S=Math.min(CW/760,CH/360);
   if(u>.25&&leave<1)koPlayers(K,CH*.86,S*.85,Math.min(1,(u-.25)/.2)*(1-leave));
   if(u<.06){ctx.fillStyle=`rgba(255,255,255,${1-u/.06})`;ctx.fillRect(0,0,CW,CH)}
   if(t>=KO_COMIC-.3)koFlush(K);if(t>=KO_COMIC)KOFX=null}
-function koShot(K){if(K.shot!==undefined)return;try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim)K.victim.shattered=true}
+// focus: re-render the exact moment of the kill from the recording, framed on the victim (so the photo/comic always shows who died)
+function koShot(K,focus){if(K.shot!==undefined)return;
+  if(focus&&K.frames&&K.frames.length>2&&K.victim){const fr=K.frames,vi=K.victim.idx;let i=fr.length-1;
+    while(i>0){const d=fr[i].fs[vi];if(d&&d.al&&d.x>-40&&d.x<W+40&&d.y<H+20)break;i--}
+    const d=fr[i].fs[vi];if(d){try{drawRecFrame(K,fr[i],d.x,d.y-45,view.s*1.3);if(K.vs){K.ix=K.vs[0];K.iy=K.vs[1]+20}}catch(e){}}}
+  try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim)K.victim.shattered=true}
 // old TV switching off: the picture jitters, collapses to a line, then a dot; static with the K.O. card; then it switches back on
 function drawKOTV(K,dt){koShot(K);const u=K.t-KO_SNAP,end=KO_TV-KO_SNAP,S=Math.min(CW/760,CH/360),on0=u>end-.45?Math.min(1,(u-(end-.45))/.3):0,hb=CH*on0;ctx.fillStyle='#000';ctx.fillRect(0,0,CW,CH/2-hb/2);ctx.fillRect(0,CH/2+hb/2,CW,CH/2-hb/2+1);
   if(!K.buzz){K.buzz=1;noise(.35,.25,3000);tone(1200,60,.4,'sawtooth',.05)}
@@ -1938,9 +1947,10 @@ function drawKOTV(K,dt){koShot(K);const u=K.t-KO_SNAP,end=KO_TV-KO_SNAP,S=Math.m
 // e grows every shape (used for the ink outline pass underneath)
 function splatShapes(b,r,e,dl,fill){ctx.fillStyle=fill;const n=b.rs.length,pts=b.rs.map((q,i)=>{const a=i/n*6.283+b.rot;return[b.x+Math.cos(a)*(r*q+e),b.y+Math.sin(a)*(r*q+e)*.92]});
   ctx.beginPath();ctx.moveTo((pts[0][0]+pts[n-1][0])/2,(pts[0][1]+pts[n-1][1])/2);for(let i=0;i<n;i++){const p=pts[i],q=pts[(i+1)%n];ctx.quadraticCurveTo(p[0],p[1],(p[0]+q[0])/2,(p[1]+q[1])/2)}ctx.fill();
-  const ar=Math.min(1,dl*3);for(const m of b.arms){const L=r*m.l*ar;if(L<1)continue;const ca=Math.cos(m.a),sa=Math.sin(m.a),bx=b.x+ca*r*.75,by=b.y+sa*r*.75*.92,tx=bx+ca*L,ty=by+sa*L,w=r*m.w+e,nx=-sa,ny=ca;
-    ctx.beginPath();ctx.moveTo(bx+nx*w,by+ny*w);ctx.quadraticCurveTo(tx-ca*L*.35+nx*w*.3,ty-sa*L*.35+ny*w*.3,tx,ty);ctx.quadraticCurveTo(tx-ca*L*.35-nx*w*.3,ty-sa*L*.35-ny*w*.3,bx-nx*w,by-ny*w);ctx.fill();
-    const dr=r*m.w*1.05*ar+e;ctx.beginPath();ctx.arc(tx+ca*dr*.5,ty+sa*dr*.5,dr,0,7);ctx.fill()}
+  const ar=Math.min(1,dl*3);for(const m of b.arms){const L=r*m.l*ar;if(L<1)continue;const ca=Math.cos(m.a),sa=Math.sin(m.a),bx=b.x+ca*r*.7,by=b.y+sa*r*.7*.92,w=r*m.w;
+    // a rounded neck: overlapping circles shrinking from the blob edge, then a fat round droplet at the end (no sharp points)
+    const N=10;for(let i=0;i<=N;i++){const t=i/N,rr=w*(1.35-.75*t)+e;ctx.beginPath();ctx.arc(bx+ca*L*t,by+sa*L*t,rr,0,7);ctx.fill()}
+    const dr=w*1.15*ar+e;ctx.beginPath();ctx.arc(bx+ca*(L+w*.7),by+sa*(L+w*.7),dr,0,7);ctx.fill()}
   for(const p of b.sp){const k=Math.min(1,Math.max(0,dl*2.5-p.d*.6)),rr=r*p.r*k+e;if(rr<=e+.5)continue;ctx.beginPath();ctx.arc(b.x+Math.cos(p.a)*r*p.d,b.y+Math.sin(p.a)*r*p.d,rr,0,7);ctx.fill()}
   for(const d of b.drips){const x=b.x+d.x*r,top=b.y+r*.55,len=r*d.l*dl,w=r*d.w+e;if(len<1)continue;ctx.beginPath();ctx.moveTo(x-w,top-w);ctx.lineTo(x-w,top+len);ctx.arc(x,top+len,w,Math.PI,0,true);ctx.lineTo(x+w,top-w);ctx.fill()}}
 // PAINT SPLAT: blobs of the winner's colour slap onto the screen, drip, and slide away
@@ -2030,7 +2040,7 @@ function drawKOBoom(K,dt){koShot(K);const u=K.t-KO_SNAP,S=Math.min(CW/760,CH/360
   if(u<.1){ctx.fillStyle=`rgba(255,255,255,${1-u/.1})`;ctx.fillRect(0,0,CW,CH)}
   if(u>KO_BOOM-KO_SNAP-.7)koFlush(K)}
 // CAMERA CAPTURE: shutter snaps, the moment becomes a photo that develops on screen and gets a K.O. stamp
-function drawKOPhoto(K,dt){koShot(K);const u=K.t-KO_SNAP,END=KO_PHOTO-KO_SNAP,S=Math.min(CW/760,CH/360);
+function drawKOPhoto(K,dt){koShot(K,true);const u=K.t-KO_SNAP,END=KO_PHOTO-KO_SNAP,S=Math.min(CW/760,CH/360);
   if(!K.click){K.click=1;noise(.06,.3,5000);setTimeout(()=>{try{noise(.05,.25,3500)}catch(e){}},90);K.rot=(Math.random()<.5?-1:1)*(.05+Math.random()*.04)}
   const leave=u>END-.45?Math.min(1,(u-(END-.45))/.45):0;
   // dark desk under the photo
@@ -2052,9 +2062,10 @@ function drawKOPhoto(K,dt){koShot(K);const u=K.t-KO_SNAP,END=KO_PHOTO-KO_SNAP,S=
     const cap=K.revenge?'payback, '+fname(K.victim)+'.':K.killer?fname(K.victim)+' was taken out by '+fname(K.killer):fname(K.victim)+' is gone.';ctx.fillText(cap,0,ph/2+bot*.55);ctx.globalAlpha=1}
   // K.O. stamp slapped on the photo
   if(u>1.5){const s2=Math.min(1,(u-1.5)/.12),sc=s2<1?2.6-1.6*s2:1;if(!K.stamp&&s2>=1){K.stamp=1;shake=Math.max(shake,6);sfx('boom')}
-    ctx.save();ctx.translate(pw*.18,-ph*.12);ctx.rotate(-.22);ctx.scale(sc,sc);ctx.globalAlpha=Math.min(1,s2*1.5);ctx.strokeStyle='#e8262d';ctx.lineWidth=7*S;ctx.strokeRect(-110*S,-46*S,220*S,92*S);ctx.lineWidth=2.5*S;ctx.strokeRect(-100*S,-37*S,200*S,74*S);
+    ctx.save();ctx.translate(K.ix<CW*.55?pw*.25:-pw*.25,ph*.26);ctx.rotate(-.18);ctx.scale(sc*.8,sc*.8);ctx.globalAlpha=Math.min(1,s2*1.5);ctx.strokeStyle='#e8262d';ctx.lineWidth=7*S;ctx.strokeRect(-110*S,-46*S,220*S,92*S);ctx.lineWidth=2.5*S;ctx.strokeRect(-100*S,-37*S,200*S,74*S);
     ctx.fillStyle='#e8262d';const sw=K.word||'K.O.!',fs=Math.min(60,60*6/Math.max(4,sw.length))*S;ctx.font=`400 ${fs}px 'Lilita One',sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(sw,0,4*S);ctx.restore()}
   ctx.restore();
+  if(u<.1){ctx.fillStyle=`rgba(255,255,255,${1-u/.1})`;ctx.fillRect(0,0,CW,CH)}
   // flash + shutter blades
   if(u<.07){ctx.fillStyle=`rgba(255,255,255,${1-u/.07})`;ctx.fillRect(0,0,CW,CH)}
   if(u<.26){const c=u<.1?u/.1:1-(u-.1)/.16,cx=CW/2,cy=CH/2,R=Math.hypot(CW,CH)/2+20,open=R*(1-c);ctx.save();ctx.fillStyle='#111';ctx.strokeStyle='#333';ctx.lineWidth=2;
@@ -2096,19 +2107,19 @@ function drawKOFX(dt){
       const tt=u-KO_CRACK-sh.delay;
       if(tt>0){sh.vy+=1500*Math.min(.05,dt);sh.ox+=sh.vx*Math.min(.05,dt);sh.oy+=sh.vy*Math.min(.05,dt);sh.ang+=sh.va*Math.min(.05,dt)}
       if(sh.oy>CH+200)continue;
-      ctx.save();ctx.translate(sh.cx+sh.ox+jx,sh.cy+sh.oy+jy);ctx.rotate(sh.ang);ctx.translate(-sh.cx,-sh.cy);
+      const cr=Math.min(1,Math.max(0,(u/(KO_CRACK*.7)*Math.max(CW,CH)*1.1-sh.dist)/120));ctx.save();ctx.translate(sh.cx+sh.ox+jx+(sh.nx||0)*cr,sh.cy+sh.oy+jy+(sh.ny||0)*cr);ctx.rotate(sh.ang);ctx.translate(-sh.cx,-sh.cy);
       ctx.beginPath();ctx.moveTo(...sh.pts[0]);ctx.lineTo(...sh.pts[1]);ctx.lineTo(...sh.pts[2]);ctx.closePath();
       if(!sh.bb){const xs=sh.pts.map(p=>p[0]),ys=sh.pts.map(p=>p[1]),x0=Math.max(0,Math.floor(Math.min(...xs))-2),y0=Math.max(0,Math.floor(Math.min(...ys))-2),x1=Math.min(CW,Math.ceil(Math.max(...xs))+2),y1=Math.min(CH,Math.ceil(Math.max(...ys))+2);sh.bb=[x0,y0,Math.max(1,x1-x0),Math.max(1,y1-y0)]}
       // each shard only copies its own little piece of the frozen frame (drawing the whole screen ~70 times a frame stuttered on phones)
       ctx.save();ctx.clip();if(K.shot){const b=sh.bb,r=K.shot.width/CW;ctx.drawImage(K.shot,b[0]*r,b[1]*r,b[2]*r,b[3]*r,b[0],b[1],b[2],b[3])}else{ctx.fillStyle='#5fd0ff';ctx.fillRect(0,0,CW,CH)}
-      if(tt>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(.18,tt*.4)})`;ctx.fillRect(sh.bb[0],sh.bb[1],sh.bb[2],sh.bb[3])}ctx.restore();
+      if(cr>0&&sh.tint){ctx.fillStyle=`rgba(255,255,255,${sh.tint*cr})`;ctx.fillRect(sh.bb[0],sh.bb[1],sh.bb[2],sh.bb[3])}if(tt>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(.18,tt*.4)})`;ctx.fillRect(sh.bb[0],sh.bb[1],sh.bb[2],sh.bb[3])}ctx.restore();
       if(tt>0){ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1.6;ctx.stroke()}
       ctx.restore()}
     // cracks spreading across the still-intact glass
     if(u<KO_CRACK+.25){const R2=Math.max(CW,CH)*1.1*Math.min(1,u/(KO_CRACK*.7));ctx.lineCap='round';ctx.lineJoin='round';
-      for(const [w2,cl] of [[3.5,'rgba(10,10,20,.75)'],[1.4,'rgba(255,255,255,.95)']]){ctx.lineWidth=w2;ctx.strokeStyle=cl;ctx.beginPath();
-        for(const e of K.edges){if(e[2]>R2)continue;ctx.moveTo(e[0][0]+jx,e[0][1]+jy);ctx.lineTo(e[1][0]+jx,e[1][1]+jy)}
-        for(const q of K.hair){ctx.moveTo(q[0][0]+jx,q[0][1]+jy);for(let i=1;i<q.length;i++)ctx.lineTo(q[i][0]+jx,q[i][1]+jy)}ctx.stroke()}
+      for(const [w2,cl,rad] of [[2.6,'rgba(10,10,20,.45)',0],[1,'rgba(255,255,255,.75)',0],[4,'rgba(10,10,20,.7)',1],[1.8,'rgba(255,255,255,.97)',1]]){ctx.lineWidth=w2;ctx.strokeStyle=cl;ctx.beginPath();
+        for(const e of K.edges){if(e[3]!==rad||e[2]>R2)continue;ctx.moveTo(e[0][0]+jx,e[0][1]+jy);ctx.lineTo(e[1][0]+jx,e[1][1]+jy)}
+        if(rad)for(const q of K.hair){ctx.moveTo(q[0][0]+jx,q[0][1]+jy);for(let i=1;i<q.length;i++)ctx.lineTo(q[i][0]+jx,q[i][1]+jy)}ctx.stroke()}
       ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(K.ix+jx,K.iy+jy,7,0,7);ctx.fill()}
     if(u<.07){ctx.fillStyle=`rgba(255,255,255,${.8*(1-u/.07)})`;ctx.fillRect(0,0,CW,CH)}
     return}
@@ -2692,7 +2703,15 @@ function drawParts(){
   for(const t of G.texts){ctx.globalAlpha=Math.min(1,t.life*2);const sz=t.size||26,pop=t.size?1+Math.max(0,t.life-.75)*3:1;ctx.font=`700 ${sz*pop}px Fredoka,Rubik,sans-serif`;ctx.lineWidth=Math.max(5,sz/4.5);ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.strokeText(t.t,t.x,t.y);ctx.fillStyle=t.c;ctx.fillText(t.t,t.x,t.y)}
   ctx.globalAlpha=1;
 }
+// pop-up words, damage numbers and little texts never sit on top of each other: a new one is nudged up (and a bit sideways) until it is clear
+function declutter(){const box=e=>{const t=1-Math.max(0,e.life/e.ml),sz=(e.size||26)*1.35,w=sz*.62*String(e.t).length+12,h=sz*.95;
+    const y=e.k==='word'?e.y-t*30:e.k==='num'?e.y+e.vy*t+330*t*t:e.y;return{x:e.x,y,w,h}},
+  all=G.fx.filter(e=>e.k==='word'||e.k==='num').concat(G.texts.map(t=>(t.ml=t.ml||.8,t.k='txt',t)));
+  for(const e of all){if(e.pl)continue;e.pl=1;for(let n=0;n<8;n++){const a=box(e);let hit=null;
+      for(const o of all){if(o===e||!o.pl)continue;const b=box(o);if(Math.abs(a.x-b.x)<(a.w+b.w)/2&&Math.abs(a.y-b.y)<(a.h+b.h)/2){hit=b;break}}
+      if(!hit)break;e.y=hit.y-(a.h+hit.h)/2-2+(e.y-a.y);e.x+=(e.x>=hit.x?1:-1)*a.h*.25}}}
 function drawFX(){if(G.demo&&state!=='play'){G.fx=G.fx.filter(e=>e.k!=='word');G.texts.length=0}
+  declutter();
   for(const e of G.fx){const a=Math.max(0,e.life/e.ml);ctx.save();
     if(e.k==='boom'){const t=1-a,R=e.R,c=e.c||['#fff6b0','#ffd23f','#ff6a1f'];
       // smoke: one solid cartoon cloud (ink outline, two greys) that rises and fades
@@ -3245,7 +3264,11 @@ function diceThumb(cv){const c=cv.getContext('2d'),w=cv.width,h=cv.height,sz=Mat
   c.fillStyle='#1d1640';for(const [px,py] of [[.25,.25],[.75,.25],[.5,.5],[.25,.75],[.75,.75]]){c.beginPath();c.arc(x+sz*px,y+sz*py,sz*.085,0,7);c.fill()}c.fillStyle='#ff4d4d';c.beginPath();c.arc(x+sz*.5,y+sz*.5,sz*.085,0,7);c.fill();c.restore()}
 let LK_TAB='hat',HK_TAB={};
 function mkScroll(cols,ar){const g=document.createElement('div');g.className='grid scroll dscroll';g.style.setProperty('--cols',cols);g.style.setProperty('--ar',ar||1.15);return g}
-function mkGrid(cols,rows,cls){const g=document.createElement('div');g.className='grid '+(cls||'');g.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;g.style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;return g}
+const HALFC=g=>{g.style.alignContent='center'};
+function mkGrid(cols,rows,cls){const g=document.createElement('div');g.className='grid '+(cls||'');g.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;g.style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;
+  // on big screens the rows would stretch the tiles into tall slabs: cap each row near the tile width
+  if(rows>1&&window.ResizeObserver){g.style.alignContent='start';new ResizeObserver(()=>{const w=g.clientWidth,h=g.clientHeight;if(!w||!h)return;const cs=getComputedStyle(g),gx=parseFloat(cs.columnGap)||0,gy=parseFloat(cs.rowGap)||0,cw=(w-gx*(cols-1))/cols,rh=Math.max(10,Math.min(cw*1.12,(h-gy*(rows-1))/rows));g.style.gridTemplateRows=`repeat(${rows},${rh.toFixed(1)}px)`}).observe(g)}
+  return g}
 function label(t){const d=document.createElement('div');d.className='rowlbl';d.textContent=t;return d}
 // ---- picker screen (map / weapon / look), everything fits on one screen, no scrolling
 function openPicker(mode,p){pkMode=mode;if(p!==undefined)fp=p;armed=null;state='picker';mainPrev.w='';buildPicker();show('picker');$('toast').textContent=''}
@@ -3409,11 +3432,11 @@ function buildHalf(ps){
   COLORS.forEach((cc,k)=>{const key='c:'+k;cell(gc,{swatch:cc,on:c.color===k,locked:!owns(key),price:priceOf(key),onTap:el=>halfUnlock(ps,key,()=>{c.color=k;save('sc_cos',cos);re()},el,'Color')})});
   const ht=HK_TAB[i]||'hat',tabs=document.createElement('div');tabs.className='lktabs sm';wrap.appendChild(tabs);
   for(const [k2,t2] of [['hat','Hats'],['trail','Trails'],['skin','Skins']]){const b=document.createElement('button');b.className='lktab'+(ht===k2?' on':'');b.textContent=t2;b.onclick=()=>{HK_TAB[i]=k2;re()};tabs.appendChild(b)}
-  if(ht==='hat'){const gh=mkGrid(7,2);gh.style.flex='1 1 0';wrap.appendChild(gh);
+  if(ht==='hat'){const gh=mkGrid(7,2);gh.style.flex='1 1 0';HALFC(gh);wrap.appendChild(gh);
   HATS.forEach((h,k)=>{const key='h:'+k;cell(gh,{compact:1,cw:100,ch:100,label:titleCase(h),on:c.hat===k,locked:!owns(key),price:priceOf(key),thumb:cv=>hatThumb(cv,k,col),onTap:el=>halfUnlock(ps,key,()=>{c.hat=k;save('sc_cos',cos);re()},el,titleCase(h))})});}
-  else if(ht==='trail'){const gt=mkGrid(4,2);gt.style.flex='1 1 0';wrap.appendChild(gt);
+  else if(ht==='trail'){const gt=mkGrid(4,2);gt.style.flex='1 1 0';HALFC(gt);wrap.appendChild(gt);
   TRAILS.forEach((t,k)=>{const key='t:'+k;cell(gt,{compact:1,label:titleCase(t),on:c.trail===k,locked:!owns(key),price:priceOf(key),thumb:cv=>trailThumb(cv,k,col),onTap:el=>halfUnlock(ps,key,()=>{c.trail=k;save('sc_cos',cos);re()},el,titleCase(t))})});}
-  else{const gs=mkGrid(5,2);gs.style.flex='1 1 0';wrap.appendChild(gs);
+  else{const gs=mkGrid(5,2);gs.style.flex='1 1 0';HALFC(gs);wrap.appendChild(gs);
   SKINS.forEach((t,k)=>{if(SECRET_SKINS.includes(k)&&!owns('s:'+k))return;const key='s:'+k;cell(gs,{compact:1,label:SECRET_SKINS.includes(k)?'Secret':titleCase(t),on:(c.skin|0)===k,locked:!owns(key),price:priceOf(key),thumb:cv=>skinThumb(cv,k,col),onTap:el=>halfUnlock(ps,key,()=>{c.skin=k;save('sc_cos',cos);re()},el,'Skin')})});}
 }
 // ---- live stickman previews

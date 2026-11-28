@@ -595,7 +595,7 @@ svg.lock{width:.9em;height:1.05em;vertical-align:-.15em}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='v1.89 · Nov 27';
+const APP_VERSION='v1.90 · Nov 28';
 // ---------- landscape-locked layout ----------
 const app=$('app'),cv=$('game');let ctx=cv.getContext('2d');
 let CW=1,CH=1,DPR=1,ROT=false,UZ=1;const SAFE={l:0,r:0,t:0,b:0};
@@ -1847,7 +1847,10 @@ function koFreeze(){if(!KOFX)return false;if(KOFX.style==='slowmo')return false;
   {const E={replay:KO_REPLAY,boom:KO_BOOM,photo:KO_PHOTO}[KOFX.style];if(E)return KOFX.t>=KO_SNAP&&KOFX.t<E-.12}if(KOFX.style==='comic')return KOFX.t>=KO_SNAP&&KOFX.t<KO_COMIC-.25;if(KOFX.style==='tv')return KOFX.t>=KO_SNAP&&KOFX.t<KO_TV-.3;if(KOFX.style==='splat')return KOFX.t>=KO_SNAP&&KOFX.t<KO_SPLAT-.35;return KOFX.t>=KO_SNAP&&KOFX.t<KO_SNAP+KO_CRACK+KO_FALL}
 // game speed while a KO cinematic plays
 function koSpeed(){return KOFX&&KOFX.style==='slowmo'&&KOFX.t<KO_SLOW-.15?.1:1}
-function koFlush(K){if(K.flushed)return;K.flushed=true;const v=K.victim;if(v&&v.dying&&v.alive){if(!v.shattered)shatter(v);v.deathT=0;ko(v)}
+function koFlush(K){if(K.flushed)return;K.flushed=true;cam.init=false;const v=K.victim;
+  // the kill cam already showed the death: the victim just leaves quietly (no second burst when the game comes back),
+  // and leftover sparks / words from before the KO are cleared so the game resumes clean
+  if(v){v.shattered=true}if(v&&v.dying&&v.alive){v.deathT=0;const q=SIM_QUIET;SIM_QUIET=true;try{ko(v)}finally{SIM_QUIET=q}}G.parts.length=0;G.fx=[];G.texts.length=0;if(G.shards)G.shards.length=0;shake=0;hitStop=0;G.slowmo=0;G.flash=0
   if(G&&G.roundOver>0&&RND&&state==='play'){G.roundOver=0;G.pendingRound=false;finishRound()}}
 function sunburst(cx,cy,R,col,a,rot){ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.globalAlpha*=a;ctx.fillStyle=col;for(let i=0;i<18;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,i*Math.PI/9,i*Math.PI/9+Math.PI/18);ctx.closePath();ctx.fill()}ctx.restore()}
 function koTitle(x,y,size,txt,rot){if(txt==='K.O.!'&&KOFX&&KOFX.word)txt=KOFX.word;
@@ -1881,9 +1884,10 @@ function koPlayers(K,cy,S,al){const k=K.killer,v=K.victim,bh=70*S,sk=18*S;if(al<
   else{const vx=CW/2-60*S;face(v,vx,true);nm(fname(v),vx+R+14*S,'#8d879c',24*S,true,'left');ctx.font=`700 ${Math.max(11,13*S)}px Fredoka,Rubik,sans-serif`;ctx.textAlign='left';ctx.fillStyle='#ff4d5e';ctx.fillText(K.ringOut?'FELL INTO THE VOID':'SELF-DESTRUCTED',vx+R+14*S,yAt(vx)+18*S)}
   ctx.restore()}
 // colour grade used by the KO screens: drain the colour, crush the blacks, bleed in red
-function koGrade(a){if(a<=0)return;ctx.save();ctx.globalCompositeOperation='saturation';ctx.globalAlpha=Math.min(1,a);ctx.fillStyle='#000';ctx.fillRect(0,0,CW,CH);
-  ctx.globalCompositeOperation='multiply';ctx.globalAlpha=Math.min(1,a)*.55;ctx.fillStyle='#ff5a6a';ctx.fillRect(0,0,CW,CH);ctx.globalCompositeOperation='source-over';
-  const R=Math.hypot(CW,CH)/2,g=ctx.createRadialGradient(CW/2,CH/2,R*.35,CW/2,CH/2,R);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(40,0,8,${.75*Math.min(1,a)})`);ctx.globalAlpha=1;ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);ctx.restore()}
+let VIG=null;
+function koGrade(a){if(a<=0)return;a=Math.min(1,a);ctx.save();ctx.fillStyle=`rgba(28,4,14,${.42*a})`;ctx.fillRect(0,0,CW,CH);
+  if(!VIG||VIG.w!==CW||VIG.h!==CH){const R=Math.hypot(CW,CH)/2,g=ctx.createRadialGradient(CW/2,CH/2,R*.35,CW/2,CH/2,R);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(30,0,8,1)');VIG={w:CW,h:CH,g}}
+  ctx.globalAlpha=.75*a;ctx.fillStyle=VIG.g;ctx.fillRect(0,0,CW,CH);ctx.restore()}
 // jagged cracks bursting out of a point
 function koCracks(K,cx,cy,R,p){let sd=(K.seed||3)+11;const rnd=()=>{sd=(sd*9301+49297)%233280;return sd/233280};ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
   for(const [w,c] of [[6,'rgba(0,0,0,.85)'],[2.2,'rgba(255,60,80,.95)']]){sd=(K.seed||3)+11;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
@@ -1901,7 +1905,7 @@ function drawKOSlow(K,dt){const t=K.t,S=Math.min(CW/760,CH/360),e=Math.min(1,t/.
   if(t>=KO_SLOW-.15)koFlush(K);if(t>=KO_SLOW)KOFX=null}
 // comic panel: freeze-frame slapped into a tilted comic panel over a sunburst
 function drawKOComic(K,dt){const t=K.t,S=Math.min(CW/760,CH/360);
-  if(!K.shot){try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim&&!K.victim.shattered&&!K.ringOut)shatter(K.victim);sfx('clang');tone(300,1500,.25,'square',.05)}
+  if(!K.shot){try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim)K.victim.shattered=true;sfx('clang');tone(300,1500,.25,'square',.05)}
   const u=t-KO_SNAP,end=KO_COMIC-KO_SNAP,leave=Math.max(0,(u-(end-.35))/.35),pop=Math.min(1,u/.22),ease=1-Math.pow(1-pop,3);
   ctx.save();ctx.globalAlpha=1-leave;ctx.fillStyle='#0a0308';ctx.fillRect(0,0,CW,CH);sunburst(CW/2,CH/2,Math.hypot(CW,CH),'#7a0014',.6,u*.25);ctx.restore();
   const pw=CW*(1-.36*ease),ph=CH*(1-.36*ease),rot=-.05*ease;ctx.save();ctx.translate(CW/2+leave*CW*1.1,CH*.45-leave*CH*.4);ctx.rotate(rot+leave*.4);
@@ -1914,7 +1918,7 @@ function drawKOComic(K,dt){const t=K.t,S=Math.min(CW/760,CH/360);
   if(u>.25&&leave<1)koPlayers(K,CH*.86,S*.85,Math.min(1,(u-.25)/.2)*(1-leave));
   if(u<.06){ctx.fillStyle=`rgba(255,255,255,${1-u/.06})`;ctx.fillRect(0,0,CW,CH)}
   if(t>=KO_COMIC-.3)koFlush(K);if(t>=KO_COMIC)KOFX=null}
-function koShot(K){if(K.shot!==undefined)return;try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim&&!K.victim.shattered&&!K.ringOut)shatter(K.victim)}
+function koShot(K){if(K.shot!==undefined)return;try{const sh=document.createElement('canvas');sh.width=cv.width;sh.height=cv.height;sh.getContext('2d').drawImage(cv,0,0);K.shot=sh}catch(e){K.shot=null}if(K.victim)K.victim.shattered=true}
 // old TV switching off: the picture jitters, collapses to a line, then a dot; static with the K.O. card; then it switches back on
 function drawKOTV(K,dt){koShot(K);const u=K.t-KO_SNAP,end=KO_TV-KO_SNAP,S=Math.min(CW/760,CH/360),on0=u>end-.45?Math.min(1,(u-(end-.45))/.3):0,hb=CH*on0;ctx.fillStyle='#000';ctx.fillRect(0,0,CW,CH/2-hb/2);ctx.fillRect(0,CH/2+hb/2,CW,CH/2-hb/2+1);
   if(!K.buzz){K.buzz=1;noise(.35,.25,3000);tone(1200,60,.4,'sawtooth',.05)}
@@ -1933,7 +1937,7 @@ function drawKOTV(K,dt){koShot(K);const u=K.t-KO_SNAP,end=KO_TV-KO_SNAP,S=Math.m
 function drawKOSplat(K,dt){koShot(K);const u=K.t-KO_SNAP,end=KO_SPLAT-KO_SNAP,S=Math.min(CW/760,CH/360),col=K.col;
   if(!K.blobs){K.blobs=[];const n=7;for(let i=0;i<n;i++){const big=i===0;K.blobs.push({x:big?CW/2:CW*(.1+Math.random()*.8),y:big?CH*.45:CH*(.1+Math.random()*.75),r:(big?Math.max(CW,CH)*.42:Math.min(CW,CH)*(.12+Math.random()*.16)),d:i*.07,seed:Math.random()*99,drips:Array.from({length:5},()=>({x:(Math.random()-.5)*1.3,l:.3+Math.random()*.9,w:.06+Math.random()*.06}))})}sfx('boom');noise(.3,.3,600)}
   const slide=Math.max(0,(u-(end-.55))/.55),off=CH*1.25*slide*slide;
-  if(K.shot)ctx.drawImage(K.shot,0,0,CW,CH);
+  if(K.shot&&slide<1){ctx.save();ctx.globalAlpha=1-slide;ctx.drawImage(K.shot,0,0,CW,CH);ctx.restore()}
   ctx.save();ctx.translate(0,off);
   for(const b of K.blobs){const k=Math.min(1,Math.max(0,(u-b.d)/.12));if(k<=0)continue;const r=b.r*(k<1?k*1.15:1),R=(a)=>r*(.78+.22*Math.sin(a*5+b.seed)+.12*Math.sin(a*11+b.seed*2));
     ctx.fillStyle=col;ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.283;ctx.lineTo(b.x+Math.cos(a)*R(a),b.y+Math.sin(a)*R(a))}ctx.closePath();ctx.fill();ctx.stroke();
@@ -1944,65 +1948,72 @@ function drawKOSplat(K,dt){koShot(K);const u=K.t-KO_SNAP,end=KO_SPLAT-KO_SNAP,S=
   if(u<.05){ctx.fillStyle=`rgba(255,255,255,${1-u/.05})`;ctx.fillRect(0,0,CW,CH)}
   if(u>end-.6)koFlush(K);if(K.t>=KO_SPLAT)KOFX=null}
 // ---------- replay recorder ----------
-function recFrame(){const R=G.rec||(G.rec=[]);const fs=G.fighters.map(f=>{const r={};for(const k in f.rig){const q=f.rig[k];if(q&&typeof q.x==='number')r[k]=[q.x,q.y]}return{x:f.x,y:f.y,fc:f.facing,al:f.alive&&!f.shattered,r}});
-  R.push({t:gtime,cam:{x:cam.x,y:cam.y,s:view.s},fs,pr:G.proj.length?G.proj.map(q=>{const o=packObj(q);o.ow=q.owner?q.owner.idx:-1;return o}):null});while(R.length>2&&gtime-R[0].t>1.7)R.shift();if(R.length>240)R.shift()}
-// draw the world as it was in a recorded frame (fighters posed from the recording, camera pulled in on the KO)
-function drawRecFrame(K,fr,zoom){const F=G.fighters,saved=F.map(f=>{const r={};for(const k in f.rig){const q=f.rig[k];if(q&&typeof q.x==='number')r[k]=[q.x,q.y]}return{x:f.x,y:f.y,fc:f.facing,al:f.alive,sh:f.shattered,sq:f.squash,inv:f.invuln,hs:f.hitstun,fz:f.frozen,r}});
-  const sc={x:cam.x,y:cam.y,s:view.s,sh:shake};
+function recFrame(){const R=G.rec||(G.rec=[]),t=G.elapsed;if(R.length&&t-R[R.length-1].t<1/90)return;
+  const fs=G.fighters.map(f=>{const r={};for(const k in f.rig){const q=f.rig[k];if(q&&typeof q.x==='number')r[k]=[q.x,q.y]}return{x:f.x,y:f.y,fc:f.facing,al:f.alive&&!f.shattered,r}});
+  R.push({t,fs,pr:G.proj.length?G.proj.map(q=>{const o=packObj(q);o.ow=q.owner?q.owner.idx:-1;return o}):null});while(R.length>2&&t-R[0].t>1.9)R.shift()}
+// the recording at any moment in between two samples (smooth playback at any speed)
+function recAt(fr,tm){const n=fr.length;if(tm<=fr[0].t)return fr[0];if(tm>=fr[n-1].t)return fr[n-1];let i=0;while(i<n-2&&fr[i+1].t<tm)i++;
+  const A=fr[i],B=fr[i+1],k=(tm-A.t)/((B.t-A.t)||1),L=(a,b)=>a+(b-a)*k;
+  return{t:tm,pr:k<.5?A.pr:B.pr,fs:A.fs.map((a,j)=>{const b=B.fs[j];if(!b||a.al!==b.al)return k<.5?a:(b||a);const r={};for(const q in a.r){const p=a.r[q],o=b.r[q]||p;r[q]=[L(p[0],o[0]),L(p[1],o[1])]}return{x:L(a.x,b.x),y:L(a.y,b.y),fc:k<.5?a.fc:b.fc,al:a.al,r}})}}
+// draw the world as it was in a recorded pose, from a given camera
+function drawRecFrame(K,fr,cx,cy,sc){const F=G.fighters,saved=F.map(f=>{const r={};for(const k in f.rig){const q=f.rig[k];if(q&&typeof q.x==='number')r[k]=[q.x,q.y]}return{x:f.x,y:f.y,fc:f.facing,al:f.alive,sh:f.shattered,sq:f.squash,inv:f.invuln,hs:f.hitstun,fz:f.frozen,r}});
+  const sv={x:cam.x,y:cam.y,s:view.s,sh:shake};
   try{F.forEach((f,i)=>{const d=fr.fs[i];if(!d)return;for(const k in d.r){const q=f.rig[k];if(q){q.x=d.r[k][0];q.y=d.r[k][1]}}f.x=d.x;f.y=d.y;f.facing=d.fc;f.alive=d.al;f.shattered=false;f.squash=0;f.invuln=0;f.hitstun=0;f.frozen=0});
-    const v=K.victim,k=K.killer,dv=v&&fr.fs[v.idx],dk=k&&fr.fs[k.idx];let fx=fr.cam.x,fy=fr.cam.y;
-    if(dv){const tx=dk&&dk.al&&Math.hypot(dk.x-dv.x,dk.y-dv.y)<700?(dv.x+dk.x)/2:dv.x,ty=(dk&&dk.al?(dv.y+dk.y)/2:dv.y)-55;fx+=(tx-fx)*.7;fy+=(ty-fy)*.7}
-    cam.x=fx;cam.y=fy;view.s=fr.cam.s*zoom;shake=0;if(dv)K.vs=[CW/2+(dv.x-cam.x)*view.s,CH/2+(dv.y-55-cam.y)*view.s];
+    cam.x=cx;cam.y=cy;view.s=sc;shake=0;const dv=K.victim&&fr.fs[K.victim.idx];if(dv)K.vs=[CW/2+(dv.x-cam.x)*view.s,CH/2+(dv.y-55-cam.y)*view.s];
     drawBG();worldT();drawStage();drawDynamic();drawItems();for(const f of F)if(f.alive)drawFighter(ctx,f,false);
     if(fr.pr){const keep=G.proj;try{G.proj=fr.pr.map(o=>Object.assign({},o,{owner:o.ow>=0?F[o.ow]:null}));drawProj()}finally{G.proj=keep}}}
   finally{F.forEach((f,i)=>{const d=saved[i];for(const k in d.r){const q=f.rig[k];if(q){q.x=d.r[k][0];q.y=d.r[k][1]}}f.x=d.x;f.y=d.y;f.facing=d.fc;f.alive=d.al;f.shattered=d.sh;f.squash=d.sq;f.invuln=d.inv;f.hitstun=d.hs;f.frozen=d.fz});
-    cam.x=sc.x;cam.y=sc.y;view.s=sc.s;shake=sc.sh;ctx.setTransform(DPR,0,0,DPR,0,0)}}
+    cam.x=sv.x;cam.y=sv.y;view.s=sv.s;shake=sv.sh;ctx.setTransform(DPR,0,0,DPR,0,0)}}
+// where the kill cam looks in a pose: the victim, or between killer and victim when they are close
+function recFocus(K,fr){const v=K.victim,k=K.killer,dv=v&&fr.fs[v.idx],dk=k&&fr.fs[k.idx];if(!dv)return[cam.x,cam.y];
+  if(dk&&dk.al&&Math.hypot(dk.x-dv.x,dk.y-dv.y)<650)return[(dv.x+dk.x)/2,(dv.y+dk.y)/2-55];return[dv.x,dv.y-55]}
 function grain(a){ctx.save();ctx.globalAlpha=a;for(let i=0;i<120;i++){ctx.fillStyle=Math.random()<.5?'#fff':'#000';ctx.fillRect(Math.random()*CW,Math.random()*CH,2,2)}ctx.restore()}
-// SLOW-MO REPLAY: quick rewind, then the last moments play back in slow motion, freeze on the hit, K.O.
-function drawKOReplay(K,dt){const u=K.t-KO_SNAP,END=KO_REPLAY-KO_SNAP,S=Math.min(CW/760,CH/360),fr=K.frames,n=fr.length,RW=.32,PB=1.75,last=fr[n-1];
-  if(!K.started){K.started=1;noise(.3,.18,2200);tone(900,300,.3,'sawtooth',.04)}
-  const bar=CH*.1;
-  if(u<RW){const i=Math.max(0,Math.floor((n-1)*(1-u/RW)));drawRecFrame(K,fr[i],1.05);
-    ctx.fillStyle='rgba(40,20,80,.25)';ctx.fillRect(0,0,CW,CH);for(let k=0;k<6;k++){const y=Math.random()*CH;ctx.drawImage(cv,0,y*DPR,cv.width,10*DPR,(Math.random()-.5)*30,y,CW,10)}
-    grain(.25);ctx.font=`400 ${30*S}px 'Lilita One',sans-serif`;ctx.textAlign='left';ctx.lineJoin='round';ctx.lineWidth=7*S;ctx.strokeStyle=INK;ctx.fillStyle='#fff';const tx=SAFE.l+26*S,ty=SAFE.t+48*S;ctx.strokeText('◀◀ REWIND',tx,ty);ctx.fillText('◀◀ REWIND',tx,ty)}
-  else if(u<RW+PB){const p=(u-RW)/PB,q=Math.sin(p*Math.PI/2),i=Math.min(n-1,Math.floor(q*(n-1)));drawRecFrame(K,fr[i],1.1+.45*p*p);
-    if(!K.pb){K.pb=1;tone(220,180,.6,'sine',.03)}
-    koGrade(.35+.6*p);grain(.14);
-    if(K.vs){const [vx,vy]=K.vs,r=(70-30*p)*S,sp=u*3;ctx.save();ctx.strokeStyle='#ff1030';ctx.lineWidth=3;ctx.shadowColor='#ff1030';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(vx,vy,r,0,7);ctx.stroke();
-      for(let k=0;k<4;k++){const a=k*1.5708+sp;line(ctx,vx+Math.cos(a)*r*.6,vy+Math.sin(a)*r*.6,vx+Math.cos(a)*r*1.35,vy+Math.sin(a)*r*1.35)}ctx.fillStyle='#ff1030';ctx.beginPath();ctx.arc(vx,vy,3,0,7);ctx.fill();ctx.restore()}
-    ctx.fillStyle=INK;ctx.fillRect(0,0,CW,bar);ctx.fillRect(0,CH-bar,CW,bar);
+// KILL CAM: a smooth rewind, then the last moments play back slowing into the hit, freeze on it, K.O.
+function drawKOReplay(K,dt){const u=K.t-KO_SNAP,S=Math.min(CW/760,CH/360),fr=K.frames,T1=fr[fr.length-1].t,T0=Math.max(fr[0].t,T1-.9),RW=.38,PB=1.6;
+  if(!K.started){K.started=1;noise(.3,.12,2200);tone(900,300,.3,'sawtooth',.03);K.s0=view.s/1.5;const f0=recFocus(K,recAt(fr,T1));K.cx=f0[0];K.cy=f0[1];K.cs=K.s0*1.15}
+  let tm,zoom,ph;if(u<RW){const p=u/RW;tm=T1-(T1-T0)*(p*p*(3-2*p));zoom=1.15;ph=0}
+  else if(u<RW+PB){const p=(u-RW)/PB;tm=T0+(T1-T0)*(1-Math.pow(1-p,1.6));zoom=1.15+.4*p*p;ph=1}else{tm=T1;zoom=1.6;ph=2}
+  const pose=recAt(fr,tm),foc=recFocus(K,pose),k=Math.min(1,dt*(ph===2?3:5));K.cx+=(foc[0]-K.cx)*k;K.cy+=(foc[1]-K.cy)*k;K.cs+=(K.s0*zoom-K.cs)*Math.min(1,dt*4);
+  drawRecFrame(K,pose,K.cx,K.cy,K.cs);const bar=CH*.1;
+  if(ph===0){ctx.fillStyle='rgba(40,20,80,.22)';ctx.fillRect(0,0,CW,CH);ctx.save();ctx.globalAlpha=.25;ctx.fillStyle='#fff';for(let i=0;i<5;i++){const y=((u*900+i*CH/5)%CH);ctx.fillRect(0,y,CW,2)}ctx.restore();grain(.18);
+    ctx.font=`400 ${30*S}px 'Lilita One',sans-serif`;ctx.textAlign='left';ctx.lineJoin='round';ctx.lineWidth=7*S;ctx.strokeStyle=INK;ctx.fillStyle='#fff';const tx=SAFE.l+26*S,ty=SAFE.t+48*S;ctx.strokeText('◀◀ REWIND',tx,ty);ctx.fillText('◀◀ REWIND',tx,ty)}
+  else if(ph===1){const p=(u-RW)/PB;if(!K.pb){K.pb=1;tone(220,180,.6,'sine',.03)}koGrade(.3+.55*p);grain(.1);
+    if(K.vs){const [vx,vy]=K.vs,r=(70-30*p)*S,sp=u*3;ctx.save();ctx.strokeStyle='#ff1030';ctx.lineWidth=3;ctx.beginPath();ctx.arc(vx,vy,r,0,7);ctx.stroke();
+      for(let q=0;q<4;q++){const a=q*1.5708+sp;line(ctx,vx+Math.cos(a)*r*.6,vy+Math.sin(a)*r*.6,vx+Math.cos(a)*r*1.35,vy+Math.sin(a)*r*1.35)}ctx.fillStyle='#ff1030';ctx.beginPath();ctx.arc(vx,vy,3,0,7);ctx.fill();ctx.restore()}
+    const sl=Math.min(1,p*3);ctx.fillStyle=INK;ctx.fillRect(0,0,CW,bar*sl);ctx.fillRect(0,CH-bar*sl,CW,bar*sl);
     ctx.font=`400 ${20*S}px 'Lilita One',sans-serif`;ctx.textAlign='left';ctx.fillStyle='#fff';const tx=SAFE.l+22*S,ty=bar*.66;if(Math.floor(u*2.5)%2===0){ctx.fillStyle='#ff3b30';ctx.beginPath();ctx.arc(tx+8*S,ty-7*S,7*S,0,7);ctx.fill()}
-    ctx.fillStyle='#fff';ctx.fillText(K.revenge?'REVENGE CAM':'KILL CAM',tx+22*S,ty);ctx.textAlign='right';ctx.font=`700 ${13*S}px Fredoka,sans-serif`;ctx.fillText((p<.6?'0.5x':p<.85?'0.25x':'0.1x')+'  SLOW-MO',CW-SAFE.r-22*S,ty)}
-  else{const w=u-RW-PB;drawRecFrame(K,last,1.55+.04*w);if(!K.hitfx){K.hitfx=1;shake=0;sfx('boom');tone(140,40,.5,'square',.06)}
-    if(w<.08){ctx.fillStyle=`rgba(255,255,255,${1-w/.08})`;ctx.fillRect(0,0,CW,CH)}
-    const a=Math.min(1,w/.15),out=u>END-.3?Math.max(0,(END-u)/.3):1;koGrade(out);if(K.vs)koCracks(K,K.vs[0],K.vs[1],Math.hypot(CW,CH)*.55,Math.min(1,w/.12)*out);ctx.fillStyle=`rgba(10,0,6,${.35*a*out})`;ctx.fillRect(0,0,CW,CH);
-    const sc2=a<1?2.2-1.2*a:1+.02*Math.sin(u*14);ctx.save();ctx.globalAlpha=out;ctx.translate(CW/2,CH*.33);ctx.scale(sc2,sc2);koTitle(0,0,70*S,'K.O.!',-.05);ctx.restore();koPlayers(K,CH*.66,S*1.05,a*out)}
-  if(u>END-.3)koFlush(K);if(K.t>=KO_REPLAY)KOFX=null}
-// EXPLOSION: the frozen frame blows up from the KO point: fireball, shockwave, flying debris, smoke, then the K.O. card in the smoke
-function drawKOBoom(K,dt){koShot(K);const u=K.t-KO_SNAP,END=KO_BOOM-KO_SNAP,S=Math.min(CW/760,CH/360),cx=K.ix,cy=K.iy,R=Math.hypot(CW,CH);
-  if(!K.deb){K.deb=[];for(let i=0;i<34;i++){const a=Math.random()*6.283,sp=300+Math.random()*900;K.deb.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-150,a:Math.random()*6,va:(Math.random()-.5)*14,z:.4+Math.random()*.8,dz:.6+Math.random()*1.6,c:i%3===0?K.col:i%3===1?'#3a3350':'#ff8a1f'})}
-    K.smoke=[];for(let i=0;i<16;i++){const a=Math.random()*6.283,d=Math.random()*R*.35;K.smoke.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d,r:R*(.12+Math.random()*.14),d:.25+Math.random()*.35,dx:Math.cos(a)*60,dy:-40-Math.random()*60})}
-    sfx('boom');noise(.8,.35,600);tone(90,30,.9,'sawtooth',.07)}
-  const clear=u>END-.55?Math.min(1,(u-(END-.55))/.55):0,jit=Math.max(0,1-u/.9)*18;
-  ctx.save();ctx.translate((Math.random()-.5)*jit,(Math.random()-.5)*jit);if(K.shot)ctx.drawImage(K.shot,0,0,CW,CH);ctx.restore();
-  // orange heat over everything
-  koGrade(Math.min(1,u*2)*(1-clear));
-  // fireball
-  const fb=Math.min(1,u/.45),fe=1-Math.pow(1-fb,3),fr=R*.55*fe,fa=(u<.9?1:Math.max(0,1-(u-.9)/.5))*(1-clear);
-  if(fa>0){const lump=(a,r)=>r*(.86+.1*Math.sin(a*6+u*9)+.06*Math.sin(a*13-u*7));
-    for(const [k,col] of [[1,'#1a0508'],[.86,'#7a0a14'],[.7,'#e0182c'],[.5,'#ff6a1f'],[.28,'#ffe0a0']]){ctx.save();ctx.globalAlpha=fa;ctx.fillStyle=col;ctx.beginPath();for(let i=0;i<=48;i++){const a=i/48*6.283,r=lump(a,fr*k);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.restore()}}
+    ctx.fillStyle='#fff';ctx.globalAlpha=sl;ctx.fillText(K.revenge?'REVENGE CAM':'KILL CAM',tx+22*S,ty);ctx.textAlign='right';ctx.font=`700 ${13*S}px Fredoka,sans-serif`;const spd=(1-Math.min(.99,p))*1.1;ctx.fillText((spd>.5?'0.5x':spd>.25?'0.25x':'0.1x')+'  SLOW-MO',CW-SAFE.r-22*S,ty);ctx.globalAlpha=1}
+  else{const w=u-RW-PB;if(!K.hitfx){K.hitfx=1;sfx('boom');tone(140,40,.5,'square',.06)}
+    if(w<.1){ctx.fillStyle=`rgba(255,255,255,${.85*(1-w/.1)})`;ctx.fillRect(0,0,CW,CH)}
+    const a=Math.min(1,w/.18);koGrade(.85);if(K.vs)koCracks(K,K.vs[0],K.vs[1],Math.hypot(CW,CH)*.55,Math.min(1,w/.14));ctx.fillStyle=`rgba(10,0,6,${.3*a})`;ctx.fillRect(0,0,CW,CH);
+    const sc2=a<1?1.8-.8*(1-Math.pow(1-a,3)):1+.02*Math.sin(u*10);ctx.save();ctx.globalAlpha=a;ctx.translate(CW/2,CH*.33);ctx.scale(sc2,sc2);koTitle(0,0,70*S,'K.O.!',-.05);ctx.restore();koPlayers(K,CH*.66,S*1.05,a)}
+  if(u>RW+PB+.35)koFlush(K)}
+// EXPLOSION: the frozen moment blows up from the victim: flash, a big cartoon fireball, a shockwave, chunks flying at the camera,
+// then a smoke cloud rolls over the screen and the K.O. card sits in the smoke
+function drawKOBoom(K,dt){koShot(K);const u=K.t-KO_SNAP,S=Math.min(CW/760,CH/360),cx=CW/2+(K.ix-CW/2)*.45,cy=CH*.45+(K.iy-CH*.45)*.45,M=Math.min(CW,CH),Rf=M*.42;
+  if(!K.pf){K.pf=[[0,0,Rf*.62,0]];for(let i=0;i<9;i++){const a=i/9*6.283+Math.random()*.4,d=Rf*(.35+Math.random()*.25);K.pf.push([Math.cos(a)*d,Math.sin(a)*d*.85,Rf*(.3+Math.random()*.16),.02+Math.random()*.08])}
+    K.sm=[];for(let i=0;i<14;i++){const a=Math.random()*6.283,d=Math.random()*M*.55;K.sm.push([Math.cos(a)*d*1.5,Math.sin(a)*d*.8,M*(.16+Math.random()*.12),.35+Math.random()*.3])}
+    K.deb=[];for(let i=0;i<22;i++){const a=Math.random()*6.283,sp=350+Math.random()*800;K.deb.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-200,a:Math.random()*6,va:(Math.random()-.5)*12,z:.7+Math.random()*.6,c:i%3===0?K.col:i%3===1?'#5a5468':'#ff8a1f'})}
+    sfx('boom');noise(.8,.3,600);tone(90,30,.9,'sawtooth',.06)}
+  // the frozen frame, pushing in slowly with a fading shake
+  const z=1+.1*Math.min(1,u/1.2),jit=Math.max(0,1-u/.7)*14;ctx.save();ctx.translate(cx+(Math.random()-.5)*jit,cy+(Math.random()-.5)*jit);ctx.scale(z,z);ctx.translate(-cx,-cy);if(K.shot)ctx.drawImage(K.shot,0,0,CW,CH);ctx.restore();
+  koGrade(Math.min(.8,u*1.6));
+  // smoke cloud rolling over (one solid cartoon cloud: ink outline, two dark greys)
+  {const al=Math.min(1,Math.max(0,(u-.3)/.4));if(al>0){ctx.save();ctx.globalAlpha=al;for(const [col,add,mul] of [[INK,5,1],['#3b3546',0,1],['#5a5468',0,.6]]){ctx.fillStyle=col;ctx.beginPath();
+      for(const q of K.sm){const k=Math.min(1,Math.max(0,(u-q[3])/.6)),r=q[2]*(.3+.9*(1-Math.pow(1-k,2)))*mul+add,x=cx+q[0]+q[0]*.15*u,y=cy+q[1]-u*14-(mul<1?q[2]*.15:0);if(k<=0)continue;ctx.moveTo(x+r,y);ctx.arc(x,y,r,0,7)}ctx.fill()}ctx.restore()}}
+  // fireball: billows out, holds, then sinks back into the smoke
+  {const g=Math.min(1,u/.3),grow=1-Math.pow(1-g,3),fade=u<.75?1:Math.max(0,1-(u-.75)/.4),cool=Math.min(1,Math.max(0,(u-.35)/.5));
+    if(fade>0){ctx.save();ctx.globalAlpha=fade;for(const [col,add,mul,one] of [[INK,6,1],['#e0402a',0,1],['#ff8a1f',0,.78-.2*cool],['#ffd23f',0,.55-.25*cool],['#fff6d0',0,.5-.35*cool,1]]){if(mul<=.05)continue;ctx.fillStyle=col;ctx.beginPath();
+      for(const q of one?K.pf.slice(0,1):K.pf){const k=Math.min(1,Math.max(0,(u-q[3])/.12));if(k<=0)continue;const r=q[2]*grow*k*(1+.04*Math.sin(u*20+q[0]))*mul+add;ctx.moveTo(cx+q[0]+r,cy+q[1]);ctx.arc(cx+q[0],cy+q[1],r,0,7)}ctx.fill()}ctx.restore()}}
   // shockwave rings
-  for(const [d,c] of [[0,'#fff'],[.12,'#ffd23f']]){const k=(u-d)/.6;if(k>0&&k<1){ctx.save();ctx.globalAlpha=(1-k)*(1-clear);ctx.strokeStyle=c;ctx.lineWidth=18*(1-k)+2;ctx.beginPath();ctx.arc(cx,cy,R*1.1*k,0,7);ctx.stroke();ctx.restore()}}
-  // debris flying at the camera
-  const dtt=Math.min(.05,dt);for(const d of K.deb){d.x+=d.vx*dtt;d.y+=d.vy*dtt;d.vy+=500*dtt;d.a+=d.va*dtt;d.z+=d.dz*dtt;if(clear>.3)continue;const sz=9*d.z*S;ctx.save();ctx.globalAlpha=1-clear;ctx.translate(d.x,d.y);ctx.rotate(d.a);ctx.fillStyle=d.c;ctx.strokeStyle=INK;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-sz,-sz*.6);ctx.lineTo(sz*.9,-sz*.8);ctx.lineTo(sz*.6,sz*.7);ctx.lineTo(-sz*.7,sz*.5);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
-  // smoke rolls in and hangs, then clears
-  for(const m of K.smoke){const k=Math.min(1,Math.max(0,(u-m.d)/.5));if(k<=0)continue;const r=m.r*(.4+.9*k),x=m.x+m.dx*u,y=m.y+m.dy*u;ctx.save();ctx.globalAlpha=.88*k*(1-clear);ctx.fillStyle='#120a12';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha*=.5;ctx.fillStyle='#3a1018';ctx.beginPath();ctx.arc(x-r*.25,y-r*.3,r*.6,0,7);ctx.fill();ctx.restore()}
-  if(u>.7){const k=Math.min(1,(u-.7)/.5);ctx.fillStyle=`rgba(12,2,6,${.7*k*(1-clear)})`;ctx.fillRect(0,0,CW,CH)}
-  // embers
-  if(u>.6&&clear<1){ctx.save();ctx.globalAlpha=1-clear;for(let i=0;i<14;i++){const ex=(i*97+u*40*(i%3+1))%CW,ey=CH-((u*(60+i*9)+i*53)%CH);ctx.fillStyle=i%2?'#ffd23f':'#ff8a1f';ctx.beginPath();ctx.arc(ex,ey,2+i%3,0,7);ctx.fill()}ctx.restore()}
-  if(u>.85){const a=Math.min(1,(u-.85)/.18)*(1-clear),sc=a<1?2.4-1.4*a:1+.02*Math.sin(u*12);ctx.save();ctx.globalAlpha=a;ctx.translate(CW/2,CH*.34);ctx.scale(sc,sc);koTitle(0,0,72*S,'K.O.!',.04);ctx.restore();koPlayers(K,CH*.66,S*1.05,a);if(!K.thud&&a>=1){K.thud=1;sfx('pick')}}
-  if(u<.09){ctx.fillStyle=`rgba(255,255,255,${1-u/.09})`;ctx.fillRect(0,0,CW,CH)}
-  if(u>END-.6)koFlush(K);if(K.t>=KO_BOOM)KOFX=null}
+  for(const [d,c] of [[0,'#fff'],[.1,'#ffd23f']]){const k=(u-d)/.55;if(k>0&&k<1){ctx.save();ctx.globalAlpha=1-k;ctx.strokeStyle=c;ctx.lineWidth=16*(1-k)+2;ctx.beginPath();ctx.arc(cx,cy,M*1.3*(1-Math.pow(1-k,2)),0,7);ctx.stroke();ctx.restore()}}
+  // chunks flying at the camera
+  const dtt=Math.min(.05,dt);for(const d of K.deb){d.x+=d.vx*dtt;d.y+=d.vy*dtt;d.vy+=700*dtt;d.a+=d.va*dtt;d.z+=1.2*dtt;const al=Math.max(0,1-u/1.3);if(al<=0)continue;const sz=10*d.z*S;ctx.save();ctx.globalAlpha=al;ctx.translate(d.x,d.y);ctx.rotate(d.a);ctx.fillStyle=d.c;ctx.strokeStyle=INK;ctx.lineWidth=3;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(-sz,-sz*.6);ctx.lineTo(sz*.9,-sz*.8);ctx.lineTo(sz*.6,sz*.7);ctx.lineTo(-sz*.7,sz*.5);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+  // embers drifting up through the smoke
+  if(u>.6){ctx.save();ctx.globalAlpha=Math.min(1,(u-.6)/.3);for(let i=0;i<14;i++){const ex=(i*97+u*40*(i%3+1))%CW,ey=CH-((u*(60+i*9)+i*53)%CH);ctx.fillStyle=i%2?'#ffd23f':'#ff8a1f';ctx.beginPath();ctx.arc(ex,ey,2+i%3,0,7);ctx.fill()}ctx.restore()}
+  if(u>.85){const a=Math.min(1,(u-.85)/.2),sc=a<1?1.9-.9*(1-Math.pow(1-a,3)):1+.02*Math.sin(u*10);ctx.save();ctx.globalAlpha=a;ctx.translate(CW/2,CH*.34);ctx.scale(sc,sc);koTitle(0,0,72*S,'K.O.!',.04);ctx.restore();koPlayers(K,CH*.66,S*1.05,a);if(!K.thud&&a>=1){K.thud=1;sfx('pick')}}
+  if(u<.1){ctx.fillStyle=`rgba(255,255,255,${1-u/.1})`;ctx.fillRect(0,0,CW,CH)}
+  if(u>KO_BOOM-KO_SNAP-.7)koFlush(K)}
 // CAMERA CAPTURE: shutter snaps, the moment becomes a photo that develops on screen and gets a K.O. stamp
 function drawKOPhoto(K,dt){koShot(K);const u=K.t-KO_SNAP,END=KO_PHOTO-KO_SNAP,S=Math.min(CW/760,CH/360);
   if(!K.click){K.click=1;noise(.06,.3,5000);setTimeout(()=>{try{noise(.05,.25,3500)}catch(e){}},90);K.rot=(Math.random()<.5?-1:1)*(.05+Math.random()*.04)}
@@ -2036,6 +2047,7 @@ function drawKOPhoto(K,dt){koShot(K);const u=K.t-KO_SNAP,END=KO_PHOTO-KO_SNAP,S=
   if(u>END-.45)koFlush(K);if(K.t>=KO_PHOTO)KOFX=null}
 function drawKOFX(dt){
   const K=KOFX;if(!K)return;K.t+=dt;const t=K.t;
+
   ctx.setTransform(DPR,0,0,DPR,0,0);
   if(K.style==='slowmo'){drawKOSlow(K,dt);return}
   if(t<KO_SNAP){
@@ -2045,13 +2057,17 @@ function drawKOFX(dt){
     ctx.save();ctx.translate(sx+(CW/2-sx)*(1-ease),sy+(CH/2-sy)*(1-ease));ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=6;
     for(const [ax,ay] of [[-1,-1],[1,-1],[1,1],[-1,1]]){ctx.beginPath();ctx.moveTo(ax*bw/2*.92,ay*bh/2*.9-ay*L);ctx.lineTo(ax*bw/2*.92,ay*bh/2*.9);ctx.lineTo(ax*bw/2*.92-ax*L,ay*bh/2*.9);ctx.stroke()}
     ctx.restore();K.ix=sx;K.iy=sy;return}
-  if(K.style==='replay'){drawKOReplay(K,dt);return}
-  if(K.style==='boom'){drawKOBoom(K,dt);return}
+  {const END={replay:KO_REPLAY,boom:KO_BOOM}[K.style];if(END){const OUT=.4;
+    if(t<END-OUT){if(K.style==='replay')drawKOReplay(K,dt);else drawKOBoom(K,dt);
+      // keep the latest kill-cam frame: the fade-out starts from exactly this picture
+      if(t>END-OUT-.2){try{if(!K.lf){K.lf=document.createElement('canvas');K.lf.width=cv.width;K.lf.height=cv.height}const c2=K.lf.getContext('2d');c2.setTransform(1,0,0,1,0,0);c2.drawImage(cv,0,0)}catch(e){}}return}
+    koFlush(K);K.outShot=K.lf;
+    const a=Math.max(0,1-(t-(END-OUT))/OUT);if(K.outShot&&a>0){ctx.save();ctx.globalAlpha=a*a*(3-2*a);ctx.drawImage(K.outShot,0,0,CW,CH);ctx.restore()}if(t>=END)KOFX=null;return}}
   if(K.style==='photo'){drawKOPhoto(K,dt);return}
   if(K.style==='comic'){drawKOComic(K,dt);return}
   if(K.style==='tv'){drawKOTV(K,dt);return}
   if(K.style==='splat'){drawKOSplat(K,dt);return}
-  if(!K.shards){koShatterScreen(K);if(K.victim)shatter(K.victim);shake=0}
+  if(!K.shards){koShatterScreen(K);if(K.victim)K.victim.shattered=true;shake=0}
   const u=t-KO_SNAP;
   const blackStart=KO_CRACK+KO_FALL,fadeStart=blackStart+KO_BLACK,end=fadeStart+KO_FADE;
   // things that happen 'off camera' while the screen is black
@@ -2067,8 +2083,10 @@ function drawKOFX(dt){
       if(sh.oy>CH+200)continue;
       ctx.save();ctx.translate(sh.cx+sh.ox+jx,sh.cy+sh.oy+jy);ctx.rotate(sh.ang);ctx.translate(-sh.cx,-sh.cy);
       ctx.beginPath();ctx.moveTo(...sh.pts[0]);ctx.lineTo(...sh.pts[1]);ctx.lineTo(...sh.pts[2]);ctx.closePath();
-      ctx.save();ctx.clip();if(K.shot)ctx.drawImage(K.shot,0,0,CW,CH);else{ctx.fillStyle='#5fd0ff';ctx.fillRect(0,0,CW,CH)}
-      if(tt>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(.18,tt*.4)})`;ctx.fillRect(0,0,CW,CH)}ctx.restore();
+      if(!sh.bb){const xs=sh.pts.map(p=>p[0]),ys=sh.pts.map(p=>p[1]),x0=Math.max(0,Math.floor(Math.min(...xs))-2),y0=Math.max(0,Math.floor(Math.min(...ys))-2),x1=Math.min(CW,Math.ceil(Math.max(...xs))+2),y1=Math.min(CH,Math.ceil(Math.max(...ys))+2);sh.bb=[x0,y0,Math.max(1,x1-x0),Math.max(1,y1-y0)]}
+      // each shard only copies its own little piece of the frozen frame (drawing the whole screen ~70 times a frame stuttered on phones)
+      ctx.save();ctx.clip();if(K.shot){const b=sh.bb,r=K.shot.width/CW;ctx.drawImage(K.shot,b[0]*r,b[1]*r,b[2]*r,b[3]*r,b[0],b[1],b[2],b[3])}else{ctx.fillStyle='#5fd0ff';ctx.fillRect(0,0,CW,CH)}
+      if(tt>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(.18,tt*.4)})`;ctx.fillRect(sh.bb[0],sh.bb[1],sh.bb[2],sh.bb[3])}ctx.restore();
       if(tt>0){ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1.6;ctx.stroke()}
       ctx.restore()}
     // cracks spreading across the still-intact glass
@@ -2852,8 +2870,8 @@ function updateCam(dt){
   if(!cam.init||G.elapsed<.05){cam.x=cx;cam.y=cy;view.s=s;cam.init=true}
   G.punch=Math.max(0,(G.punch||0)-dt*.45);s*=1+(G.punch||0);
   let tx=cx,ty=cy;if(KOFX&&KOFX.style==='slowmo'&&KOFX.t<KO_SLOW){const q=Math.min(1,KOFX.t/.25)*Math.min(1,(KO_SLOW-KOFX.t)/.3);tx=cx+(KOFX.victim.x-cx)*q;ty=cy+(KOFX.victim.y-50-cy)*q;s*=1+.9*q}
-  else if(KOFX&&!KOFX.ringOut&&KOFX.t<.7){const k2=KOFX.t<.28?Math.min(1,KOFX.t/.18):1-(KOFX.t-.28)/.42;const q=Math.max(0,k2);tx=cx+(KOFX.x-cx)*q;ty=cy+(KOFX.y-cy)*q;s*=1+1.1*q}
-  const fast=KOFX&&!KOFX.ringOut&&(KOFX.t<.7||KOFX.style==='slowmo'),kp=Math.min(1,dt*(fast?16:5)),kz=Math.min(1,dt*(fast?16:(s<view.s?6:2.5)));
+  else if(KOFX&&!KOFX.ringOut&&!KOFX.flushed){const e=Math.min(1,KOFX.t/KO_SNAP),q=e*e*(3-2*e);tx=cx+(KOFX.x-cx)*q;ty=cy+(KOFX.y-cy)*q;s*=1+.5*q}
+  const fast=KOFX&&!KOFX.ringOut&&!KOFX.flushed,kp=Math.min(1,dt*(fast?8:5)),kz=Math.min(1,dt*(fast?7:(s<view.s?6:2.5)));
   cam.x+=(tx-cam.x)*kp;cam.y+=(ty-cam.y)*kp;view.s+=(s-view.s)*kz;
 }
 let pbVis='';
